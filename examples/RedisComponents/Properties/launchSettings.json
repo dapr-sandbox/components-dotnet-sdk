@@ -1,0 +1,14 @@
+﻿{
+  "profiles": {
+    "DaprRedisComponentsService": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5258;https://localhost:7052",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DAPR_COMPONENT_SOCKET_PATH": "dotnet-redis-components.sock"
+      }
+    }
+  }
+}

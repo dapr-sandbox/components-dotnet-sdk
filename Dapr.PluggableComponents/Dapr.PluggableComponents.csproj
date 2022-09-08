@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <Folder Include="Protos\" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Dapr.PluggableComponents</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Grpc.AspNetCore" Version="2.32.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.15.0" />
+        <PackageReference Include="Grpc.Net.Client" Version="2.32.0" />
+        <PackageReference Include="Google.Api.CommonProtos" Version="2.2.0" />
+        <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+      <PackageReference Include="Grpc.Tools" Version="2.47.0-pre1">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Protobuf Include="Protos\dapr\proto\components\v1\common.proto" ProtoRoot="Protos" GrpcServices="Client,Server" />
+        <Protobuf Include="Protos\dapr\proto\components\v1\state.proto" ProtoRoot="Protos" GrpcServices="Client,Server" />
+        <Protobuf Include="Protos\dapr\proto\common\v1\common.proto" ProtoRoot="Protos" GrpcServices="Client" />
+    </ItemGroup>
+</Project>

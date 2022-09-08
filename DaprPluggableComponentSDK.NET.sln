@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents", "Dapr.PluggableComponents\Dapr.PluggableComponents.csproj", "{2AF8EE19-43DB-494F-804C-E2573AC1EC7B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InMemoryComponents", "examples\InMemoryComponents\InMemoryComponents.csproj", "{FD5659EC-2FE3-42E3-8E4F-A26D84879B4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisComponents", "examples\RedisComponents\RedisComponents.csproj", "{FD5659EC-2FE3-42E3-8E4F-F26D84879B4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.AspNetCore", "Dapr.PluggableComponents.AspNetCore\Dapr.PluggableComponents.AspNetCore.csproj", "{59077BC9-AECA-4B7C-9A18-68A17FE4651D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{914497DE-BDEF-43EC-B640-E1A4E5A39A6B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2AF8EE19-43DB-494F-804C-E2573AC1EC7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AF8EE19-43DB-494F-804C-E2573AC1EC7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AF8EE19-43DB-494F-804C-E2573AC1EC7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AF8EE19-43DB-494F-804C-E2573AC1EC7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD5659EC-2FE3-42E3-8E4F-A26D84879B4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD5659EC-2FE3-42E3-8E4F-A26D84879B4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD5659EC-2FE3-42E3-8E4F-A26D84879B4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD5659EC-2FE3-42E3-8E4F-A26D84879B4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59077BC9-AECA-4B7C-9A18-68A17FE4651D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59077BC9-AECA-4B7C-9A18-68A17FE4651D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59077BC9-AECA-4B7C-9A18-68A17FE4651D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59077BC9-AECA-4B7C-9A18-68A17FE4651D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FD5659EC-2FE3-42E3-8E4F-A26D84879B4E} = {914497DE-BDEF-43EC-B640-E1A4E5A39A6B}
+		{FD5659EC-2FE3-42E3-8E4F-F26D84879B4E} = {914497DE-BDEF-43EC-B640-E1A4E5A39A6B}
+	EndGlobalSection
+EndGlobal

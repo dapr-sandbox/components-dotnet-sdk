@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DaprInMemoryComponents</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.40.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Dapr.PluggableComponents.AspNetCore\Dapr.PluggableComponents.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\Dapr.PluggableComponents\Dapr.PluggableComponents.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\OutputBinding" />
+  </ItemGroup>
+
+</Project>
