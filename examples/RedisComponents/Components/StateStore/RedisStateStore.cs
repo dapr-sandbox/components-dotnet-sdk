@@ -27,8 +27,8 @@ public class RedisStateStore : IStateStore
         {
             StoreObject? so = new StoreObject
             {
-                data = result,
-                etag = 1,
+                Data = result,
+                ETag = 1,
             };
             return Task.FromResult(so);
         }
@@ -48,7 +48,7 @@ public class RedisStateStore : IStateStore
     public Task Set(string requestKey, StoreObject storeObject)
     {
         IDatabase db = _redis.GetDatabase();
-        db.StringSet(requestKey, storeObject.data);
+        db.StringSet(requestKey, storeObject.Data);
         return Task.FromResult(true);
     }
 }

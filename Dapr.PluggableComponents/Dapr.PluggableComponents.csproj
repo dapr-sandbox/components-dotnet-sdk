@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="Protos\dapr\proto\components\v1\common.proto" ProtoRoot="Protos" GrpcServices="Client,Server" />
+        <Protobuf Include="Protos\dapr\proto\components\v1\shared.proto" ProtoRoot="Protos" GrpcServices="Client,Server" />
         <Protobuf Include="Protos\dapr\proto\components\v1\state.proto" ProtoRoot="Protos" GrpcServices="Client,Server" />
         <Protobuf Include="Protos\dapr\proto\common\v1\common.proto" ProtoRoot="Protos" GrpcServices="Client" />
     </ItemGroup>

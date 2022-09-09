@@ -60,9 +60,22 @@ namespace Dapr.PluggableComponents.AspNetCore
             });
         }
 
-        public PluggableComponentServiceBuilder UseStateStore(Func<IStateStore> stateStoreFactory)
+        public PluggableComponentServiceBuilder UseStateStore<T>(Func<T> stateStoreFactory) where T : class, IStateStore
         {
-            return this.UseServiceFactory<IStateStore, StateStoreWrapper>(stateStoreFactory);
+            var self = this;
+
+            if (stateStoreFactory is Func<ITransactionalStateStore> transactionalStateStore)
+            {
+                self = self.UseServiceFactory<ITransactionalStateStore, TransactionalStateStoreWrapper>(transactionalStateStore);
+
+            }
+
+            if (stateStoreFactory is Func<IQueriableStateStore> queriableStateStore)
+            {
+                self = self.UseServiceFactory<IQueriableStateStore, QueriableStateStoreWrapper>(queriableStateStore);
+            }
+
+            return self.UseServiceFactory<IStateStore, StateStoreWrapper>(stateStoreFactory);
         }
 
         private PluggableComponentServiceBuilder UseServiceFactory<TImpl, TService>(Func<TImpl> factory) where TImpl : class where TService : class
