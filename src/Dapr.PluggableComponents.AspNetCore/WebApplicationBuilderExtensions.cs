@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Dapr.PluggableComponents;
@@ -26,7 +27,12 @@ public static class WebApplicationBuilderExtensions
                     File.Delete(socketPath);
                 }
 
-                options.ListenUnixSocket(socketPath);
+                options.ListenUnixSocket(
+                    socketPath,
+                    listenOptions =>
+                    {
+                        listenOptions.Protocols = HttpProtocols.Http2;
+                    });
             });
 
         builder.Services.AddGrpc();
