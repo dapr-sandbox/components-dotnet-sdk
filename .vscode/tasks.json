@@ -7,7 +7,7 @@
             "command": "dotnet",
             "args": [
                 "build",
-                "${workspaceFolder}/samples/MemoryStateStore/MemoryStateStore.csproj",
+                "${workspaceFolder}/samples/MemoryStateStoreSample/MemoryStateStoreSample.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],

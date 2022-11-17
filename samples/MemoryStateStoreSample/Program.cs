@@ -1,3 +1,5 @@
+using MemoryStateStoreSample.Services;
+
 var componentName = "memstore";
 
 // Additional configuration is required to successfully run gRPC on macOS.
@@ -5,7 +7,7 @@ var componentName = "memstore";
 
 var builder = DaprPluggableComponentsApplication.CreateBuilder(args, new DaprPluggableComponentOptions { SocketName = componentName });
 
-builder.Services.AddSingleton<IStateStore, MemoryStateStore.Services.MemoryStateStore>();
+builder.Services.AddSingleton<IStateStore, MemoryStateStore>();
 
 var app = builder.Build();
 

@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text;
 
-namespace MemoryStateStore.Services;
+namespace MemoryStateStoreSample.Services;
 
 internal sealed class MemoryStateStore : IStateStore
 {

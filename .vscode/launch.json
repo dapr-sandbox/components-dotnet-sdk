@@ -9,9 +9,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "sample-memorystatestore-build",
-            "program": "${workspaceFolder}/samples/MemoryStateStore/bin/Debug/net6.0/MemoryStateStore.dll",
+            "program": "${workspaceFolder}/samples/MemoryStateStoreSample/bin/Debug/net6.0/MemoryStateStore.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/samples/MemoryStateStore",
+            "cwd": "${workspaceFolder}/samples/MemoryStateStoreSample",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
