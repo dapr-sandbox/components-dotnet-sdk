@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Sample MemoryStateStore",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "sample-memorystatestore-build",
+            "program": "${workspaceFolder}/samples/MemoryStateStore/bin/Debug/net6.0/MemoryStateStore.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/samples/MemoryStateStore",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+            }
+        }
+    ]
+}
