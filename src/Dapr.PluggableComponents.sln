@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents", "Dapr.PluggableComponents\Dapr.PluggableComponents.csproj", "{564281B0-DAAF-4CA9-B470-F2303DFADC27}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.AspNet", "Dapr.PluggableComponents.AspNet\Dapr.PluggableComponents.AspNet.csproj", "{F8E0AAC3-6E11-48B6-9548-BD172322E3DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.AspNetCore", "Dapr.PluggableComponents.AspNetCore\Dapr.PluggableComponents.AspNetCore.csproj", "{F8E0AAC3-6E11-48B6-9548-BD172322E3DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
