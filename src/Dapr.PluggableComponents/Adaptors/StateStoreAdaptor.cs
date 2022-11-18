@@ -21,6 +21,59 @@ public class StateStoreAdaptor : StateStoreBase
         this.store = store ?? throw new ArgumentNullException(nameof(store));
     }
 
+    private static BulkStateItem ToBulkStateItem(StateStoreBulkStateItem item)
+    {
+        var bulkStateItem = new BulkStateItem
+        {
+            ContentType = item.ContentType,
+            Data = ByteString.CopyFrom(item.Data),
+            Error = item.Error
+        };
+
+        if (!String.IsNullOrEmpty(item.ETag))
+        {
+            bulkStateItem.Etag = new Etag { Value = item.ETag };
+        }
+
+        item.Metadata.CopyTo(bulkStateItem.Metadata);
+
+        return bulkStateItem;
+    }
+
+    public override async Task<BulkGetResponse> BulkGet(BulkGetRequest request, ServerCallContext context)
+    {
+        var response = await this.store.BulkGetAsync(
+            new StateStoreBulkGetRequest
+            {
+                Items =
+                    request
+                        .Items
+                        .Select(
+                            item => new StateStoreGetRequest
+                            {
+                                Key = item.Key,
+                                Metadata = item.Metadata
+                            })
+                        .ToList()
+            },
+            context.CancellationToken);
+
+        var items =
+            response
+                .Items
+                .Select(ToBulkStateItem)
+                .ToList();
+
+        var bulkGetResponse = new BulkGetResponse
+        {
+            Got = items.Any()
+        };
+
+        bulkGetResponse.Items.AddRange(items);
+
+        return bulkGetResponse;
+    }
+
     public override Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext ctx)
     {
         return Task.FromResult(new FeaturesResponse { });
@@ -60,10 +113,10 @@ public class StateStoreAdaptor : StateStoreBase
             new StateStoreSetRequest
             {
                 ContentType = request.ContentType,
-                ETag = request.Etag?.Value,
+                ETag = request.Etag?.Value ?? String.Empty,
                 Key = request.Key,
-                Value = request.Value.Memory,
-                Metadata = request.Metadata
+                Metadata = request.Metadata,
+                Value = request.Value.Memory
             },
             ctx.CancellationToken).ConfigureAwait(false);
 
@@ -77,14 +130,19 @@ public class StateStoreAdaptor : StateStoreBase
         await this.store.BulkSetAsync(
             new StateStoreBulkSetRequest
             {
-                Items = request.Items.Select(item => new StateStoreSetRequest
-                {
-                    ContentType = item.ContentType,
-                    ETag = item.Etag?.Value,
-                    Key = item.Key,
-                    Value = item.Value.Memory,
-                    Metadata = item.Metadata
-                }).ToList()
+                Items =
+                    request
+                        .Items
+                        .Select(
+                            item => new StateStoreSetRequest
+                            {
+                                ContentType = item.ContentType,
+                                ETag = item.Etag?.Value ?? String.Empty,
+                                Key = item.Key,
+                                Metadata = item.Metadata,
+                                Value = item.Value.Memory
+                            })
+                        .ToList()
             },
             ctx.CancellationToken).ConfigureAwait(false);
 
@@ -96,9 +154,9 @@ public class StateStoreAdaptor : StateStoreBase
         logger.LogInformation("Init request for memstore");
         
         await this.store.InitAsync(
-            new StateStoreInitMetadata
+            new StateStoreInitRequest
             {
-                Properties = request.Metadata.Properties,
+                Metadata = new StateStoreInitMetadata { Properties = request.Metadata.Properties },
             },
             ctx.CancellationToken);
         
