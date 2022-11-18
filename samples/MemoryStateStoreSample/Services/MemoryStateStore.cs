@@ -1,9 +1,10 @@
 using System.Collections.Concurrent;
 using System.Text;
+using Dapr.PluggableComponents.Components;
 
 namespace MemoryStateStoreSample.Services;
 
-internal sealed class MemoryStateStore : IStateStore
+internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 {
     private readonly ILogger<MemoryStateStore> logger;
 
@@ -13,6 +14,26 @@ internal sealed class MemoryStateStore : IStateStore
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    #region IFeatures Members
+
+    public Task<string[]> GetFeaturesAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(Array.Empty<string>());
+    }
+
+    #endregion
+
+    #region IPing Members
+
+    public Task PingAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    #endregion
+
+    #region IStateStore Members
 
     public Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreBulkGetRequest request, CancellationToken cancellationToken = default)
     {
@@ -85,4 +106,6 @@ internal sealed class MemoryStateStore : IStateStore
 
         return Task.CompletedTask;
     }
+
+    #endregion
 }

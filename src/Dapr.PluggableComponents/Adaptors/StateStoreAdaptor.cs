@@ -1,4 +1,5 @@
 using Dapr.Client.Autogen.Grpc.v1;
+using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.StateStore;
 using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
@@ -14,7 +15,6 @@ public class StateStoreAdaptor : StateStoreBase
     private readonly ILogger<StateStoreAdaptor> logger;
     private readonly IStateStore store;
 
-    
     public StateStoreAdaptor(ILogger<StateStoreAdaptor> logger, IStateStore store)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -42,6 +42,8 @@ public class StateStoreAdaptor : StateStoreBase
 
     public override async Task<BulkGetResponse> BulkGet(BulkGetRequest request, ServerCallContext context)
     {
+        this.logger.LogInformation("Bulk get request for {count} keys", request.Items.Count);
+
         var response = await this.store.BulkGetAsync(
             new StateStoreBulkGetRequest
             {
@@ -74,9 +76,46 @@ public class StateStoreAdaptor : StateStoreBase
         return bulkGetResponse;
     }
 
-    public override Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext ctx)
+    public override async Task<BulkSetResponse> BulkSet(BulkSetRequest request, ServerCallContext ctx)
     {
-        return Task.FromResult(new FeaturesResponse { });
+        this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
+
+        await this.store.BulkSetAsync(
+            new StateStoreBulkSetRequest
+            {
+                Items =
+                    request
+                        .Items
+                        .Select(
+                            item => new StateStoreSetRequest
+                            {
+                                ContentType = item.ContentType,
+                                ETag = item.Etag?.Value ?? String.Empty,
+                                Key = item.Key,
+                                Metadata = item.Metadata,
+                                Value = item.Value.Memory
+                            })
+                        .ToList()
+            },
+            ctx.CancellationToken).ConfigureAwait(false);
+
+        return new BulkSetResponse();
+    }
+
+    public override async Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext ctx)
+    {
+        this.logger.LogInformation("Features request");
+
+        var response = new FeaturesResponse();
+
+        if (this.store is IFeatures features)
+        {
+            var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken).ConfigureAwait(false);
+    
+            response.Features.AddRange(featuresResponse);
+        }
+
+        return response;
     }
 
     public override async Task<GetResponse> Get(GetRequest request, ServerCallContext ctx)
@@ -105,6 +144,32 @@ public class StateStoreAdaptor : StateStoreBase
         return grpcResponse;
     }
 
+    public async override Task<InitResponse> Init(InitRequest request, ServerCallContext ctx)
+    {
+        this.logger.LogInformation("Init request");
+        
+        await this.store.InitAsync(
+            new StateStoreInitRequest
+            {
+                Metadata = new StateStoreInitMetadata { Properties = request.Metadata.Properties },
+            },
+            ctx.CancellationToken);
+        
+        return new InitResponse();
+    }
+
+    public override async Task<PingResponse> Ping(PingRequest request, ServerCallContext ctx)
+    {
+        this.logger.LogInformation("Ping request");
+
+        if (this.store is IPing ping)
+        {
+            await ping.PingAsync(ctx.CancellationToken).ConfigureAwait(false);
+        }
+
+        return new PingResponse();
+    }
+
     public override async Task<SetResponse> Set(SetRequest request, ServerCallContext ctx)
     {
         this.logger.LogInformation("Set request for key {key}", request.Key);
@@ -121,50 +186,5 @@ public class StateStoreAdaptor : StateStoreBase
             ctx.CancellationToken).ConfigureAwait(false);
 
         return new SetResponse();
-    }
-
-    public override async Task<BulkSetResponse> BulkSet(BulkSetRequest request, ServerCallContext ctx)
-    {
-        this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
-
-        await this.store.BulkSetAsync(
-            new StateStoreBulkSetRequest
-            {
-                Items =
-                    request
-                        .Items
-                        .Select(
-                            item => new StateStoreSetRequest
-                            {
-                                ContentType = item.ContentType,
-                                ETag = item.Etag?.Value ?? String.Empty,
-                                Key = item.Key,
-                                Metadata = item.Metadata,
-                                Value = item.Value.Memory
-                            })
-                        .ToList()
-            },
-            ctx.CancellationToken).ConfigureAwait(false);
-
-        return new BulkSetResponse();
-    }
-
-    public async override Task<InitResponse> Init(InitRequest request, ServerCallContext ctx)
-    {
-        logger.LogInformation("Init request for memstore");
-        
-        await this.store.InitAsync(
-            new StateStoreInitRequest
-            {
-                Metadata = new StateStoreInitMetadata { Properties = request.Metadata.Properties },
-            },
-            ctx.CancellationToken);
-        
-        return new InitResponse();
-    }
-
-    public override Task<PingResponse> Ping(PingRequest request, ServerCallContext ctx)
-    {
-        return Task.FromResult(new PingResponse());
     }
 }
