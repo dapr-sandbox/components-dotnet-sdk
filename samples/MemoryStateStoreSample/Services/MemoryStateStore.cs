@@ -35,6 +35,18 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
     #region IStateStore Members
 
+    public Task BulkDeleteAsync(StateStoreBulkDeleteRequest request, CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
+
+        foreach (var item in request.Items)
+        {
+            this.storage.Remove(item.Key);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreBulkGetRequest request, CancellationToken cancellationToken = default)
     {
         this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
@@ -72,6 +84,15 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
         {
             this.storage[item.Key] = Encoding.UTF8.GetString(item.Value.Span);
         }
+
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(StateStoreDeleteRequest request, CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("Delete request for key {key}", request.Key);
+
+        this.storage.Remove(request.Key);
 
         return Task.CompletedTask;
     }

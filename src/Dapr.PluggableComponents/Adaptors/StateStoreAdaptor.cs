@@ -40,6 +40,30 @@ public class StateStoreAdaptor : StateStoreBase
         return bulkStateItem;
     }
 
+    public override async Task<BulkDeleteResponse> BulkDelete(BulkDeleteRequest request, ServerCallContext context)
+    {
+        this.logger.LogInformation("BulkDelete request for {count} keys", request.Items.Count);
+
+        await this.store.BulkDeleteAsync(
+            new StateStoreBulkDeleteRequest
+            {
+                Items =
+                    request
+                        .Items
+                        .Select(
+                            item => new StateStoreDeleteRequest
+                            {
+                                Key = item.Key,
+                                ETag = item.Etag?.Value,
+                                Metadata = item.Metadata
+                            })
+                        .ToList()
+            },
+            context.CancellationToken).ConfigureAwait(false);
+
+        return new BulkDeleteResponse();
+    }
+
     public override async Task<BulkGetResponse> BulkGet(BulkGetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Bulk get request for {count} keys", request.Items.Count);
@@ -58,7 +82,7 @@ public class StateStoreAdaptor : StateStoreBase
                             })
                         .ToList()
             },
-            context.CancellationToken);
+            context.CancellationToken).ConfigureAwait(false);
 
         var items =
             response
@@ -100,6 +124,22 @@ public class StateStoreAdaptor : StateStoreBase
             ctx.CancellationToken).ConfigureAwait(false);
 
         return new BulkSetResponse();
+    }
+
+    public override async Task<DeleteResponse> Delete(DeleteRequest request, ServerCallContext context)
+    {
+        this.logger.LogInformation("Delete request for key {key}", request.Key);
+
+        await this.store.DeleteAsync(
+            new StateStoreDeleteRequest
+            {
+                Key = request.Key,
+                ETag = request.Etag?.Value,
+                Metadata = request.Metadata
+            },
+            context.CancellationToken).ConfigureAwait(false);
+
+        return new DeleteResponse();
     }
 
     public override async Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext ctx)
@@ -153,7 +193,7 @@ public class StateStoreAdaptor : StateStoreBase
             {
                 Metadata = new StateStoreInitMetadata { Properties = request.Metadata.Properties },
             },
-            ctx.CancellationToken);
+            ctx.CancellationToken).ConfigureAwait(false);
         
         return new InitResponse();
     }
