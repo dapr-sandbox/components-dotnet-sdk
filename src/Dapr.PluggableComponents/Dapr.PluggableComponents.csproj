@@ -3,6 +3,12 @@
   <PropertyGroup>
   </PropertyGroup>
 
+  <!-- Additional Nuget package properties. -->
+  <PropertyGroup>
+    <Description>This package contains the reference assemblies for developing pluggable components for Dapr.</Description>
+    <PackageTags>$(PackageTags);</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <Protobuf Include="Protos\dapr\proto\components\v1\bindings.proto" ProtoRoot="Protos" GrpcServices="Client,Server" />
     <Protobuf Include="Protos\dapr\proto\components\v1\common.proto" ProtoRoot="Protos" GrpcServices="Client" />

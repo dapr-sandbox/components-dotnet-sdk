@@ -3,6 +3,12 @@
   <PropertyGroup>
   </PropertyGroup>
 
+  <!-- Additional Nuget package properties. -->
+  <PropertyGroup>
+    <Description>This package contains the reference assemblies for hosting pluggable components for Dapr.</Description>
+    <PackageTags>$(PackageTags);</PackageTags>
+  </PropertyGroup>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
