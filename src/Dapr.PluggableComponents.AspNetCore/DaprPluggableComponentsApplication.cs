@@ -5,21 +5,29 @@ namespace Dapr.PluggableComponents;
 
 public sealed class DaprPluggableComponentsApplication
 {
-    private readonly string[] args;
-    private readonly DaprPluggableComponentOptions options;
+    public static DaprPluggableComponentsApplication Create()
+    {
+        return Create(new DaprPluggableComponentsOptions());
+    }
+
+    public static DaprPluggableComponentsApplication Create(string[] args)
+    {
+        return Create(new DaprPluggableComponentsOptions { Args = args });
+    }
+
+    public static DaprPluggableComponentsApplication Create(DaprPluggableComponentsOptions options)
+    {
+        return new DaprPluggableComponentsApplication(options);
+    }
+
+    private readonly DaprPluggableComponentsOptions options;
 
     private readonly ConcurrentBag<Action<WebApplicationBuilder>> builderActions = new ConcurrentBag<Action<WebApplicationBuilder>>();
     private readonly ConcurrentBag<Action<WebApplication>> appActions = new ConcurrentBag<Action<WebApplication>>();
 
-    private DaprPluggableComponentsApplication(string[] args, DaprPluggableComponentOptions options)
+    private DaprPluggableComponentsApplication(DaprPluggableComponentsOptions options)
     {       
-        this.args = args;
         this.options = options;
-    }
-
-    public static DaprPluggableComponentsApplication Create(string[] args, DaprPluggableComponentOptions options)
-    {
-        return new DaprPluggableComponentsApplication(args, options);
     }
 
     public void Run()
@@ -44,7 +52,10 @@ public sealed class DaprPluggableComponentsApplication
 
     private WebApplication CreateApplication()
     {
-        var builder = WebApplication.CreateBuilder(args);
+        var builder =
+            this.options.Args != null
+                ? WebApplication.CreateBuilder(this.options.Args)
+                : WebApplication.CreateBuilder();
 
         this.options.WebApplicationBuilderConfiguration?.Invoke(builder);
 

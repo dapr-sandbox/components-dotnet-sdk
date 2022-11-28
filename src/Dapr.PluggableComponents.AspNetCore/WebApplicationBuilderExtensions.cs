@@ -7,7 +7,7 @@ namespace Dapr.PluggableComponents;
 
 public static class WebApplicationBuilderExtensions
 {
-    public static WebApplicationBuilder UseDaprPluggableComponents(this WebApplicationBuilder builder, DaprPluggableComponentOptions? options = null)
+    public static WebApplicationBuilder UseDaprPluggableComponents(this WebApplicationBuilder builder, DaprPluggableComponentsOptions? options = null)
     {
         string socketExtension = options?.SocketExtension ?? ".sock";
         // TODO: What about Windows?

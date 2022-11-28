@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Builder;
 
 namespace Dapr.PluggableComponents;
 
-public sealed record DaprPluggableComponentOptions
+public sealed record DaprPluggableComponentsOptions
 {
+    public string[]? Args { get; init; }
+
     public string? SocketExtension { get; init; }
 
     public string? SocketFolder { get; init; }
