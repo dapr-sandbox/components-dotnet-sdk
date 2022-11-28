@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
+using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dapr.PluggableComponents;
 
@@ -29,6 +32,25 @@ public sealed class DaprPluggableComponentsApplication
     {       
         this.options = options;
     }
+
+    #region State Store Members
+
+    public void UseStateStore<TStateStore>() where TStateStore : class, IStateStore
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IStateStore, TStateStore>();
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+            });
+    }
+
+    #endregion
 
     public void Run()
     {

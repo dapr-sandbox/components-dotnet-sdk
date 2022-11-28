@@ -8,19 +8,11 @@ var componentName = "memstore";
 var options = new DaprPluggableComponentsOptions
     {
         Args = args,
-        SocketName = componentName,
-        WebApplicationConfiguration =
-            app =>
-            {
-                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
-            },
-        WebApplicationBuilderConfiguration =
-            builder =>
-            {
-                builder.Services.AddSingleton<IStateStore, MemoryStateStore>();
-            }
+        SocketName = componentName
     };
 
 var app = DaprPluggableComponentsApplication.Create(options);
+
+app.UseStateStore<MemoryStateStore>();
 
 app.Run();
