@@ -5,17 +5,21 @@ var componentName = "memstore";
 // Additional configuration is required to successfully run gRPC on macOS.
 // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
 
-var builder = DaprPluggableComponentsApplication.CreateBuilder(args, new DaprPluggableComponentOptions { SocketName = componentName });
+var options = new DaprPluggableComponentOptions
+    {
+        SocketName = componentName,
+        WebApplicationConfiguration =
+            app =>
+            {
+                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+            },
+        WebApplicationBuilderConfiguration =
+            builder =>
+            {
+                builder.Services.AddSingleton<IStateStore, MemoryStateStore>();
+            }
+    };
 
-builder.Services.AddSingleton<IStateStore, MemoryStateStore>();
-
-var app = builder.Build();
-
-app.MapDaprPluggableComponents();
-
-// register our memstore
-//app.UseDaprPluggableComponent<MemStoreService>();
-
-app.UseDaprPluggableComponent<StateStoreAdaptor>();
+var app = DaprPluggableComponentsApplication.Create(args, options);
 
 app.Run();
