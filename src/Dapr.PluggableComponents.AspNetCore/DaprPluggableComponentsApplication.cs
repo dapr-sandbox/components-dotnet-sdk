@@ -35,6 +35,21 @@ public sealed class DaprPluggableComponentsApplication
 
     #region State Store Members
 
+    public void UseStateStore(Func<IStateStore> stateStoreFactory)
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddScoped(_ => stateStoreFactory());
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+            });
+    }
+
     public void UseStateStore<TStateStore>() where TStateStore : class, IStateStore
     {
         this.ConfigureApplicationBuilder(

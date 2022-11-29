@@ -6,13 +6,13 @@ namespace MemoryStateStoreSample.Services;
 
 internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 {
-    private readonly ILogger<MemoryStateStore> logger;
+    private readonly ILogger<MemoryStateStore>? logger;
 
     private readonly IDictionary<string, string> storage = new ConcurrentDictionary<string, string>();
 
-    public MemoryStateStore(ILogger<MemoryStateStore> logger)
+    public MemoryStateStore(ILogger<MemoryStateStore>? logger = null)
     {
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.logger = logger;
     }
 
     #region IFeatures Members
@@ -37,7 +37,7 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
     public Task BulkDeleteAsync(StateStoreBulkDeleteRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
+        this.logger?.LogInformation("BulkGet request for {count} keys", request.Items.Count);
 
         foreach (var item in request.Items)
         {
@@ -49,7 +49,7 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
     public Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreBulkGetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
+        this.logger?.LogInformation("BulkGet request for {count} keys", request.Items.Count);
 
         var items = new List<StateStoreBulkStateItem>();
 
@@ -78,7 +78,7 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
     public Task BulkSetAsync(StateStoreBulkSetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
+        this.logger?.LogInformation("BulkSet request for {count} keys", request.Items.Count);
 
         foreach (var item in request.Items)
         {
@@ -90,7 +90,7 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
     public Task DeleteAsync(StateStoreDeleteRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("Delete request for key {key}", request.Key);
+        this.logger?.LogInformation("Delete request for key {key}", request.Key);
 
         this.storage.Remove(request.Key);
 
@@ -99,7 +99,7 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
     public Task<StateStoreGetResponse?> GetAsync(StateStoreGetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("MemStateStore: Get request for key {key}", request.Key);
+        this.logger?.LogInformation("MemStateStore: Get request for key {key}", request.Key);
 
         StateStoreGetResponse? response = null;
 
@@ -121,7 +121,7 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
     public Task SetAsync(StateStoreSetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("MemStore: Set request for key {key}", request.Key);
+        this.logger?.LogInformation("MemStore: Set request for key {key}", request.Key);
 
         this.storage[request.Key] = Encoding.UTF8.GetString(request.Value.Span);
 

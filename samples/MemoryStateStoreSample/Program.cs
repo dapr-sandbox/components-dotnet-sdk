@@ -13,6 +13,10 @@ var options = new DaprPluggableComponentsOptions
 
 var app = DaprPluggableComponentsApplication.Create(options);
 
-app.UseStateStore<MemoryStateStore>();
+// app.UseStateStore<MemoryStateStore>();
+
+var stateStore = new MemoryStateStore();
+
+app.UseStateStore(() => stateStore);
 
 app.Run();
