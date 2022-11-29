@@ -35,12 +35,12 @@ public sealed class DaprPluggableComponentsApplication
 
     #region State Store Members
 
-    public void UseStateStore(Func<IStateStore> stateStoreFactory)
+    public void UseStateStore(Func<string?, IStateStore> stateStoreFactory)
     {
         this.ConfigureApplicationBuilder(
             builder =>
             {
-                builder.Services.AddScoped(_ => stateStoreFactory());
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IStateStore>>(_ => new MultiplexedComponentProvider<IStateStore>(stateStoreFactory));
             });
 
         this.ConfigureApplication(
@@ -56,6 +56,7 @@ public sealed class DaprPluggableComponentsApplication
             builder =>
             {
                 builder.Services.AddSingleton<IStateStore, TStateStore>();
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IStateStore>, SingletonComponentProvider<IStateStore>>();
             });
 
         this.ConfigureApplication(

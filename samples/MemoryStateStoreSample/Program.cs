@@ -17,6 +17,6 @@ var app = DaprPluggableComponentsApplication.Create(options);
 
 var stateStore = new MemoryStateStore();
 
-app.UseStateStore(() => stateStore);
+app.UseStateStore(_ => stateStore);
 
 app.Run();

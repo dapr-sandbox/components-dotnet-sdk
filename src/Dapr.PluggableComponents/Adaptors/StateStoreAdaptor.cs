@@ -13,12 +13,12 @@ namespace Dapr.PluggableComponents.Adaptors;
 public class StateStoreAdaptor : StateStoreBase
 {
     private readonly ILogger<StateStoreAdaptor> logger;
-    private readonly IStateStore store;
+    private readonly IDaprPluggableComponentProvider<IStateStore> componentProvider;
 
-    public StateStoreAdaptor(ILogger<StateStoreAdaptor> logger, IStateStore store)
+    public StateStoreAdaptor(ILogger<StateStoreAdaptor> logger, IDaprPluggableComponentProvider<IStateStore> componentProvider)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this.store = store ?? throw new ArgumentNullException(nameof(store));
+        this.componentProvider = componentProvider ?? throw new ArgumentNullException(nameof(componentProvider));
     }
 
     private static BulkStateItem ToBulkStateItem(StateStoreBulkStateItem item)
@@ -44,7 +44,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("BulkDelete request for {count} keys", request.Items.Count);
 
-        await this.store.BulkDeleteAsync(
+        await this.GetStateStore(context.RequestHeaders).BulkDeleteAsync(
             new StateStoreBulkDeleteRequest
             {
                 Items =
@@ -68,7 +68,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Bulk get request for {count} keys", request.Items.Count);
 
-        var response = await this.store.BulkGetAsync(
+        var response = await this.GetStateStore(context.RequestHeaders).BulkGetAsync(
             new StateStoreBulkGetRequest
             {
                 Items =
@@ -104,7 +104,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
 
-        await this.store.BulkSetAsync(
+        await this.GetStateStore(ctx.RequestHeaders).BulkSetAsync(
             new StateStoreBulkSetRequest
             {
                 Items =
@@ -130,7 +130,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Delete request for key {key}", request.Key);
 
-        await this.store.DeleteAsync(
+        await this.GetStateStore(context.RequestHeaders).DeleteAsync(
             new StateStoreDeleteRequest
             {
                 Key = request.Key,
@@ -148,7 +148,7 @@ public class StateStoreAdaptor : StateStoreBase
 
         var response = new FeaturesResponse();
 
-        if (this.store is IFeatures features)
+        if (this.GetStateStore(ctx.RequestHeaders) is IFeatures features)
         {
             var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken).ConfigureAwait(false);
     
@@ -162,7 +162,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Get request for key {key}", request.Key);
 
-        var response = await this.store.GetAsync(
+        var response = await this.GetStateStore(ctx.RequestHeaders).GetAsync(
             new StateStoreGetRequest
             {
                 Key = request.Key,
@@ -188,7 +188,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Init request");
         
-        await this.store.InitAsync(
+        await this.GetStateStore(ctx.RequestHeaders).InitAsync(
             new StateStoreInitRequest
             {
                 Metadata = new StateStoreInitMetadata { Properties = request.Metadata.Properties },
@@ -202,7 +202,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Ping request");
 
-        if (this.store is IPing ping)
+        if (this.GetStateStore(ctx.RequestHeaders) is IPing ping)
         {
             await ping.PingAsync(ctx.CancellationToken).ConfigureAwait(false);
         }
@@ -214,7 +214,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Set request for key {key}", request.Key);
 
-        await this.store.SetAsync(
+        await this.GetStateStore(ctx.RequestHeaders).SetAsync(
             new StateStoreSetRequest
             {
                 ContentType = request.ContentType,
@@ -226,5 +226,10 @@ public class StateStoreAdaptor : StateStoreBase
             ctx.CancellationToken).ConfigureAwait(false);
 
         return new SetResponse();
+    }
+
+    private IStateStore GetStateStore(Metadata metadata)
+    {
+        return this.componentProvider.GetComponent(key => metadata.Get(key));
     }
 }
