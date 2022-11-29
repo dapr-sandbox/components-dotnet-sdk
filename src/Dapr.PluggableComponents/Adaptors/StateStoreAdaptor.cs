@@ -35,7 +35,7 @@ public class StateStoreAdaptor : StateStoreBase
             bulkStateItem.Etag = new Etag { Value = item.ETag };
         }
 
-        item.Metadata.CopyTo(bulkStateItem.Metadata);
+        bulkStateItem.Metadata.Add(item.Metadata);
 
         return bulkStateItem;
     }
@@ -177,7 +177,7 @@ public class StateStoreAdaptor : StateStoreBase
             grpcResponse.Data = ByteString.CopyFrom(response.Data);
             grpcResponse.Etag = new Etag { Value = response.ETag };
             
-            response.Metadata.CopyTo(grpcResponse.Metadata);
+            grpcResponse.Metadata.Add(response.Metadata);
         }
         // in case of not found you should not return any error.
 
@@ -191,7 +191,7 @@ public class StateStoreAdaptor : StateStoreBase
         await this.GetStateStore(ctx.RequestHeaders).InitAsync(
             new StateStoreInitRequest
             {
-                Metadata = new StateStoreInitMetadata { Properties = request.Metadata.Properties },
+                Metadata = new Components.MetadataRequest { Properties = request.Metadata.Properties },
             },
             ctx.CancellationToken).ConfigureAwait(false);
         

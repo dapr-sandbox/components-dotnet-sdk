@@ -1,6 +1,6 @@
-namespace Dapr.PluggableComponents.Components.StateStore;
+namespace Dapr.PluggableComponents.Components;
 
-public sealed class StateStoreInitMetadata
+public sealed class MetadataRequest
 {
     public IReadOnlyDictionary<string, string> Properties { get; init; } = new Dictionary<string, string>();
 }

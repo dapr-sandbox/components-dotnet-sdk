@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +34,41 @@ public sealed class DaprPluggableComponentsApplication
         this.options = options;
     }
 
+    #region PubSub Members
+
+    public void UsePubSub(Func<string?, IPubSub> pubSubFactory)
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IPubSub>>(_ => new MultiplexedComponentProvider<IPubSub>(pubSubFactory));
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+            });
+    }
+
+    public void UsePubSub<TPubSub>() where TPubSub : class, IPubSub
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IPubSub, TPubSub>();
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IPubSub>, SingletonComponentProvider<IPubSub>>();
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+            });
+    }
+
+    #endregion
+
     #region State Store Members
 
     public void UseStateStore(Func<string?, IStateStore> stateStoreFactory)
@@ -53,11 +89,11 @@ public sealed class DaprPluggableComponentsApplication
     public void UseStateStore<TStateStore>() where TStateStore : class, IStateStore
     {
         this.ConfigureApplicationBuilder(
-            builder =>
+            (Action<WebApplicationBuilder>)(            builder =>
             {
                 builder.Services.AddSingleton<IStateStore, TStateStore>();
                 builder.Services.AddSingleton<IDaprPluggableComponentProvider<IStateStore>, SingletonComponentProvider<IStateStore>>();
-            });
+            }));
 
         this.ConfigureApplication(
             app =>
