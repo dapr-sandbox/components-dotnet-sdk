@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Dapr.PluggableComponents.Adaptors;
+namespace Dapr.PluggableComponents.Utilities;
 
 public static class IAsyncEnumerableExtensions
 {

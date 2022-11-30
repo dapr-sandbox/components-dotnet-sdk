@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using Grpc.Core;
 
-namespace Dapr.PluggableComponents.Adaptors;
+namespace Dapr.PluggableComponents.Utilities;
 
 public static class IAsyncStreamReaderExtensions
 {

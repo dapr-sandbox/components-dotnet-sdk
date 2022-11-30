@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
@@ -34,6 +35,42 @@ public sealed class DaprPluggableComponentsApplication
         this.options = options;
     }
 
+    #region Output Binding Members
+
+    public void UseOutputBinding(Func<string?, IOutputBinding> pubSubFactory)
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IOutputBinding>>(_ => new MultiplexedComponentProvider<IOutputBinding>(pubSubFactory));
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.MapOutputBinding<OutputBindingAdaptor>();                
+            });
+    }
+
+    public void UseOutputBinding<TPubSub>() where TPubSub : class, IPubSub
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IPubSub, TPubSub>();
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IPubSub>, SingletonComponentProvider<IPubSub>>();
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.MapOutputBinding<OutputBindingAdaptor>();                
+            });
+    }
+
+    #endregion
+
+
     #region PubSub Members
 
     public void UsePubSub(Func<string?, IPubSub> pubSubFactory)
@@ -47,7 +84,7 @@ public sealed class DaprPluggableComponentsApplication
         this.ConfigureApplication(
             app =>
             {
-                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+                app.MapPubSub<PubSubAdaptor>();                
             });
     }
 
@@ -63,7 +100,7 @@ public sealed class DaprPluggableComponentsApplication
         this.ConfigureApplication(
             app =>
             {
-                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+                app.MapPubSub<PubSubAdaptor>();                
             });
     }
 
@@ -82,7 +119,7 @@ public sealed class DaprPluggableComponentsApplication
         this.ConfigureApplication(
             app =>
             {
-                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+                app.MapStateStore<StateStoreAdaptor>();                
             });
     }
 
@@ -98,7 +135,7 @@ public sealed class DaprPluggableComponentsApplication
         this.ConfigureApplication(
             app =>
             {
-                app.UseDaprPluggableComponent<StateStoreAdaptor>();                
+                app.MapStateStore<StateStoreAdaptor>();                
             });
     }
 

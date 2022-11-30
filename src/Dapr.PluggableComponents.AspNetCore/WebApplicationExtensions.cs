@@ -17,7 +17,17 @@ public static class WebApplicationExtensions
         return app;
     }
 
-    public static GrpcServiceEndpointConventionBuilder UseDaprPluggableComponent<T>(this IEndpointRouteBuilder app) where T : Proto.Components.V1.StateStore.StateStoreBase
+    public static GrpcServiceEndpointConventionBuilder MapOutputBinding<T>(this IEndpointRouteBuilder app) where T : Proto.Components.V1.OutputBinding.OutputBindingBase
+    {
+        return app.MapGrpcService<T>();
+    }
+
+    public static GrpcServiceEndpointConventionBuilder MapPubSub<T>(this IEndpointRouteBuilder app) where T : Proto.Components.V1.PubSub.PubSubBase
+    {
+        return app.MapGrpcService<T>();
+    }
+
+    public static GrpcServiceEndpointConventionBuilder MapStateStore<T>(this IEndpointRouteBuilder app) where T : Proto.Components.V1.StateStore.StateStoreBase
     {
         return app.MapGrpcService<T>();
     }
