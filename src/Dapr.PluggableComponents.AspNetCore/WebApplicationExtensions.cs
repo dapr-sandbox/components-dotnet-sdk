@@ -17,6 +17,11 @@ public static class WebApplicationExtensions
         return app;
     }
 
+    public static GrpcServiceEndpointConventionBuilder MapInputBinding<T>(this IEndpointRouteBuilder app) where T : Proto.Components.V1.InputBinding.InputBindingBase
+    {
+        return app.MapGrpcService<T>();
+    }
+
     public static GrpcServiceEndpointConventionBuilder MapOutputBinding<T>(this IEndpointRouteBuilder app) where T : Proto.Components.V1.OutputBinding.OutputBindingBase
     {
         return app.MapGrpcService<T>();

@@ -35,6 +35,41 @@ public sealed class DaprPluggableComponentsApplication
         this.options = options;
     }
 
+    #region Input Binding Members
+
+    public void UseInputBinding(Func<string?, IInputBinding> pubSubFactory)
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IInputBinding>>(_ => new MultiplexedComponentProvider<IInputBinding>(pubSubFactory));
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.MapInputBinding<InputBindingAdaptor>();                
+            });
+    }
+
+    public void UseInputBinding<TInputBinding>() where TInputBinding : class, IInputBinding
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IInputBinding, TInputBinding>();
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IInputBinding>, SingletonComponentProvider<IInputBinding>>();
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.MapInputBinding<InputBindingAdaptor>();                
+            });
+    }
+
+    #endregion
+
     #region Output Binding Members
 
     public void UseOutputBinding(Func<string?, IOutputBinding> pubSubFactory)
@@ -52,13 +87,13 @@ public sealed class DaprPluggableComponentsApplication
             });
     }
 
-    public void UseOutputBinding<TPubSub>() where TPubSub : class, IPubSub
+    public void UseOutputBinding<TOutputBinding>() where TOutputBinding : class, IOutputBinding
     {
         this.ConfigureApplicationBuilder(
             builder =>
             {
-                builder.Services.AddSingleton<IPubSub, TPubSub>();
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IPubSub>, SingletonComponentProvider<IPubSub>>();
+                builder.Services.AddSingleton<IOutputBinding, TOutputBinding>();
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IOutputBinding>, SingletonComponentProvider<IOutputBinding>>();
             });
 
         this.ConfigureApplication(
@@ -69,7 +104,6 @@ public sealed class DaprPluggableComponentsApplication
     }
 
     #endregion
-
 
     #region PubSub Members
 
