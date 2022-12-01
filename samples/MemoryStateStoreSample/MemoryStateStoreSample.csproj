@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Dapr.PluggableComponents\Dapr.PluggableComponents.csproj" />
     <ProjectReference Include="..\..\src\Dapr.PluggableComponents.AspNetCore\Dapr.PluggableComponents.AspNetCore.csproj" />
   </ItemGroup>
 
