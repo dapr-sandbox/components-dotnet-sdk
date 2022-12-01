@@ -37,139 +37,83 @@ public sealed class DaprPluggableComponentsApplication
 
     #region Input Binding Members
 
-    public void UseInputBinding(Func<string?, IInputBinding> pubSubFactory)
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IInputBinding>>(_ => new MultiplexedComponentProvider<IInputBinding>(pubSubFactory));
-            });
+    public void AddInputBinding(Func<string?, IInputBinding> pubSubFactory)
+        => this.AddComponent<IInputBinding, InputBindingAdaptor>(pubSubFactory);
 
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapInputBinding<InputBindingAdaptor>();                
-            });
-    }
-
-    public void UseInputBinding<TInputBinding>() where TInputBinding : class, IInputBinding
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IInputBinding, TInputBinding>();
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IInputBinding>, SingletonComponentProvider<IInputBinding>>();
-            });
-
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapInputBinding<InputBindingAdaptor>();                
-            });
-    }
+    public void AddInputBinding<TInputBinding>()
+        where TInputBinding : class, IInputBinding
+        => this.AddComponent<IInputBinding, TInputBinding, InputBindingAdaptor>();
 
     #endregion
 
     #region Output Binding Members
 
-    public void UseOutputBinding(Func<string?, IOutputBinding> pubSubFactory)
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IOutputBinding>>(_ => new MultiplexedComponentProvider<IOutputBinding>(pubSubFactory));
-            });
+    public void AddOutputBinding(Func<string?, IOutputBinding> pubSubFactory)
+        => this.AddComponent<IOutputBinding, OutputBindingAdaptor>(pubSubFactory);
 
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapOutputBinding<OutputBindingAdaptor>();                
-            });
-    }
-
-    public void UseOutputBinding<TOutputBinding>() where TOutputBinding : class, IOutputBinding
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IOutputBinding, TOutputBinding>();
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IOutputBinding>, SingletonComponentProvider<IOutputBinding>>();
-            });
-
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapOutputBinding<OutputBindingAdaptor>();                
-            });
-    }
+    public void AddOutputBinding<TOutputBinding>()
+        where TOutputBinding : class, IOutputBinding
+        => this.AddComponent<IOutputBinding, TOutputBinding, OutputBindingAdaptor>();
 
     #endregion
 
     #region PubSub Members
 
-    public void UsePubSub(Func<string?, IPubSub> pubSubFactory)
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IPubSub>>(_ => new MultiplexedComponentProvider<IPubSub>(pubSubFactory));
-            });
+    public void AddPubSub(Func<string?, IPubSub> pubSubFactory)
+        => this.AddComponent<IPubSub, PubSubAdaptor>(pubSubFactory);
 
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapPubSub<PubSubAdaptor>();                
-            });
-    }
-
-    public void UsePubSub<TPubSub>() where TPubSub : class, IPubSub
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IPubSub, TPubSub>();
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IPubSub>, SingletonComponentProvider<IPubSub>>();
-            });
-
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapPubSub<PubSubAdaptor>();                
-            });
-    }
+    public void AddPubSub<TPubSub>()
+        where TPubSub : class, IPubSub
+        => this.AddComponent<IPubSub, TPubSub, PubSubAdaptor>();
 
     #endregion
 
     #region State Store Members
 
-    public void UseStateStore(Func<string?, IStateStore> stateStoreFactory)
+    public void AddStateStore(Func<string?, IStateStore> stateStoreFactory)
+        => this.AddComponent<IStateStore, StateStoreAdaptor>(stateStoreFactory);
+
+
+    public void AddStateStore<TStateStore>()
+        where TStateStore : class, IStateStore
+        => this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>();
+
+    #endregion
+
+    #region Component Members
+
+    public void AddComponent<TComponent, TAdaptor>(Func<string?, TComponent> pubSubFactory)
+        where TAdaptor : class
     {
         this.ConfigureApplicationBuilder(
             builder =>
             {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IStateStore>>(_ => new MultiplexedComponentProvider<IStateStore>(stateStoreFactory));
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>>(_ => new MultiplexedComponentProvider<TComponent>(pubSubFactory));
             });
 
         this.ConfigureApplication(
             app =>
             {
-                app.MapStateStore<StateStoreAdaptor>();                
+                app.MapDaprPluggableComponent<TAdaptor>();                
             });
     }
 
-    public void UseStateStore<TStateStore>() where TStateStore : class, IStateStore
+    public void AddComponent<TComponentType, TComponentImpl, TAdaptor>()
+        where TComponentType : class
+        where TComponentImpl : class, TComponentType
+        where TAdaptor : class
     {
         this.ConfigureApplicationBuilder(
-            (Action<WebApplicationBuilder>)(            builder =>
+            builder =>
             {
-                builder.Services.AddSingleton<IStateStore, TStateStore>();
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<IStateStore>, SingletonComponentProvider<IStateStore>>();
-            }));
+                builder.Services.AddSingleton<TComponentType, TComponentImpl>();
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentType>, SingletonComponentProvider<TComponentType>>();
+            });
 
         this.ConfigureApplication(
             app =>
             {
-                app.MapStateStore<StateStoreAdaptor>();                
+                app.MapDaprPluggableComponent<TAdaptor>();                
             });
     }
 
@@ -204,7 +148,7 @@ public sealed class DaprPluggableComponentsApplication
 
         this.options.WebApplicationBuilderConfiguration?.Invoke(builder);
 
-        builder.UseDaprPluggableComponents(options);
+        builder.AddDaprPluggableComponentsServices(options);
 
         foreach (var configurer in this.builderActions)
         {
@@ -215,7 +159,7 @@ public sealed class DaprPluggableComponentsApplication
 
         this.options.WebApplicationConfiguration?.Invoke(app);
 
-        app.MapDaprPluggableComponents();
+        app.MapDaprPluggableComponentsServices();
 
         foreach (var configurer in this.appActions)
         {

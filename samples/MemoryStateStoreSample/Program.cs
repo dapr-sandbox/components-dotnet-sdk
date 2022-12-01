@@ -10,9 +10,9 @@ var options = new DaprPluggableComponentsOptions
 
 var app = DaprPluggableComponentsApplication.Create(options);
 
-// app.UseStateStore<MemoryStateStore>();
+// app.AddStateStore<MemoryStateStore>();
 
-app.UseStateStore(
+app.AddStateStore(
     instanceId => 
     {
         Console.WriteLine("Creating state store for instance: {0}", instanceId);
