@@ -4,7 +4,7 @@ using Dapr.PluggableComponents.Components;
 
 namespace MemoryStateStoreSample.Services;
 
-internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
+internal sealed class MemoryStateStore : IStateStore, IQueryableStateStore, IFeatures, IPing
 {
     private readonly ILogger<MemoryStateStore>? logger;
 
@@ -127,6 +127,19 @@ internal sealed class MemoryStateStore : IStateStore, IFeatures, IPing
 
         return Task.CompletedTask;
     }
+
+    #endregion
+
+    #region IQueryableStateStore Members
+
+    public Task<QueryResponse> QueryAsync(QueryRequest request, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(
+            new QueryResponse
+            {
+            });
+    }
+
 
     #endregion
 }

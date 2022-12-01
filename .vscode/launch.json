@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "sample-memorystatestore-build",
-            "program": "${workspaceFolder}/samples/MemoryStateStoreSample/bin/Debug/net6.0/MemoryStateStore.dll",
+            "program": "${workspaceFolder}/samples/MemoryStateStoreSample/bin/Debug/net6.0/MemoryStateStoreSample.dll",
             "args": [],
             "cwd": "${workspaceFolder}/samples/MemoryStateStoreSample",
             "stopAtEntry": false,

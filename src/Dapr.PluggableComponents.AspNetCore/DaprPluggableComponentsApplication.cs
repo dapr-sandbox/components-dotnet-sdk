@@ -37,8 +37,9 @@ public sealed class DaprPluggableComponentsApplication
 
     #region Input Binding Members
 
-    public void AddInputBinding(Func<string?, IInputBinding> pubSubFactory)
-        => this.AddComponent<IInputBinding, InputBindingAdaptor>(pubSubFactory);
+    public void AddInputBinding<TInputBinding>(Func<string?, TInputBinding> pubSubFactory)
+        where TInputBinding : class, IInputBinding
+        => this.AddComponent<IInputBinding, TInputBinding, InputBindingAdaptor>(pubSubFactory);
 
     public void AddInputBinding<TInputBinding>()
         where TInputBinding : class, IInputBinding
@@ -48,8 +49,9 @@ public sealed class DaprPluggableComponentsApplication
 
     #region Output Binding Members
 
-    public void AddOutputBinding(Func<string?, IOutputBinding> pubSubFactory)
-        => this.AddComponent<IOutputBinding, OutputBindingAdaptor>(pubSubFactory);
+    public void AddOutputBinding<TOutputBinding>(Func<string?, TOutputBinding> pubSubFactory)
+        where TOutputBinding : class, IOutputBinding
+        => this.AddComponent<IOutputBinding, TOutputBinding, OutputBindingAdaptor>(pubSubFactory);
 
     public void AddOutputBinding<TOutputBinding>()
         where TOutputBinding : class, IOutputBinding
@@ -59,8 +61,9 @@ public sealed class DaprPluggableComponentsApplication
 
     #region PubSub Members
 
-    public void AddPubSub(Func<string?, IPubSub> pubSubFactory)
-        => this.AddComponent<IPubSub, PubSubAdaptor>(pubSubFactory);
+    public void AddPubSub<TPubSub>(Func<string?, TPubSub> pubSubFactory)
+        where TPubSub : class, IPubSub
+        => this.AddComponent<IPubSub, TPubSub, PubSubAdaptor>(pubSubFactory);
 
     public void AddPubSub<TPubSub>()
         where TPubSub : class, IPubSub
@@ -70,25 +73,61 @@ public sealed class DaprPluggableComponentsApplication
 
     #region State Store Members
 
-    public void AddStateStore(Func<string?, IStateStore> stateStoreFactory)
-        => this.AddComponent<IStateStore, StateStoreAdaptor>(stateStoreFactory);
-
-
-    public void AddStateStore<TStateStore>()
+    public void AddStateStore<TStateStore>(Func<string?, TStateStore> stateStoreFactory)
         where TStateStore : class, IStateStore
-        => this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>();
+    {
+        this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>(stateStoreFactory);
+
+        this.AddRelatedStateStoreServices<TStateStore>();
+    }
+
+    public void AddStateStore<TStateStore>() where TStateStore : class, IStateStore
+    {
+        this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>();
+
+        this.AddRelatedStateStoreServices<TStateStore>();
+    }
+
+    private void AddRelatedStateStoreServices<TStateStore>()
+    {
+        bool isQueryable = typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore));
+
+        if (isQueryable)
+        {
+            this.ConfigureApplicationBuilder(
+                builder =>
+                {
+                    builder.Services.AddSingleton<IDaprPluggableComponentProvider<IQueryableStateStore>, DelegatedComponentProvider<IQueryableStateStore, IStateStore>>();
+                });
+
+            this.ConfigureApplication(
+                app =>
+                {
+                    app.MapDaprPluggableComponent<QueryableStateStoreAdaptor>();
+                });
+        }
+    }
 
     #endregion
 
-    #region Component Members
+    public void Run()
+    {
+        this.CreateApplication().Run();        
+    }
 
-    public void AddComponent<TComponent, TAdaptor>(Func<string?, TComponent> pubSubFactory)
+    public Task RunAsync()
+    {
+        return this.CreateApplication().RunAsync();
+    }
+
+    private void AddComponent<TComponentType, TComponentImpl, TAdaptor>(Func<string?, TComponentImpl> pubSubFactory)
+        where TComponentImpl : class, TComponentType
         where TAdaptor : class
     {
         this.ConfigureApplicationBuilder(
             builder =>
             {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>>(_ => new MultiplexedComponentProvider<TComponent>(pubSubFactory));
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentType>>(_ => new MultiplexedComponentProvider<TComponentType>(pubSubFactory));
             });
 
         this.ConfigureApplication(
@@ -98,7 +137,7 @@ public sealed class DaprPluggableComponentsApplication
             });
     }
 
-    public void AddComponent<TComponentType, TComponentImpl, TAdaptor>()
+    private void AddComponent<TComponentType, TComponentImpl, TAdaptor>()
         where TComponentType : class
         where TComponentImpl : class, TComponentType
         where TAdaptor : class
@@ -115,18 +154,6 @@ public sealed class DaprPluggableComponentsApplication
             {
                 app.MapDaprPluggableComponent<TAdaptor>();                
             });
-    }
-
-    #endregion
-
-    public void Run()
-    {
-        this.CreateApplication().Run();        
-    }
-
-    public Task RunAsync()
-    {
-        return this.CreateApplication().RunAsync();
     }
 
     private void ConfigureApplication(Action<WebApplication> configurer)
