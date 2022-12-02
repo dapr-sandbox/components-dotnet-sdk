@@ -90,22 +90,32 @@ public sealed class DaprPluggableComponentsApplication
 
     private void AddRelatedStateStoreServices<TStateStore>()
     {
-        bool isQueryable = typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore));
-
-        if (isQueryable)
+        if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
         {
-            this.ConfigureApplicationBuilder(
-                builder =>
-                {
-                    builder.Services.AddSingleton<IDaprPluggableComponentProvider<IQueryableStateStore>, DelegatedComponentProvider<IQueryableStateStore, IStateStore>>();
-                });
-
-            this.ConfigureApplication(
-                app =>
-                {
-                    app.MapDaprPluggableComponent<QueryableStateStoreAdaptor>();
-                });
+            this.AddRelatedStateStoreService<IQueryableStateStore, QueryableStateStoreAdaptor>();
         }
+
+        if (typeof(TStateStore).IsAssignableFrom(typeof(ITransactionalStateStore)))
+        {
+            this.AddRelatedStateStoreService<ITransactionalStateStore, TransactionalStateStoreAdaptor>();
+        }
+    }
+
+    private void AddRelatedStateStoreService<TService, TAdaptor>()
+        where TService : class
+        where TAdaptor : class
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TService>, DelegatedComponentProvider<TService, IStateStore>>();
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.MapDaprPluggableComponent<TAdaptor>();
+            });
     }
 
     #endregion
