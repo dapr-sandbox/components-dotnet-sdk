@@ -2,10 +2,8 @@ using Microsoft.AspNetCore.Builder;
 
 namespace Dapr.PluggableComponents;
 
-public sealed record DaprPluggableComponentsOptions
+public sealed class DaprPluggableComponentsApplicationOptions
 {
-    public string[]? Args { get; init; }
-
     public string? SocketExtension { get; init; }
 
     public string? SocketFolder { get; init; }
@@ -15,4 +13,6 @@ public sealed record DaprPluggableComponentsOptions
     public Action<WebApplication>? WebApplicationConfiguration { get; init; }
 
     public Action<WebApplicationBuilder>? WebApplicationBuilderConfiguration { get; init; }
+
+    public WebApplicationOptions? WebApplicationOptions { get; init; }
 }

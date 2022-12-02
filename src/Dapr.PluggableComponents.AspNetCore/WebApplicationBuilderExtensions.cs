@@ -7,21 +7,28 @@ namespace Dapr.PluggableComponents;
 
 public static class WebApplicationBuilderExtensions
 {
-    public static WebApplicationBuilder AddDaprPluggableComponentsServices(this WebApplicationBuilder builder, DaprPluggableComponentsOptions? options = null)
+    public static WebApplicationBuilder AddDaprPluggableComponentsServices(this WebApplicationBuilder builder, DaprPluggableComponentsApplicationOptions options)
     {
-        string socketExtension = options?.SocketExtension ?? ".sock";
-        // TODO: What about Windows?
-        string socketDirectory = options?.SocketFolder ?? "/tmp/dapr-components-sockets";
-        string socketName = options?.SocketName ?? throw new ArgumentException("Socket name is required.");
+        string socketExtension = options.SocketExtension
+            ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsExtension)
+            ?? Constants.Defaults.DaprComponentsSocketsExtension;
 
-        string socketPath = Path.Join(socketDirectory, socketName + socketExtension);
+        // TODO: Add support for native (i.e. non-WSL) Windows.
+        string socketFolder = options.SocketFolder
+            ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsFolder)
+            ?? Constants.Defaults.DaprComponentsSocketsFolder;
 
-        Directory.CreateDirectory(socketDirectory);
+        string socketName = options.SocketName
+            ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsName)
+            ?? throw new ArgumentException("The socket name was not specified via the options or environment variable.", nameof(options));
+
+        string socketPath = Path.Join(socketFolder, socketName + socketExtension);
+
+        Directory.CreateDirectory(socketFolder);
 
         builder.WebHost.ConfigureKestrel(
             options =>
             {
-                // TODO: Address race condition.
                 if (File.Exists(socketPath))
                 {
                     File.Delete(socketPath);
@@ -37,7 +44,7 @@ public static class WebApplicationBuilderExtensions
 
         builder.Services.AddGrpc();
 
-        // Dapr service discovery relies on gRPC reflection.
+        // Dapr component discovery relies on the gRPC reflection service.
         builder.Services.AddGrpcReflection();
 
         return builder;

@@ -8,7 +8,7 @@ public static class WebApplicationExtensions
     public static TBuilder MapDaprPluggableComponentsServices<TBuilder>(this TBuilder app)
         where TBuilder : IEndpointRouteBuilder
     {
-        // Dapr service discovery relies on gRPC reflection.
+        // Dapr component discovery relies on the gRPC reflection service.
         app.MapGrpcReflectionService();
 
         return app;

@@ -1,14 +1,6 @@
 using MemoryStateStoreSample.Services;
 
-var componentName = "memstore";
-
-var options = new DaprPluggableComponentsOptions
-    {
-        Args = args,
-        SocketName = componentName
-    };
-
-var app = DaprPluggableComponentsApplication.Create(options);
+var app = DaprPluggableComponentsApplication.Create("memstore");
 
 // app.AddStateStore<MemoryStateStore>();
 

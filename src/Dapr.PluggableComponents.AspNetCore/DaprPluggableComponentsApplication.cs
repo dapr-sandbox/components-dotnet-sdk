@@ -12,25 +12,25 @@ public sealed class DaprPluggableComponentsApplication
 {
     public static DaprPluggableComponentsApplication Create()
     {
-        return Create(new DaprPluggableComponentsOptions());
+        return Create(new DaprPluggableComponentsApplicationOptions());
     }
 
-    public static DaprPluggableComponentsApplication Create(string[] args)
+    public static DaprPluggableComponentsApplication Create(string socketName)
     {
-        return Create(new DaprPluggableComponentsOptions { Args = args });
+        return Create(new DaprPluggableComponentsApplicationOptions { SocketName = socketName });
     }
 
-    public static DaprPluggableComponentsApplication Create(DaprPluggableComponentsOptions options)
+    public static DaprPluggableComponentsApplication Create(DaprPluggableComponentsApplicationOptions options)
     {
         return new DaprPluggableComponentsApplication(options);
     }
 
-    private readonly DaprPluggableComponentsOptions options;
+    private readonly DaprPluggableComponentsApplicationOptions options;
 
     private readonly ConcurrentBag<Action<WebApplicationBuilder>> builderActions = new ConcurrentBag<Action<WebApplicationBuilder>>();
     private readonly ConcurrentBag<Action<WebApplication>> appActions = new ConcurrentBag<Action<WebApplication>>();
 
-    private DaprPluggableComponentsApplication(DaprPluggableComponentsOptions options)
+    private DaprPluggableComponentsApplication(DaprPluggableComponentsApplicationOptions options)
     {       
         this.options = options;
     }
@@ -178,10 +178,9 @@ public sealed class DaprPluggableComponentsApplication
 
     private WebApplication CreateApplication()
     {
-        var builder =
-            this.options.Args != null
-                ? WebApplication.CreateBuilder(this.options.Args)
-                : WebApplication.CreateBuilder();
+        var builder = this.options.WebApplicationOptions != null
+            ? WebApplication.CreateBuilder(this.options.WebApplicationOptions)
+            : WebApplication.CreateBuilder();
 
         this.options.WebApplicationBuilderConfiguration?.Invoke(builder);
 
