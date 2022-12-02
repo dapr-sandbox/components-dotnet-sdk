@@ -7,15 +7,17 @@ public sealed class MultiplexedComponentProvider<T> : IDaprPluggableComponentPro
 {
     private const string metadataInstanceId = "x-component-instance";
 
-    private readonly Func<string?, T> componentProvider;
+    private readonly Func<IServiceProvider, string?, T> componentProvider;
     private readonly ConcurrentDictionary<string, Lazy<T>> components = new ConcurrentDictionary<string, Lazy<T>>();
     private readonly Lazy<T> defaultComponent;
+    private readonly IServiceProvider serviceProvider;
 
-    public MultiplexedComponentProvider(Func<string?, T> componentProvider)
+    public MultiplexedComponentProvider(IServiceProvider serviceProvider, Func<IServiceProvider, string?, T> componentProvider)
     {
         this.componentProvider = componentProvider ?? throw new ArgumentNullException(nameof(componentProvider));
+        this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        this.defaultComponent = new Lazy<T>(() => componentProvider(null));
+        this.defaultComponent = new Lazy<T>(() => componentProvider(this.serviceProvider, null));
     }
 
     #region IDaprPluggableComponentProvider<T> Members
@@ -26,7 +28,7 @@ public sealed class MultiplexedComponentProvider<T> : IDaprPluggableComponentPro
 
         var component =
             entry != null
-                ? this.components.GetOrAdd(entry.Value, instanceId => new Lazy<T>(() => this.componentProvider(instanceId)))
+                ? this.components.GetOrAdd(entry.Value, instanceId => new Lazy<T>(() => this.componentProvider(this.serviceProvider, instanceId)))
                 : this.defaultComponent;
 
         return component.Value;
