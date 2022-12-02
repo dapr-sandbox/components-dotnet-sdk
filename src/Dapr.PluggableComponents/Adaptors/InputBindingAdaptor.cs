@@ -24,7 +24,7 @@ public class InputBindingAdaptor : InputBindingBase
     public override async Task<InputBindingInitResponse> Init(Proto.Components.V1.InputBindingInitRequest request, ServerCallContext context)
     {
         await this.GetInputBinding(context.RequestHeaders).InitAsync(
-            new Components.Bindings.InputBindingInitRequest
+            new Components.InitRequest
             {
                 // TODO: Metadata.
             },

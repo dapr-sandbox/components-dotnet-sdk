@@ -184,12 +184,12 @@ public class StateStoreAdaptor : StateStoreBase
         return grpcResponse;
     }
 
-    public async override Task<InitResponse> Init(InitRequest request, ServerCallContext ctx)
+    public async override Task<InitResponse> Init(Proto.Components.V1.InitRequest request, ServerCallContext ctx)
     {
         this.logger.LogInformation("Init request");
         
         await this.GetStateStore(ctx.RequestHeaders).InitAsync(
-            new StateStoreInitRequest
+            new Components.InitRequest
             {
                 Metadata = new Components.MetadataRequest { Properties = request.Metadata.Properties },
             },

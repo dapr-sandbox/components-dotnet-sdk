@@ -42,7 +42,7 @@ public class PubSubAdaptor : PubSubBase
         this.logger.LogInformation("Init request");
         
         await this.GetPubSub(ctx.RequestHeaders).InitAsync(
-            new Components.PubSub.PubSubInitRequest
+            new Components.InitRequest
             {
                 Metadata = new Components.MetadataRequest { Properties = request.Metadata.Properties },
             },

@@ -25,7 +25,7 @@ public class OutputBindingAdaptor : OutputBindingBase
     {
         await this.GetOutputBinding(context.RequestHeaders)
             .InitAsync(
-                new Components.Bindings.OutputBindingInitRequest
+                new Components.InitRequest
                 {
                     // TODO: What if Metadata is null?
                     Metadata = new Components.MetadataRequest { Properties = request.Metadata.Properties }
