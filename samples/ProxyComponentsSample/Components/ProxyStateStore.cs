@@ -14,10 +14,12 @@ internal sealed class ProxyStateStore : IStateStore
 
     private string? storeName;
 
-    public ProxyStateStore(string? instanceId, ILogger<ProxyStateStore> logger)
+    public ProxyStateStore(
+        string? instanceId,
+        DaprClient daprClient,
+        ILogger<ProxyStateStore> logger)
     {
-        // TODO: Pull from service provider and dispose of properly.
-        this.daprClient = new DaprClientBuilder().Build();
+        this.daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
         this.instanceId = instanceId;
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -35,7 +37,7 @@ internal sealed class ProxyStateStore : IStateStore
                 .Select(
                     item =>
                     {
-                        return new BulkDeleteStateItem(item.Key, item.ETag, stateOptions: default, metadata: item.Metadata);
+                        return new BulkDeleteStateItem(ToProxyKey(item.Key), item.ETag, stateOptions: default, metadata: item.Metadata);
                     })
                 .ToList(),
             cancellationToken);
@@ -45,21 +47,27 @@ internal sealed class ProxyStateStore : IStateStore
     {
         this.logger?.LogInformation("BulkGet request for {count} keys", request.Items.Count);
 
+        var responses = await this.daprClient.GetBulkStateAsync(
+            this.storeName,
+            request.Items.Select(item => ToProxyKey(item.Key)).ToList(),
+            parallelism: null, // TODO: Where does parallelism come from?
+            metadata: null,     // TODO: Individual requests have metadata, but not bulk request as a whole.
+            cancellationToken: cancellationToken
+        );
+
         var items = new List<StateStoreBulkStateItem>();
 
         // NOTE: Bulk APIs were added post-1.9.
 
-        foreach (var itemRequest in request.Items)
+        foreach (var response in responses)
         {
-            var itemResponse = await this.GetAsync(itemRequest, cancellationToken);
-
             StateStoreBulkStateItem item = null;
 
-            if (itemResponse != null)
+            if (response.Value != null)
             {
                 item = new StateStoreBulkStateItem
                 {
-                    Data = itemResponse.Data
+                    Data = Encoding.UTF8.GetBytes(response.Value)
                 };
             }
 
@@ -77,12 +85,9 @@ internal sealed class ProxyStateStore : IStateStore
     {
         this.logger?.LogInformation("BulkSet request for {count} keys", request.Items.Count);
 
-        // NOTE: Bulk APIs were added post-1.9.
+        // NOTE: Bulk set API was added post-1.9.
 
-        foreach (var item in request.Items)
-        {
-            this.SetAsync(item, cancellationToken);
-        }
+        await Task.WhenAll(request.Items.Select(item => this.SetAsync(item, cancellationToken)));
     }
 
     public async Task DeleteAsync(StateStoreDeleteRequest request, CancellationToken cancellationToken = default)
@@ -91,7 +96,7 @@ internal sealed class ProxyStateStore : IStateStore
 
         await this.daprClient.DeleteStateAsync(
             this.storeName,
-            request.Key,
+            ToProxyKey(request.Key),
             stateOptions: default,
             metadata: request.Metadata,
             cancellationToken: cancellationToken);
@@ -104,7 +109,7 @@ internal sealed class ProxyStateStore : IStateStore
         // NOTE: Assume string?
         var value = await this.daprClient.GetStateAsync<string>(
             this.storeName,
-            request.Key,
+            ToProxyKey(request.Key),
             consistencyMode: default,
             metadata: request.Metadata,
             cancellationToken: cancellationToken);
@@ -136,16 +141,21 @@ internal sealed class ProxyStateStore : IStateStore
 
     public async Task SetAsync(StateStoreSetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("MemStore: Set request for key {key}", request.Key);
+        this.logger?.LogInformation("Set request for key {key}", request.Key);
 
         await this.daprClient.SaveStateAsync(
             this.storeName,
-            request.Key,
-            request.Value,
+            ToProxyKey(request.Key),
+            Encoding.UTF8.GetString(request.Value.Span),
             stateOptions: default,
             metadata: request.Metadata,
             cancellationToken: cancellationToken);
     }
 
     #endregion
+
+    private static string ToProxyKey(string key)
+    {
+        return key.Replace("||", "--");
+    }
 }

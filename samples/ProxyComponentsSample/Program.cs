@@ -1,8 +1,23 @@
+using Dapr.Client;
 using Dapr.PluggableComponents;
 using ProxyComponentsSample.Components;
 
-var app = DaprPluggableComponentsApplication.Create("proxy");
+var options = new DaprPluggableComponentsApplicationOptions
+{
+    SocketName = "proxy",
+    WebApplicationBuilderConfiguration =
+        builder =>
+        {
+            builder.Services.AddDaprClient();
+        }
+};
 
-app.AddStateStore((serviceProvider, instanceId) => new ProxyStateStore(instanceId, serviceProvider.GetService<ILogger<ProxyStateStore>>()));
+var app = DaprPluggableComponentsApplication.Create(options);
+
+app.AddStateStore(
+    (serviceProvider, instanceId) => new ProxyStateStore(
+        instanceId,
+        serviceProvider.GetService<DaprClient>(),
+        serviceProvider.GetService<ILogger<ProxyStateStore>>()));
 
 app.Run();
