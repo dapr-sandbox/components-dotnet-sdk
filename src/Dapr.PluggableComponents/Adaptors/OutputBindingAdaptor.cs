@@ -37,11 +37,10 @@ public class OutputBindingAdaptor : OutputBindingBase
     public override async Task<InvokeResponse> Invoke(InvokeRequest request, ServerCallContext context)
     {
         var response = await this.GetOutputBinding(context.RequestHeaders).InvokeAsync(
-            new OutputBindingInvokeRequest
+            new OutputBindingInvokeRequest(request.Operation)
             {
                 Data = request.Data.Memory,
-                Metadata = request.Metadata,
-                Operation = request.Operation
+                Metadata = request.Metadata
             },
             context.CancellationToken);
 

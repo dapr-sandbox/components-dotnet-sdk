@@ -1,10 +1,8 @@
 namespace Dapr.PluggableComponents.Components.Bindings;
 
-public sealed class OutputBindingInvokeRequest
+public sealed record OutputBindingInvokeRequest(string Operation)
 {
-    public ReadOnlyMemory<byte> Data { get; init; }
+    public ReadOnlyMemory<byte> Data { get; init; } = ReadOnlyMemory<byte>.Empty;
 
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
-
-    public string? Operation { get; init; }
 }

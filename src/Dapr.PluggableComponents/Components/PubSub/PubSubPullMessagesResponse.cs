@@ -1,6 +1,6 @@
 namespace Dapr.PluggableComponents.Components.PubSub;
 
-public sealed record PubSubPullMessagesResponse(string TopicName, string Id)
+public sealed record PubSubPullMessagesResponse(string TopicName, string MessageId)
 {
     public byte[] Data { get; init; } = Array.Empty<byte>();
 

@@ -53,11 +53,10 @@ public class InputBindingAdaptor : InputBindingBase
                 .WithTransform(
                     request =>
                     {
-                        return new InputBindingReadRequest
+                        return new InputBindingReadRequest(request.MessageId)
                         {
-                            MessageId = request.MessageId,
                             ResponseData = request.ResponseData.Memory,
-                            ResponseError = request.ResponseError != null ? new Components.Bindings.AckResponseError { Message = request.ResponseError.Message } : null
+                            ResponseErrorMessage = request.ResponseError?.Message
                         };
                     }),
             new ServerStreamWriterAdaptor<ReadResponse, InputBindingReadResponse>(

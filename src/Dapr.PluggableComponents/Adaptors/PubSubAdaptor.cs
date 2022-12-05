@@ -98,11 +98,11 @@ public class PubSubAdaptor : PubSubBase
                 responseStream,
                 message =>
                 {
-                    var response = new PullMessagesResponse
+                    var response = new PullMessagesResponse()
                     {
                         ContentType = message.ContentType,
                         Data = message.Data != null ? ByteString.CopyFrom(message.Data) : ByteString.Empty,
-                        Id = message.Id,
+                        Id = message.MessageId,
                         TopicName = message.TopicName
                     };
 

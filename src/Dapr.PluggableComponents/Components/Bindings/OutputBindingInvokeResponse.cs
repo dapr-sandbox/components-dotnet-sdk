@@ -1,6 +1,6 @@
 namespace Dapr.PluggableComponents.Components.Bindings;
 
-public sealed class OutputBindingInvokeResponse
+public sealed record OutputBindingInvokeResponse
 {
     public byte[] Data { get; init; } = Array.Empty<byte>();
 

@@ -1,15 +1,8 @@
 namespace Dapr.PluggableComponents.Components.Bindings;
 
-public sealed class AckResponseError
+public sealed record InputBindingReadRequest(string MessageId)
 {
-    public string Message { get; init; }
-}
+    public ReadOnlyMemory<byte> ResponseData { get; init; } = ReadOnlyMemory<byte>.Empty;
 
-public sealed class InputBindingReadRequest
-{
-    public ReadOnlyMemory<byte> ResponseData { get; init; }
-
-    public string MessageId { get; init; }
-
-    public AckResponseError ResponseError { get; init; }
+    public string? ResponseErrorMessage { get; init; }
 }
