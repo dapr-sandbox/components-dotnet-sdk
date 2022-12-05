@@ -25,7 +25,7 @@ public class QueryableStateStoreAdaptor : QueriableStateStoreBase
     public override async Task<Proto.Components.V1.QueryResponse> Query(Proto.Components.V1.QueryRequest request, ServerCallContext context)
     {
         var response = await this.GetStateStore(context.RequestHeaders).QueryAsync(
-            new Components.StateStore.QueryRequest
+            new Components.StateStore.StateStoreQueryRequest
             {
                 Metadata = request.Metadata
             },

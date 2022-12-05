@@ -21,7 +21,7 @@ public class TransactionalStateStoreAdaptor : TransactionalStateStoreBase
     public override async Task<TransactionalStateResponse> Transact(TransactionalStateRequest request, ServerCallContext context)
     {
         await this.GetStateStore(context.RequestHeaders).TransactAsync(
-            new TransactionalStateStoreTransactRequest
+            new StateStoreTransactRequest
             {
                 Metadata = request.Metadata,
                 Operations = request.Operations.Select(ToOperation).WhereNonNull().ToArray()
@@ -36,35 +36,32 @@ public class TransactionalStateStoreAdaptor : TransactionalStateStoreBase
         return this.componentProvider.GetComponent(key => metadata.Get(key));
     }
 
-    public static TransactionalStateStoreTransactOperation? ToOperation(TransactionalStateOperation operation)
+    public static StateStoreTransactOperation? ToOperation(TransactionalStateOperation operation)
     {
         return operation.RequestCase switch
         {
-            TransactionalStateOperation.RequestOneofCase.Delete => new TransactionalStateStoreTransactDeleteOperation(ToDeleteRequest(operation.Delete)),
-            TransactionalStateOperation.RequestOneofCase.Set => new TransactionalStateStoreTransactSetOperation(ToSetRequest(operation.Set)),
+            TransactionalStateOperation.RequestOneofCase.Delete => new StateStoreTransactDeleteOperation(ToDeleteRequest(operation.Delete)),
+            TransactionalStateOperation.RequestOneofCase.Set => new StateStoreTransactSetOperation(ToSetRequest(operation.Set)),
             _ => null
         };
     }
 
     public static StateStoreDeleteRequest ToDeleteRequest(DeleteRequest request)
     {
-        return new StateStoreDeleteRequest
+        return new StateStoreDeleteRequest(request.Key)
         {
             ETag = request.Etag?.Value,
-            Key = request.Key,
             Metadata = request.Metadata
         };
     }
 
     public static StateStoreSetRequest ToSetRequest(SetRequest request)
     {
-        return new StateStoreSetRequest
+        return new StateStoreSetRequest(request.Key, request.Value.Memory)
         {
             ContentType = request.ContentType,
             ETag = request.Etag?.Value,
-            Key = request.Key,
-            Metadata = request.Metadata,
-            Value = request.Value.Memory
+            Metadata = request.Metadata
         };
     }
 }

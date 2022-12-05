@@ -1,6 +1,5 @@
 namespace Dapr.PluggableComponents.Components.StateStore;
 
-// TODO: Consider IFeatures and IPing as inherited.
 public interface IStateStore : IPluggableComponent
 {
     Task BulkDeleteAsync(StateStoreBulkDeleteRequest request, CancellationToken cancellationToken = default);

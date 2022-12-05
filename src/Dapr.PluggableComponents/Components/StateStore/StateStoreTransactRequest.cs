@@ -1,10 +1,8 @@
 namespace Dapr.PluggableComponents.Components.StateStore;
 
-public sealed record StateStoreDeleteRequest(string Key)
+public sealed record StateStoreTransactRequest
 {
-    public string? ETag { get; init; }
+    public StateStoreTransactOperation[] Operations { get; init; } = Array.Empty<StateStoreTransactOperation>();
 
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
-
-    public StateStoreStateOptions? Options { get; init; }
 }

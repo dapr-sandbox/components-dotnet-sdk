@@ -1,8 +1,8 @@
 namespace Dapr.PluggableComponents.Components.StateStore;
 
-public sealed class StateStoreGetRequest
+public sealed record StateStoreGetRequest(string Key)
 {
-    public string Key { get; init; } = String.Empty;
+    public StateStoreConsistency Consistency { get; init; } = StateStoreConsistency.Unspecified;
 
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 }

@@ -51,9 +51,8 @@ public class StateStoreAdaptor : StateStoreBase
                     request
                         .Items
                         .Select(
-                            item => new StateStoreDeleteRequest
+                            item => new StateStoreDeleteRequest(item.Key)
                             {
-                                Key = item.Key,
                                 ETag = item.Etag?.Value,
                                 Metadata = item.Metadata
                             })
@@ -75,9 +74,9 @@ public class StateStoreAdaptor : StateStoreBase
                     request
                         .Items
                         .Select(
-                            item => new StateStoreGetRequest
+                            item => new StateStoreGetRequest(item.Key)
                             {
-                                Key = item.Key,
+                                Consistency = (StateStoreConsistency)item.Consistency,
                                 Metadata = item.Metadata
                             })
                         .ToList()
@@ -92,7 +91,7 @@ public class StateStoreAdaptor : StateStoreBase
 
         var bulkGetResponse = new BulkGetResponse
         {
-            Got = items.Any()
+            Got = response.Got
         };
 
         bulkGetResponse.Items.AddRange(items);
@@ -111,13 +110,11 @@ public class StateStoreAdaptor : StateStoreBase
                     request
                         .Items
                         .Select(
-                            item => new StateStoreSetRequest
+                            item => new StateStoreSetRequest(item.Key, item.Value.Memory)
                             {
                                 ContentType = item.ContentType,
                                 ETag = item.Etag?.Value ?? String.Empty,
-                                Key = item.Key,
-                                Metadata = item.Metadata,
-                                Value = item.Value.Memory
+                                Metadata = item.Metadata
                             })
                         .ToList()
             },
@@ -131,11 +128,11 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Delete request for key {key}", request.Key);
 
         await this.GetStateStore(context.RequestHeaders).DeleteAsync(
-            new StateStoreDeleteRequest
+            new StateStoreDeleteRequest(request.Key)
             {
-                Key = request.Key,
                 ETag = request.Etag?.Value,
-                Metadata = request.Metadata
+                Metadata = request.Metadata,
+                Options = StateStoreStateOptions.FromStateOptions(request.Options)
             },
             context.CancellationToken).ConfigureAwait(false);
 
@@ -163,9 +160,9 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Get request for key {key}", request.Key);
 
         var response = await this.GetStateStore(ctx.RequestHeaders).GetAsync(
-            new StateStoreGetRequest
+            new StateStoreGetRequest(request.Key)
             {
-                Key = request.Key,
+                Consistency = (StateStoreConsistency)request.Consistency,
                 Metadata = request.Metadata
             },
             ctx.CancellationToken).ConfigureAwait(false);
@@ -215,13 +212,12 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Set request for key {key}", request.Key);
 
         await this.GetStateStore(ctx.RequestHeaders).SetAsync(
-            new StateStoreSetRequest
+            new StateStoreSetRequest(request.Key, request.Value.Memory)
             {
                 ContentType = request.ContentType,
                 ETag = request.Etag?.Value ?? String.Empty,
-                Key = request.Key,
                 Metadata = request.Metadata,
-                Value = request.Value.Memory
+                Options = StateStoreStateOptions.FromStateOptions(request.Options)
             },
             ctx.CancellationToken).ConfigureAwait(false);
 
