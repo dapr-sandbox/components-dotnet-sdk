@@ -68,13 +68,11 @@ public class PubSubAdaptor : PubSubBase
         this.logger.LogInformation("Publish request");
 
         await this.GetPubSub(context.RequestHeaders).PublishAsync(
-            new PubSubPublishRequest
+            new PubSubPublishRequest(request.PubsubName, request.Topic)
             {
                 ContentType = request.ContentType,
                 Data = request.Data.Memory,
-                Metadata = request.Metadata,
-                PubSubName = request.PubsubName,
-                Topic = request.Topic
+                Metadata = request.Metadata
             },
             context.CancellationToken).ConfigureAwait(false);
 
@@ -91,9 +89,9 @@ public class PubSubAdaptor : PubSubBase
                 .WithTransform(
                     request => new PubSubPullMessagesRequest
                     {
-                        AckError = request.AckError != null ? new Components.PubSub.AckMessageError { Message = request.AckError.Message } : null,
+                        AckMessageError = request.AckError?.Message,
                         AckMessageId = request.AckMessageId,
-                        Topic = request.Topic != null ? new Components.PubSub.Topic { Metadata = request.Topic.Metadata, Name = request.Topic.Name } : null
+                        Topic = request.Topic != null ? new PubSubPullMessagesTopic(request.Topic.Name) { Metadata = request.Topic.Metadata } : null
                     },
                     context.CancellationToken),
             new ServerStreamWriterAdaptor<PullMessagesResponse, PubSubPullMessagesResponse>(
