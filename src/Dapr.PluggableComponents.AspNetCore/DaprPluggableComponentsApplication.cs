@@ -35,27 +35,45 @@ public sealed class DaprPluggableComponentsApplication
         this.options = options;
     }
 
-    #region Input Binding Members
+    #region Binding Members
 
-    public void AddInputBinding<TInputBinding>(Func<IServiceProvider, string?, TInputBinding> inputBindingFactory)
-        where TInputBinding : class, IInputBinding
-        => this.AddComponent<IInputBinding, TInputBinding, InputBindingAdaptor>(inputBindingFactory);
+    public void AddBinding<TComponentImpl>(Func<IServiceProvider, string?, TComponentImpl> bindingFactory)
+        where TComponentImpl : class
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentImpl>>(serviceProvider => new MultiplexedComponentProvider<TComponentImpl>(serviceProvider, bindingFactory));
+            });
 
-    public void AddInputBinding<TInputBinding>()
-        where TInputBinding : class, IInputBinding
-        => this.AddComponent<IInputBinding, TInputBinding, InputBindingAdaptor>();
+        this.AddBindingServices<TComponentImpl>();
+    }
 
-    #endregion
+    public void AddBinding<TComponentImpl>()
+        where TComponentImpl : class
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<TComponentImpl, TComponentImpl>();
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentImpl>, SingletonComponentProvider<TComponentImpl>>();
+            });
 
-    #region Output Binding Members
+        this.AddBindingServices<TComponentImpl>();
+    }
 
-    public void AddOutputBinding<TOutputBinding>(Func<IServiceProvider, string?, TOutputBinding> outputBindingFactory)
-        where TOutputBinding : class, IOutputBinding
-        => this.AddComponent<IOutputBinding, TOutputBinding, OutputBindingAdaptor>(outputBindingFactory);
+    private void AddBindingServices<TComponentImpl>()
+    {
+        if (typeof(TComponentImpl).IsAssignableTo(typeof(IInputBinding)))
+        {
+            this.AddRelatedService<IInputBinding, TComponentImpl, InputBindingAdaptor>();
+        }
 
-    public void AddOutputBinding<TOutputBinding>()
-        where TOutputBinding : class, IOutputBinding
-        => this.AddComponent<IOutputBinding, TOutputBinding, OutputBindingAdaptor>();
+        if (typeof(TComponentImpl).IsAssignableFrom(typeof(IOutputBinding)))
+        {
+            this.AddRelatedService<IOutputBinding, TComponentImpl, OutputBindingAdaptor>();
+        }
+    }
 
     #endregion
 
@@ -92,30 +110,13 @@ public sealed class DaprPluggableComponentsApplication
     {
         if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
         {
-            this.AddRelatedStateStoreService<IQueryableStateStore, QueryableStateStoreAdaptor>();
+            this.AddRelatedService<IQueryableStateStore, IStateStore, QueryableStateStoreAdaptor>();
         }
 
         if (typeof(TStateStore).IsAssignableFrom(typeof(ITransactionalStateStore)))
         {
-            this.AddRelatedStateStoreService<ITransactionalStateStore, TransactionalStateStoreAdaptor>();
+            this.AddRelatedService<ITransactionalStateStore, IStateStore, TransactionalStateStoreAdaptor>();
         }
-    }
-
-    private void AddRelatedStateStoreService<TService, TAdaptor>()
-        where TService : class
-        where TAdaptor : class
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TService>, DelegatedComponentProvider<TService, IStateStore>>();
-            });
-
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapDaprPluggableComponent<TAdaptor>();
-            });
     }
 
     #endregion
@@ -162,7 +163,24 @@ public sealed class DaprPluggableComponentsApplication
         this.ConfigureApplication(
             app =>
             {
-                app.MapDaprPluggableComponent<TAdaptor>();                
+                app.MapDaprPluggableComponent<TAdaptor>();
+            });
+    }
+
+    private void AddRelatedService<TComponent, TComponentImpl, TAdaptor>()
+        where TComponent : class
+        where TAdaptor : class
+    {
+        this.ConfigureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>, DelegatedComponentProvider<TComponent, TComponentImpl>>();
+            });
+
+        this.ConfigureApplication(
+            app =>
+            {
+                app.MapDaprPluggableComponent<TAdaptor>();
             });
     }
 
