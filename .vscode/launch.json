@@ -35,6 +35,23 @@
             },
             "sourceFileMap": {
             }
+        },
+        {
+            "name": "Launch Test Proxies",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "test-proxies-build",
+            "program": "${workspaceFolder}/test/Dapr.PluggableComponents.Proxies/bin/Debug/net6.0/Dapr.PluggableComponents.Proxies.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/test/Dapr.PluggableComponents.Proxies",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "DAPR_HTTP_PORT": "<port>",
+                "DAPR_GRPC_PORT": "<port>"
+            },
+            "sourceFileMap": {
+            }
         }
     ]
 }
