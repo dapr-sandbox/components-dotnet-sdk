@@ -1,9 +1,7 @@
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.StateStore;
-using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
-using Google.Protobuf;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using static Dapr.Proto.Components.V1.StateStore;
@@ -21,44 +19,13 @@ public class StateStoreAdaptor : StateStoreBase
         this.componentProvider = componentProvider ?? throw new ArgumentNullException(nameof(componentProvider));
     }
 
-    private static BulkStateItem ToBulkStateItem(StateStoreBulkStateItem item)
-    {
-        var bulkStateItem = new BulkStateItem
-        {
-            ContentType = item.ContentType,
-            Data = ByteString.CopyFrom(item.Data),
-            Error = item.Error
-        };
-
-        if (!String.IsNullOrEmpty(item.ETag))
-        {
-            bulkStateItem.Etag = new Etag { Value = item.ETag };
-        }
-
-        bulkStateItem.Metadata.Add(item.Metadata);
-
-        return bulkStateItem;
-    }
-
     public override async Task<BulkDeleteResponse> BulkDelete(BulkDeleteRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("BulkDelete request for {count} keys", request.Items.Count);
 
         await this.GetStateStore(context.RequestHeaders).BulkDeleteAsync(
-            new StateStoreBulkDeleteRequest
-            {
-                Items =
-                    request
-                        .Items
-                        .Select(
-                            item => new StateStoreDeleteRequest(item.Key)
-                            {
-                                ETag = item.Etag?.Value,
-                                Metadata = item.Metadata
-                            })
-                        .ToList()
-            },
-            context.CancellationToken).ConfigureAwait(false);
+            StateStoreBulkDeleteRequest.FromBulkDeleteRequest(request),
+            context.CancellationToken);
 
         return new BulkDeleteResponse();
     }
@@ -68,35 +35,10 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Bulk get request for {count} keys", request.Items.Count);
 
         var response = await this.GetStateStore(context.RequestHeaders).BulkGetAsync(
-            new StateStoreBulkGetRequest
-            {
-                Items =
-                    request
-                        .Items
-                        .Select(
-                            item => new StateStoreGetRequest(item.Key)
-                            {
-                                Consistency = (StateStoreConsistency)item.Consistency,
-                                Metadata = item.Metadata
-                            })
-                        .ToList()
-            },
-            context.CancellationToken).ConfigureAwait(false);
+            StateStoreBulkGetRequest.FromBulkGetRequest(request),
+            context.CancellationToken);
 
-        var items =
-            response
-                .Items
-                .Select(ToBulkStateItem)
-                .ToList();
-
-        var bulkGetResponse = new BulkGetResponse
-        {
-            Got = response.Got
-        };
-
-        bulkGetResponse.Items.AddRange(items);
-
-        return bulkGetResponse;
+        return StateStoreBulkGetResponse.ToBulkGetResponse(response);
     }
 
     public override async Task<BulkSetResponse> BulkSet(BulkSetRequest request, ServerCallContext ctx)
@@ -104,21 +46,8 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
 
         await this.GetStateStore(ctx.RequestHeaders).BulkSetAsync(
-            new StateStoreBulkSetRequest
-            {
-                Items =
-                    request
-                        .Items
-                        .Select(
-                            item => new StateStoreSetRequest(item.Key, item.Value.Memory)
-                            {
-                                ContentType = item.ContentType,
-                                ETag = item.Etag?.Value ?? String.Empty,
-                                Metadata = item.Metadata
-                            })
-                        .ToList()
-            },
-            ctx.CancellationToken).ConfigureAwait(false);
+            StateStoreBulkSetRequest.FromBulkSetRequest(request),
+            ctx.CancellationToken);
 
         return new BulkSetResponse();
     }
@@ -128,13 +57,8 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Delete request for key {key}", request.Key);
 
         await this.GetStateStore(context.RequestHeaders).DeleteAsync(
-            new StateStoreDeleteRequest(request.Key)
-            {
-                ETag = request.Etag?.Value,
-                Metadata = request.Metadata,
-                Options = StateStoreStateOptions.FromStateOptions(request.Options)
-            },
-            context.CancellationToken).ConfigureAwait(false);
+            StateStoreDeleteRequest.FromDeleteRequest(request),
+            context.CancellationToken);
 
         return new DeleteResponse();
     }
@@ -147,7 +71,7 @@ public class StateStoreAdaptor : StateStoreBase
 
         if (this.GetStateStore(ctx.RequestHeaders) is IFeatures features)
         {
-            var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken).ConfigureAwait(false);
+            var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken);
     
             response.Features.AddRange(featuresResponse);
         }
@@ -160,25 +84,10 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Get request for key {key}", request.Key);
 
         var response = await this.GetStateStore(ctx.RequestHeaders).GetAsync(
-            new StateStoreGetRequest(request.Key)
-            {
-                Consistency = (StateStoreConsistency)request.Consistency,
-                Metadata = request.Metadata
-            },
-            ctx.CancellationToken).ConfigureAwait(false);
+            StateStoreGetRequest.FromGetRequest(request),
+            ctx.CancellationToken);
 
-        var grpcResponse = new GetResponse();
-
-        if (response != null)
-        {
-            grpcResponse.Data = ByteString.CopyFrom(response.Data);
-            grpcResponse.Etag = new Etag { Value = response.ETag };
-            
-            grpcResponse.Metadata.Add(response.Metadata);
-        }
-        // in case of not found you should not return any error.
-
-        return grpcResponse;
+        return StateStoreGetResponse.ToGetResponse(response);
     }
 
     public async override Task<InitResponse> Init(Proto.Components.V1.InitRequest request, ServerCallContext ctx)
@@ -186,11 +95,8 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Init request");
         
         await this.GetStateStore(ctx.RequestHeaders).InitAsync(
-            new Components.InitRequest
-            {
-                Metadata = new Components.MetadataRequest { Properties = request.Metadata.Properties },
-            },
-            ctx.CancellationToken).ConfigureAwait(false);
+            Components.InitRequest.FromInitRequest(request),
+            ctx.CancellationToken);
         
         return new InitResponse();
     }
@@ -201,7 +107,7 @@ public class StateStoreAdaptor : StateStoreBase
 
         if (this.GetStateStore(ctx.RequestHeaders) is IPing ping)
         {
-            await ping.PingAsync(ctx.CancellationToken).ConfigureAwait(false);
+            await ping.PingAsync(ctx.CancellationToken);
         }
 
         return new PingResponse();
@@ -212,14 +118,8 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Set request for key {key}", request.Key);
 
         await this.GetStateStore(ctx.RequestHeaders).SetAsync(
-            new StateStoreSetRequest(request.Key, request.Value.Memory)
-            {
-                ContentType = request.ContentType,
-                ETag = request.Etag?.Value ?? String.Empty,
-                Metadata = request.Metadata,
-                Options = StateStoreStateOptions.FromStateOptions(request.Options)
-            },
-            ctx.CancellationToken).ConfigureAwait(false);
+            StateStoreSetRequest.FromSetRequest(request),
+            ctx.CancellationToken);
 
         return new SetResponse();
     }
