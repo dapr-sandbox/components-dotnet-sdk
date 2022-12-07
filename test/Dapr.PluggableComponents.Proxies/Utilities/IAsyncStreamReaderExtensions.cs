@@ -1,8 +1,9 @@
 using System.Runtime.CompilerServices;
 using Grpc.Core;
 
-namespace Dapr.PluggableComponents.Utilities;
+namespace Dapr.PluggableComponents.Proxies.Utilities;
 
+// TODO: Use InternalsVisibleToAttribute to reuse common implementations.
 internal static class IAsyncStreamReaderExtensions
 {
     public static async IAsyncEnumerable<T> AsEnumerable<T>(this IAsyncStreamReader<T> reader, [EnumeratorCancellation] CancellationToken cancellationToken = default)

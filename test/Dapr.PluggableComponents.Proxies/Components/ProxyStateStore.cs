@@ -3,7 +3,6 @@ using Dapr.PluggableComponents.Components.StateStore;
 using Dapr.PluggableComponents.Proxies.Grpc.v1;
 using Dapr.PluggableComponents.Proxies.Utilities;
 using Google.Protobuf;
-using Grpc.Net.Client;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
 
@@ -58,7 +57,7 @@ internal sealed class ProxyStateStore : IStateStore
                         {
                             return new StateStoreBulkStateItem(item.Key)
                             {
-                                ContentType = item.ContentType,
+                                ContentType = item.ContentType ?? String.Empty,
                                 Data = item.Data.Memory.ToArray(),
                                 ETag = item.Etag?.Value,
                                 Error = item.Error,
@@ -111,7 +110,7 @@ internal sealed class ProxyStateStore : IStateStore
         // TODO: Should response really be nullable?
         var storeResponse = new StateStoreGetResponse
         {
-            ContentType = response.ContentType,
+            ContentType = response.ContentType ?? String.Empty,
             Data = response.Data.Memory.ToArray(),
             ETag = response.Etag?.Value,
             Metadata = response.Metadata

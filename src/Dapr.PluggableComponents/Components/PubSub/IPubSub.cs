@@ -4,5 +4,5 @@ public interface IPubSub : IPluggableComponent
 {
     Task PublishAsync(PubSubPublishRequest request, CancellationToken cancellationToken = default);
 
-    Task PullMessagesAsync(IAsyncEnumerable<PubSubPullMessagesRequest> request, IAsyncMessageWriter<PubSubPullMessagesResponse> response, CancellationToken cancellationToken = default);
+    Task PullMessagesAsync(IAsyncEnumerable<PubSubPullMessagesRequest> requests, IAsyncMessageWriter<PubSubPullMessagesResponse> responses, CancellationToken cancellationToken = default);
 }

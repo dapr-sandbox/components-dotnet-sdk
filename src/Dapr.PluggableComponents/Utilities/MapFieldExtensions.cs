@@ -4,11 +4,14 @@ namespace Dapr.PluggableComponents.Utilities;
 
 internal static class MapFieldExtensions
 {
-    public static void Add<TKey, TValue>(this MapField<TKey, TValue> map, IEnumerable<KeyValuePair<TKey, TValue>> entries)
+    public static void Add<TKey, TValue>(this MapField<TKey, TValue> map, IEnumerable<KeyValuePair<TKey, TValue>>? entries)
     {
-        foreach (var entry in entries)
+        if (entries != null)
         {
-            map.Add(entry.Key, entry.Value);
+            foreach (var entry in entries)
+            {
+                map.Add(entry.Key, entry.Value);
+            }
         }
     }
 }

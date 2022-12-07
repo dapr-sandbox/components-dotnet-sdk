@@ -85,7 +85,7 @@ public class PubSubAdaptor : PubSubBase
 
         return this.GetPubSub(context.RequestHeaders).PullMessagesAsync(
             requestStream
-                .ToAsyncEnumerable(context.CancellationToken)
+                .AsEnumerable(context.CancellationToken)
                 .WithTransform(
                     request => new PubSubPullMessagesRequest
                     {

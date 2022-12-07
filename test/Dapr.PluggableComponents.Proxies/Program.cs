@@ -23,6 +23,7 @@ var options = new DaprPluggableComponentsApplicationOptions
 
 var app = DaprPluggableComponentsApplication.Create(options);
 
+app.AddPubSub<ProxyPubSub>();
 app.AddStateStore<ProxyStateStore>();
 
 app.Run();
