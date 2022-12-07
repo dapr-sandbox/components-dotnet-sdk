@@ -23,7 +23,8 @@ public sealed record StateStoreBulkStateItem(string Key)
             ContentType = item.ContentType ?? String.Empty,
             Data = ByteString.CopyFrom(item.Data),
             Error = item.Error ?? String.Empty,
-            Etag = item.ETag != null ? new Etag { Value = item.ETag } : null
+            Etag = item.ETag != null ? new Etag { Value = item.ETag } : null,
+            Key = item.Key
         };
 
         bulkStateItem.Metadata.Add(item.Metadata);

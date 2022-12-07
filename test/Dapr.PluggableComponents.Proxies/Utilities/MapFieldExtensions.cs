@@ -1,6 +1,6 @@
 using Google.Protobuf.Collections;
 
-namespace Dapr.PluggableComponents.Utilities;
+namespace Dapr.PluggableComponents.Proxies.Utilities;
 
 internal static class MapFieldExtensions
 {

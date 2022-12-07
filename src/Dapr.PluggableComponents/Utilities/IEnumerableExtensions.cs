@@ -1,6 +1,6 @@
 namespace Dapr.PluggableComponents.Utilities;
 
-public static class IEnumerableExtensions
+internal static class IEnumerableExtensions
 {
     public static IEnumerable<T> WhereNonNull<T>(this IEnumerable<T?> items)
     {
