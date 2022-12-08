@@ -27,7 +27,7 @@ public class PubSubAdaptor : PubSubBase
 
         var response = new FeaturesResponse();
 
-        if (this.GetPubSub(ctx.RequestHeaders) is IFeatures features)
+        if (this.GetPubSub(ctx.RequestHeaders) is IPluggableComponentFeatures features)
         {
             var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken);
     
@@ -52,7 +52,7 @@ public class PubSubAdaptor : PubSubBase
     {
         this.logger.LogInformation("Ping request");
 
-        if (this.GetPubSub(ctx.RequestHeaders) is IPing ping)
+        if (this.GetPubSub(ctx.RequestHeaders) is IPluggableComponentLiveness ping)
         {
             await ping.PingAsync(ctx.CancellationToken);
         }

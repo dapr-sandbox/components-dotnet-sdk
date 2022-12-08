@@ -6,7 +6,7 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
 
-internal sealed class ProxyInputBinding : IInputBinding
+internal sealed class ProxyInputBinding : IInputBinding, IPluggableComponentLiveness
 {
     private readonly IGrpcChannelProvider grpcChannelProvider;
     private readonly ILogger<ProxyInputBinding> logger;
@@ -24,8 +24,6 @@ internal sealed class ProxyInputBinding : IInputBinding
     {
         this.logger.LogInformation("Init request");
 
-        var client = new InputBinding.InputBindingClient(this.grpcChannelProvider.GetChannel());
-
         var grpcRequest = new Dapr.PluggableComponents.Proxies.Grpc.v1.InputBindingInitRequest
         {
             Metadata = new Dapr.PluggableComponents.Proxies.Grpc.v1.MetadataRequest()
@@ -33,16 +31,14 @@ internal sealed class ProxyInputBinding : IInputBinding
 
         grpcRequest.Metadata.Properties.Add(request.Properties);
 
-        await client.InitAsync(grpcRequest, cancellationToken: cancellationToken);
+        await this.GetClient().InitAsync(grpcRequest, cancellationToken: cancellationToken);
     }
 
     public async Task ReadAsync(IAsyncEnumerable<InputBindingReadRequest> requests, IAsyncMessageWriter<InputBindingReadResponse> responses, CancellationToken cancellationToken = default)
     {
         this.logger.LogInformation("Read request");
 
-        var client = new InputBinding.InputBindingClient(this.grpcChannelProvider.GetChannel());
-
-        using var stream = client.Read(cancellationToken: cancellationToken);
+        using var stream = this.GetClient().Read(cancellationToken: cancellationToken);
 
         var requestReaderTask =
             async () =>
@@ -84,4 +80,22 @@ internal sealed class ProxyInputBinding : IInputBinding
     }
 
     #endregion
+
+    #region IPluggableComponentLiveness Members
+
+    public async Task PingAsync(CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("Ping request");
+
+        await this.GetClient().PingAsync(
+            new PingRequest(),
+            cancellationToken: cancellationToken);
+    }
+
+    #endregion
+
+    private InputBinding.InputBindingClient GetClient()
+    {
+        return new InputBinding.InputBindingClient(this.grpcChannelProvider.GetChannel());
+    }
 }

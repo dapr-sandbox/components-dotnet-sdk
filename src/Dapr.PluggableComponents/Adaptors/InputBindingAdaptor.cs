@@ -36,7 +36,7 @@ public class InputBindingAdaptor : InputBindingBase
     {
         this.logger.LogInformation("Ping request");
 
-        if (this.GetInputBinding(ctx.RequestHeaders) is IPing ping)
+        if (this.GetInputBinding(ctx.RequestHeaders) is IPluggableComponentLiveness ping)
         {
             await ping.PingAsync(ctx.CancellationToken).ConfigureAwait(false);
         }

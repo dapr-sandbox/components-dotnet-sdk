@@ -1,7 +1,6 @@
 namespace Dapr.PluggableComponents.Components;
 
-// TODO: Consider naming.
-public interface IPing
+public interface IPluggableComponentLiveness
 {
     Task PingAsync(CancellationToken cancellationToken = default);
 }

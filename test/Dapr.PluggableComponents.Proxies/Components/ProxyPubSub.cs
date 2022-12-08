@@ -6,7 +6,7 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
 
-internal sealed class ProxyPubSub : IPubSub
+internal sealed class ProxyPubSub : IPubSub, IPluggableComponentFeatures, IPluggableComponentLiveness
 {
     private readonly IGrpcChannelProvider grpcChannelProvider;
     private readonly ILogger<ProxyPubSub> logger;
@@ -23,8 +23,6 @@ internal sealed class ProxyPubSub : IPubSub
     {
         this.logger.LogInformation("Init request");
 
-        var client = new PubSub.PubSubClient(this.grpcChannelProvider.GetChannel());
-
         var grpcRequest = new Dapr.PluggableComponents.Proxies.Grpc.v1.PubSubInitRequest
         {
             Metadata = new Dapr.PluggableComponents.Proxies.Grpc.v1.MetadataRequest()
@@ -32,14 +30,12 @@ internal sealed class ProxyPubSub : IPubSub
 
         grpcRequest.Metadata.Properties.Add(request.Properties);
 
-        await client.InitAsync(grpcRequest, cancellationToken: cancellationToken);
+        await this.GetClient().InitAsync(grpcRequest, cancellationToken: cancellationToken);
     }
 
     public async Task PublishAsync(PubSubPublishRequest request, CancellationToken cancellationToken = default)
     {
         this.logger.LogInformation("Publish request for pub-sub {0} on topic {1}", request.PubSubName, request.Topic);
-
-        var client = new PubSub.PubSubClient(this.grpcChannelProvider.GetChannel());
 
         var grpcRequest = new PublishRequest
         {
@@ -51,7 +47,7 @@ internal sealed class ProxyPubSub : IPubSub
 
         grpcRequest.Metadata.Add(request.Metadata);
 
-        await client.PublishAsync(
+        await this.GetClient().PublishAsync(
             grpcRequest,
             cancellationToken: cancellationToken);
     }
@@ -60,9 +56,7 @@ internal sealed class ProxyPubSub : IPubSub
     {
         this.logger.LogInformation("Pull messages request");
 
-        var client = new PubSub.PubSubClient(this.grpcChannelProvider.GetChannel());
-
-        using var stream = client.PullMessages(cancellationToken: cancellationToken);
+        using var stream = this.GetClient().PullMessages(cancellationToken: cancellationToken);
 
         var requestReaderTask =
             async () =>
@@ -111,4 +105,41 @@ internal sealed class ProxyPubSub : IPubSub
     }
 
     #endregion
+
+    #region IPluggableComponentFeatures Members
+
+    public async Task<string[]> GetFeaturesAsync(CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("Get features request");
+
+        var response = await this.GetClient().FeaturesAsync(
+            new FeaturesRequest(),
+            cancellationToken: cancellationToken);
+
+        var features = response.Features.ToArray();
+
+        this.logger.LogInformation("Returning features: {0}", String.Join(",", features));
+
+        return features;
+    }
+
+    #endregion
+
+    #region IPluggableComponentLiveness Members
+
+    public async Task PingAsync(CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("Ping request");
+
+        await this.GetClient().PingAsync(
+            new PingRequest(),
+            cancellationToken: cancellationToken);
+    }
+
+    #endregion
+
+    private PubSub.PubSubClient GetClient()
+    {
+        return new PubSub.PubSubClient(this.grpcChannelProvider.GetChannel());
+    }
 }

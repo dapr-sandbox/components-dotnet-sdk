@@ -69,7 +69,7 @@ public class StateStoreAdaptor : StateStoreBase
 
         var response = new FeaturesResponse();
 
-        if (this.GetStateStore(ctx.RequestHeaders) is IFeatures features)
+        if (this.GetStateStore(ctx.RequestHeaders) is IPluggableComponentFeatures features)
         {
             var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken);
     
@@ -105,7 +105,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Ping request");
 
-        if (this.GetStateStore(ctx.RequestHeaders) is IPing ping)
+        if (this.GetStateStore(ctx.RequestHeaders) is IPluggableComponentLiveness ping)
         {
             await ping.PingAsync(ctx.CancellationToken);
         }

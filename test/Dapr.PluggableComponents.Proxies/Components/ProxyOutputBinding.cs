@@ -6,7 +6,7 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
 
-internal sealed class ProxyOutputBinding : IOutputBinding
+internal sealed class ProxyOutputBinding : IOutputBinding, IPluggableComponentLiveness
 {
     private readonly IGrpcChannelProvider grpcChannelProvider;
     private readonly ILogger<ProxyOutputBinding> logger;
@@ -24,8 +24,6 @@ internal sealed class ProxyOutputBinding : IOutputBinding
     {
         this.logger?.LogInformation("Init request");
 
-        var client = new OutputBinding.OutputBindingClient(this.grpcChannelProvider.GetChannel());
-
         var grpcRequest = new Dapr.PluggableComponents.Proxies.Grpc.v1.OutputBindingInitRequest
         {
             Metadata = new Dapr.PluggableComponents.Proxies.Grpc.v1.MetadataRequest()
@@ -33,14 +31,12 @@ internal sealed class ProxyOutputBinding : IOutputBinding
 
         grpcRequest.Metadata.Properties.Add(request.Properties);
 
-        await client.InitAsync(grpcRequest, cancellationToken: cancellationToken);
+        await this.GetClient().InitAsync(grpcRequest, cancellationToken: cancellationToken);
     }
 
     public async Task<OutputBindingInvokeResponse> InvokeAsync(OutputBindingInvokeRequest request, CancellationToken cancellationToken = default)
     {
         this.logger?.LogInformation("Invoke request for operation {0}", request.Operation);
-
-        var client = new OutputBinding.OutputBindingClient(this.grpcChannelProvider.GetChannel());
 
         var grpcRequest = new InvokeRequest
         {
@@ -50,7 +46,7 @@ internal sealed class ProxyOutputBinding : IOutputBinding
 
         grpcRequest.Metadata.Add(request.Metadata);
 
-        var grpcResponse = await client.InvokeAsync(
+        var grpcResponse = await this.GetClient().InvokeAsync(
             grpcRequest,
             cancellationToken: cancellationToken);
 
@@ -66,9 +62,7 @@ internal sealed class ProxyOutputBinding : IOutputBinding
     {
         this.logger?.LogInformation("List operations request");
 
-        var client = new OutputBinding.OutputBindingClient(this.grpcChannelProvider.GetChannel());
-
-        var response = await client.ListOperationsAsync(
+        var response = await this.GetClient().ListOperationsAsync(
             new ListOperationsRequest(),
             cancellationToken: cancellationToken);        
 
@@ -76,4 +70,22 @@ internal sealed class ProxyOutputBinding : IOutputBinding
     }
 
     #endregion
+
+    #region IPluggableComponentLiveness Members
+
+    public async Task PingAsync(CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("Ping request");
+
+        await this.GetClient().PingAsync(
+            new PingRequest(),
+            cancellationToken: cancellationToken);
+    }
+
+    #endregion
+
+    private OutputBinding.OutputBindingClient GetClient()
+    {
+        return new OutputBinding.OutputBindingClient(this.grpcChannelProvider.GetChannel());
+    }
 }

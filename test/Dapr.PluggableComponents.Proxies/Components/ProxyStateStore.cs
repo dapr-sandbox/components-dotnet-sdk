@@ -6,7 +6,7 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
 
-internal sealed class ProxyStateStore : IStateStore
+internal sealed class ProxyStateStore : IStateStore, IPluggableComponentFeatures, IPluggableComponentLiveness
 {
     private readonly IGrpcChannelProvider grpcChannelProvider;
     private readonly ILogger<ProxyStateStore> logger;
@@ -23,27 +23,23 @@ internal sealed class ProxyStateStore : IStateStore
     {
         this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
 
-        var client = new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
-
         var grpcRequest = new BulkDeleteRequest();
 
         grpcRequest.Items.AddRange(
             request.Items.Select(ToDeleteRequest));
 
-        await client.BulkDeleteAsync(grpcRequest, cancellationToken: cancellationToken);
+        await this.GetClient().BulkDeleteAsync(grpcRequest, cancellationToken: cancellationToken);
     }
 
     public async Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreBulkGetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("BulkGet request for {count} keys", request.Items.Count);
-
-        var client = new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
+        this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
 
         var grpcRequest = new BulkGetRequest();
 
         grpcRequest.Items.Add(request.Items.Select(ToGetRequest));
 
-        var grpcResponse = await client.BulkGetAsync(
+        var grpcResponse = await this.GetClient().BulkGetAsync(
             grpcRequest,
             cancellationToken: cancellationToken);
 
@@ -70,9 +66,7 @@ internal sealed class ProxyStateStore : IStateStore
 
     public async Task BulkSetAsync(StateStoreBulkSetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("BulkSet request for {count} keys", request.Items.Count);
-
-        var client = new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
+        this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
 
         var grpcRequest = new BulkSetRequest();
 
@@ -81,29 +75,25 @@ internal sealed class ProxyStateStore : IStateStore
                 .Items
                 .Select(ToSetRequest));
 
-        await client.BulkSetAsync(
+        await this.GetClient().BulkSetAsync(
             grpcRequest,
             cancellationToken: cancellationToken);
     }
 
     public async Task DeleteAsync(StateStoreDeleteRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Delete request for key {key}", request.Key);
+        this.logger.LogInformation("Delete request for key {key}", request.Key);
 
-        var client = new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
-
-        await client.DeleteAsync(
+        await this.GetClient().DeleteAsync(
             ToDeleteRequest(request),
             cancellationToken: cancellationToken);
     }
 
     public async Task<StateStoreGetResponse?> GetAsync(StateStoreGetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Get request for key {key}", request.Key);
+        this.logger.LogInformation("Get request for key {key}", request.Key);
 
-        var client = new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
-
-        var response = await client.GetAsync(
+        var response = await this.GetClient().GetAsync(
             ToGetRequest(request),
             cancellationToken: cancellationToken);
 
@@ -121,9 +111,7 @@ internal sealed class ProxyStateStore : IStateStore
 
     public async Task InitAsync(Dapr.PluggableComponents.Components.MetadataRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Init request");
-
-        var client = new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
+        this.logger.LogInformation("Init request");
 
         var grpcRequest = new Dapr.PluggableComponents.Proxies.Grpc.v1.InitRequest
         {
@@ -132,21 +120,57 @@ internal sealed class ProxyStateStore : IStateStore
 
         grpcRequest.Metadata.Properties.Add(request.Properties);
 
-        await client.InitAsync(grpcRequest, cancellationToken: cancellationToken);
+        await this.GetClient().InitAsync(grpcRequest, cancellationToken: cancellationToken);
     }
 
     public async Task SetAsync(StateStoreSetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Set request for key {key}", request.Key);
+        this.logger.LogInformation("Set request for key {key}", request.Key);
 
-        var client = new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
-
-        await client.SetAsync(
+        await this.GetClient().SetAsync(
             ToSetRequest(request),
             cancellationToken: cancellationToken);
     }
 
     #endregion
+
+    #region IPluggableComponentFeatures Members
+
+    public async Task<string[]> GetFeaturesAsync(CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("Get features request");
+
+        var response = await this.GetClient().FeaturesAsync(
+            new FeaturesRequest(),
+            cancellationToken: cancellationToken);
+
+        var features = response.Features.ToArray();
+
+        this.logger.LogInformation("Returning features: {0}", String.Join(",", features));
+
+        return features;
+    }
+
+
+    #endregion
+
+    #region IPluggableComponentLiveness Members
+
+    public async Task PingAsync(CancellationToken cancellationToken = default)
+    {
+        this.logger.LogInformation("Ping request");
+
+        await this.GetClient().PingAsync(
+            new PingRequest(),
+            cancellationToken: cancellationToken);
+    }
+
+    #endregion
+
+    private StateStore.StateStoreClient GetClient()
+    {
+        return new StateStore.StateStoreClient(this.grpcChannelProvider.GetChannel());
+    }
 
     private static Etag? ToEtag(string? eTag)
     {

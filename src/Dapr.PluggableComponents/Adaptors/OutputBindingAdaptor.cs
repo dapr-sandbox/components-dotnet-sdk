@@ -67,7 +67,7 @@ public class OutputBindingAdaptor : OutputBindingBase
     {
         this.logger.LogInformation("Ping request");
 
-        if (this.GetOutputBinding(ctx.RequestHeaders) is IPing ping)
+        if (this.GetOutputBinding(ctx.RequestHeaders) is IPluggableComponentLiveness ping)
         {
             await ping.PingAsync(ctx.CancellationToken).ConfigureAwait(false);
         }

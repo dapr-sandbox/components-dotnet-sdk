@@ -1,7 +1,6 @@
 namespace Dapr.PluggableComponents.Components;
 
-// TODO: Consider naming.
-public interface IFeatures
+public interface IPluggableComponentFeatures
 {
     Task<string[]> GetFeaturesAsync(CancellationToken cancellationToken = default);
 }
