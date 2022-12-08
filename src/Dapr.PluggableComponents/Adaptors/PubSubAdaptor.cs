@@ -29,7 +29,7 @@ public class PubSubAdaptor : PubSubBase
 
         if (this.GetPubSub(ctx.RequestHeaders) is IFeatures features)
         {
-            var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken).ConfigureAwait(false);
+            var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken);
     
             response.Features.AddRange(featuresResponse);
         }
@@ -42,11 +42,8 @@ public class PubSubAdaptor : PubSubBase
         this.logger.LogInformation("Init request");
         
         await this.GetPubSub(ctx.RequestHeaders).InitAsync(
-            new Components.InitRequest
-            {
-                Metadata = new Components.MetadataRequest { Properties = request.Metadata.Properties },
-            },
-            ctx.CancellationToken).ConfigureAwait(false);
+            Components.MetadataRequest.FromMetadataRequest(request.Metadata),
+            ctx.CancellationToken);
         
         return new PubSubInitResponse();
     }
@@ -57,7 +54,7 @@ public class PubSubAdaptor : PubSubBase
 
         if (this.GetPubSub(ctx.RequestHeaders) is IPing ping)
         {
-            await ping.PingAsync(ctx.CancellationToken).ConfigureAwait(false);
+            await ping.PingAsync(ctx.CancellationToken);
         }
 
         return new PingResponse();
@@ -74,7 +71,7 @@ public class PubSubAdaptor : PubSubBase
                 Data = request.Data.Memory,
                 Metadata = request.Metadata
             },
-            context.CancellationToken).ConfigureAwait(false);
+            context.CancellationToken);
 
         return new PublishResponse();
     }

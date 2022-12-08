@@ -95,7 +95,7 @@ public class StateStoreAdaptor : StateStoreBase
         this.logger.LogInformation("Init request");
         
         await this.GetStateStore(ctx.RequestHeaders).InitAsync(
-            Components.InitRequest.FromInitRequest(request),
+            Components.MetadataRequest.FromMetadataRequest(request.Metadata),
             ctx.CancellationToken);
         
         return new InitResponse();

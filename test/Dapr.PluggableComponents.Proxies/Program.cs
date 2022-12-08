@@ -23,6 +23,8 @@ var options = new DaprPluggableComponentsApplicationOptions
 
 var app = DaprPluggableComponentsApplication.Create(options);
 
+app.AddBinding<ProxyInputBinding>();
+app.AddBinding<ProxyOutputBinding>();
 app.AddPubSub<ProxyPubSub>();
 app.AddStateStore<ProxyStateStore>();
 

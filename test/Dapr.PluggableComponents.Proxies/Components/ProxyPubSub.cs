@@ -19,7 +19,7 @@ internal sealed class ProxyPubSub : IPubSub
 
     #region IPubSub Members
 
-    public async Task InitAsync(Dapr.PluggableComponents.Components.InitRequest request, CancellationToken cancellationToken = default)
+    public async Task InitAsync(Dapr.PluggableComponents.Components.MetadataRequest request, CancellationToken cancellationToken = default)
     {
         this.logger?.LogInformation("Init request");
 
@@ -30,7 +30,7 @@ internal sealed class ProxyPubSub : IPubSub
             Metadata = new Dapr.PluggableComponents.Proxies.Grpc.v1.MetadataRequest()
         };
 
-        grpcRequest.Metadata.Properties.Add(request.Metadata?.Properties ?? Enumerable.Empty<KeyValuePair<string, string>>());
+        grpcRequest.Metadata.Properties.Add(request.Properties);
 
         await client.InitAsync(grpcRequest, cancellationToken: cancellationToken);
     }

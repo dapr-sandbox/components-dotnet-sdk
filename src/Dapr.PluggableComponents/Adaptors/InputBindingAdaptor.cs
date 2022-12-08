@@ -23,11 +23,10 @@ public class InputBindingAdaptor : InputBindingBase
 
     public override async Task<InputBindingInitResponse> Init(Proto.Components.V1.InputBindingInitRequest request, ServerCallContext context)
     {
+        this.logger.LogInformation("Init request");
+
         await this.GetInputBinding(context.RequestHeaders).InitAsync(
-            new Components.InitRequest
-            {
-                // TODO: Metadata.
-            },
+            Components.MetadataRequest.FromMetadataRequest(request.Metadata),
             context.CancellationToken);
 
         return new InputBindingInitResponse();
@@ -47,6 +46,8 @@ public class InputBindingAdaptor : InputBindingBase
 
     public override async Task Read(IAsyncStreamReader<ReadRequest> requestStream, IServerStreamWriter<ReadResponse> responseStream, ServerCallContext context)
     {
+        this.logger.LogInformation("Read request");
+
         await this.GetInputBinding(context.RequestHeaders).ReadAsync(
             requestStream
                 .AsEnumerable()

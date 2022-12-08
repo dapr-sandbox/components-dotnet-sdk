@@ -25,11 +25,8 @@ public class OutputBindingAdaptor : OutputBindingBase
     {
         await this.GetOutputBinding(context.RequestHeaders)
             .InitAsync(
-                new Components.InitRequest
-                {
-                    // TODO: What if Metadata is null?
-                    Metadata = new Components.MetadataRequest { Properties = request.Metadata.Properties }
-                });
+                Components.MetadataRequest.FromMetadataRequest(request.Metadata),
+                context.CancellationToken);
 
         return new OutputBindingInitResponse();
     }
@@ -57,11 +54,11 @@ public class OutputBindingAdaptor : OutputBindingBase
 
     public override async Task<ListOperationsResponse> ListOperations(ListOperationsRequest request, ServerCallContext context)
     {
-        var response = await this.GetOutputBinding(context.RequestHeaders).ListOperationsAsync(context.CancellationToken);
+        var operations = await this.GetOutputBinding(context.RequestHeaders).ListOperationsAsync(context.CancellationToken);
 
         var grpcResponse = new ListOperationsResponse();
 
-        grpcResponse.Operations.Add(response.Operations);
+        grpcResponse.Operations.Add(operations);
 
         return grpcResponse;
     }
