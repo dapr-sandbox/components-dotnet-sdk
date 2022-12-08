@@ -56,6 +56,8 @@ internal sealed class ProxyInputBinding : IInputBinding, IPluggableComponentLive
 
                     await stream.RequestStream.WriteAsync(grpcRequest, cancellationToken);
                 }
+
+                await stream.RequestStream.CompleteAsync();
             };
 
         var responseReaderTask =

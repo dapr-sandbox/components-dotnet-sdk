@@ -6,7 +6,11 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
 
-internal sealed class ProxyStateStore : IStateStore, IPluggableComponentFeatures, IPluggableComponentLiveness
+internal sealed class ProxyStateStore : 
+    IStateStore,
+    IQueryableStateStore,
+    IPluggableComponentFeatures,
+    IPluggableComponentLiveness
 {
     private readonly IGrpcChannelProvider grpcChannelProvider;
     private readonly ILogger<ProxyStateStore> logger;
@@ -130,6 +134,69 @@ internal sealed class ProxyStateStore : IStateStore, IPluggableComponentFeatures
         await this.GetClient().SetAsync(
             ToSetRequest(request),
             cancellationToken: cancellationToken);
+    }
+
+    #endregion
+
+    #region IQueryableStateStore Members
+
+    public async Task<StateStoreQueryResponse> QueryAsync(StateStoreQueryRequest request, CancellationToken cancellationToken = default)
+    {
+        var client = new QueriableStateStore.QueriableStateStoreClient(this.grpcChannelProvider.GetChannel());
+
+        var grpcRequest = new QueryRequest();
+
+        if (request.Query != null)
+        {
+            grpcRequest.Query = new Query();
+
+            grpcRequest.Query.Filter.Add(request.Query.Filter);
+
+            if (request.Query.Pagination != null)
+            {
+                grpcRequest.Query.Pagination = new Pagination
+                {
+                    Limit = request.Query.Pagination.Limit,
+                    Token = request.Query.Pagination.Token
+                };
+            }
+
+            grpcRequest.Query.Sort.Add(
+                request
+                    .Query
+                    .Sorting
+                    .Select(
+                        sort => new Sorting
+                        {
+                            Key = sort.Key,
+                            Order = (Dapr.PluggableComponents.Proxies.Grpc.v1.Sorting.Types.Order)sort.Order
+                        })
+            );
+        }
+
+        grpcRequest.Metadata.Add(request.Metadata);
+
+        var response = await client.QueryAsync(
+            grpcRequest,
+            cancellationToken: cancellationToken);
+
+        return new StateStoreQueryResponse
+        {
+            Items =
+                response
+                    .Items
+                    .Select(
+                        item => new StateStoreQueryItem(item.Key)
+                        {
+                            ContentType = item.ContentType,
+                            Data = item.Data.ToArray(),
+                            Error = item.Error,
+                            ETag = item.Etag?.Value
+                        })
+                    .ToArray(),
+            Metadata = response.Metadata,
+            Token = response.Token
+        };
     }
 
     #endregion

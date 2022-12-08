@@ -1,3 +1,5 @@
+using Dapr.Proto.Components.V1;
+
 namespace Dapr.PluggableComponents.Components.StateStore;
 
 public enum StateStoreQuerySortingOrder
@@ -6,9 +8,13 @@ public enum StateStoreQuerySortingOrder
     Descending = 1
 }
 
-public sealed record StateStoreQuerySorting
+public sealed record StateStoreQuerySorting(string Key)
 {
-    public string Key { get; init; } = String.Empty;
-
     public StateStoreQuerySortingOrder Order { get; init; } = StateStoreQuerySortingOrder.Ascending;
+
+    internal static StateStoreQuerySorting FromSorting(Sorting sorting)
+        => new StateStoreQuerySorting(sorting.Key)
+        {
+            Order = (StateStoreQuerySortingOrder)sorting.Order
+        };
 }

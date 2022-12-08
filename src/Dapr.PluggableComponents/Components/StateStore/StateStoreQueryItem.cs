@@ -1,6 +1,6 @@
 namespace Dapr.PluggableComponents.Components.StateStore;
 
-public sealed record StateStoreQueryItem
+public sealed record StateStoreQueryItem(string Key)
 {
     public string? ContentType { get; init; }
 
@@ -9,6 +9,4 @@ public sealed record StateStoreQueryItem
     public string? Error { get; init; }
 
     public string? ETag { get; init; }
-
-    public string Key { get; init; } = String.Empty;
 }
