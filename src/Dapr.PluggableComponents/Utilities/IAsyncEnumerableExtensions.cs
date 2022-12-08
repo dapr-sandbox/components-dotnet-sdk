@@ -4,7 +4,7 @@ namespace Dapr.PluggableComponents.Utilities;
 
 internal static class IAsyncEnumerableExtensions
 {
-    public static async IAsyncEnumerable<TTransformedType> WithTransform<TOriginalType, TTransformedType>(this IAsyncEnumerable<TOriginalType> enumerable, Func<TOriginalType, TTransformedType> transform, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+    public static async IAsyncEnumerable<TTransformedType> Select<TOriginalType, TTransformedType>(this IAsyncEnumerable<TOriginalType> enumerable, Func<TOriginalType, TTransformedType> transform, [EnumeratorCancellation]CancellationToken cancellationToken = default)
     {
         var enumerator = enumerable.GetAsyncEnumerator(cancellationToken);
 

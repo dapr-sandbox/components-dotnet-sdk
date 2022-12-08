@@ -51,7 +51,7 @@ public class InputBindingAdaptor : InputBindingBase
         await this.GetInputBinding(context.RequestHeaders).ReadAsync(
             requestStream
                 .AsEnumerable()
-                .WithTransform(
+                .Select(
                     request =>
                     {
                         return new InputBindingReadRequest(request.MessageId)

@@ -76,14 +76,14 @@ public class PubSubAdaptor : PubSubBase
         return new PublishResponse();
     }
 
-    public override Task PullMessages(IAsyncStreamReader<PullMessagesRequest> requestStream, IServerStreamWriter<PullMessagesResponse> responseStream, ServerCallContext context)
+    public override Task PullMessages(IAsyncStreamReader<PullMessagesRequest> requests, IServerStreamWriter<PullMessagesResponse> responses, ServerCallContext context)
     {
         this.logger.LogInformation("Pull messages request");
 
         return this.GetPubSub(context.RequestHeaders).PullMessagesAsync(
-            requestStream
+            requests
                 .AsEnumerable(context.CancellationToken)
-                .WithTransform(
+                .Select(
                     request => new PubSubPullMessagesRequest
                     {
                         AckMessageError = request.AckError?.Message,
@@ -92,7 +92,7 @@ public class PubSubAdaptor : PubSubBase
                     },
                     context.CancellationToken),
             new ServerStreamWriterAdaptor<PullMessagesResponse, PubSubPullMessagesResponse>(
-                responseStream,
+                responses,
                 message =>
                 {
                     var response = new PullMessagesResponse()

@@ -21,7 +21,7 @@ internal sealed class ProxyPubSub : IPubSub
 
     public async Task InitAsync(Dapr.PluggableComponents.Components.MetadataRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Init request");
+        this.logger.LogInformation("Init request");
 
         var client = new PubSub.PubSubClient(this.grpcChannelProvider.GetChannel());
 
@@ -37,7 +37,7 @@ internal sealed class ProxyPubSub : IPubSub
 
     public async Task PublishAsync(PubSubPublishRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Publish request for pub-sub {0} on topic {1}", request.PubSubName, request.Topic);
+        this.logger.LogInformation("Publish request for pub-sub {0} on topic {1}", request.PubSubName, request.Topic);
 
         var client = new PubSub.PubSubClient(this.grpcChannelProvider.GetChannel());
 
@@ -58,59 +58,56 @@ internal sealed class ProxyPubSub : IPubSub
 
     public async Task PullMessagesAsync(IAsyncEnumerable<PubSubPullMessagesRequest> requests, IAsyncMessageWriter<PubSubPullMessagesResponse> responses, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Pull messages request");
+        this.logger.LogInformation("Pull messages request");
 
         var client = new PubSub.PubSubClient(this.grpcChannelProvider.GetChannel());
 
-        var stream = client.PullMessages(cancellationToken: cancellationToken);
+        using var stream = client.PullMessages(cancellationToken: cancellationToken);
 
-        try
-        {
-            var requestReaderTask =
-                async () =>
+        var requestReaderTask =
+            async () =>
+            {
+                await foreach (var request in requests.WithCancellation(cancellationToken))
                 {
-                    await foreach (var request in requests.WithCancellation(cancellationToken))
+                    this.logger.LogInformation("Received request (ID = {0})", request.AckMessageId ?? "<none>");
+
+                    var grpcRequest = new PullMessagesRequest
                     {
-                        var grpcRequest = new PullMessagesRequest
-                        {
-                            AckError = request.AckMessageError != null ? new AckMessageError { Message = request.AckMessageError } : null,
-                            AckMessageId = request.AckMessageId,
-                            Topic = request.Topic != null ? new Topic { Name = request.Topic.Name } : null
-                        };
+                        AckError = request.AckMessageError != null ? new AckMessageError { Message = request.AckMessageError } : null,
+                        AckMessageId = request.AckMessageId,
+                        Topic = request.Topic != null ? new Topic { Name = request.Topic.Name } : null
+                    };
 
-                        if (grpcRequest.Topic != null)
-                        {
-                            grpcRequest.Topic.Metadata.Add(request.Topic?.Metadata);
-                        }
-
-                        await stream.RequestStream.WriteAsync(grpcRequest);
+                    if (grpcRequest.Topic != null)
+                    {
+                        grpcRequest.Topic.Metadata.Add(request.Topic?.Metadata);
                     }
 
-                    await stream.RequestStream.CompleteAsync();
-                };
+                    await stream.RequestStream.WriteAsync(grpcRequest);
+                }
 
-            var responseReaderTask =
-                async () =>
+                await stream.RequestStream.CompleteAsync();
+            };
+
+        var responseReaderTask =
+            async () =>
+            {
+                await foreach(var response in stream.ResponseStream.AsEnumerable(cancellationToken))
                 {
-                    await foreach(var response in stream.ResponseStream.AsEnumerable(cancellationToken))
-                    {
-                        await responses.WriteAsync(
-                            new PubSubPullMessagesResponse(response.TopicName, response.Id)
-                            {
-                                ContentType = response.ContentType,
-                                Data = response.Data.ToArray(),
-                                Metadata = response.Metadata                                
-                            },
-                            cancellationToken);
-                    }
-                };
+                    this.logger.LogInformation("Received response (ID = {0})", response.Id);
 
-            await Task.WhenAll(requestReaderTask(), responseReaderTask());
-        }
-        finally
-        {
-            stream.Dispose();
-        }
+                    await responses.WriteAsync(
+                        new PubSubPullMessagesResponse(response.TopicName, response.Id)
+                        {
+                            ContentType = response.ContentType,
+                            Data = response.Data.ToArray(),
+                            Metadata = response.Metadata                                
+                        },
+                        cancellationToken);
+                }
+            };
+
+        await Task.WhenAll(requestReaderTask(), responseReaderTask());
     }
 
     #endregion
