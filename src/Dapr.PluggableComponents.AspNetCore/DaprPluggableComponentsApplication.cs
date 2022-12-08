@@ -69,7 +69,7 @@ public sealed class DaprPluggableComponentsApplication
             this.AddRelatedService<IInputBinding, TComponentImpl, InputBindingAdaptor>();
         }
 
-        if (typeof(TComponentImpl).IsAssignableFrom(typeof(IOutputBinding)))
+        if (typeof(TComponentImpl).IsAssignableTo(typeof(IOutputBinding)))
         {
             this.AddRelatedService<IOutputBinding, TComponentImpl, OutputBindingAdaptor>();
         }
@@ -113,7 +113,7 @@ public sealed class DaprPluggableComponentsApplication
             this.AddRelatedService<IQueryableStateStore, IStateStore, QueryableStateStoreAdaptor>();
         }
 
-        if (typeof(TStateStore).IsAssignableFrom(typeof(ITransactionalStateStore)))
+        if (typeof(TStateStore).IsAssignableTo(typeof(ITransactionalStateStore)))
         {
             this.AddRelatedService<ITransactionalStateStore, IStateStore, TransactionalStateStoreAdaptor>();
         }

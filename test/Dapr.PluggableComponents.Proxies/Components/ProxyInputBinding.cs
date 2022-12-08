@@ -22,7 +22,7 @@ internal sealed class ProxyInputBinding : IInputBinding
     // TODO: How is initialization handled when a binding is both and input *and* output binding?
     public async Task InitAsync(Dapr.PluggableComponents.Components.MetadataRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Init request");
+        this.logger.LogInformation("Init request");
 
         var client = new InputBinding.InputBindingClient(this.grpcChannelProvider.GetChannel());
 
@@ -38,7 +38,7 @@ internal sealed class ProxyInputBinding : IInputBinding
 
     public async Task ReadAsync(IAsyncEnumerable<InputBindingReadRequest> requests, IAsyncMessageWriter<InputBindingReadResponse> responses, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Init request");
+        this.logger.LogInformation("Read request");
 
         var client = new InputBinding.InputBindingClient(this.grpcChannelProvider.GetChannel());
 
@@ -56,6 +56,8 @@ internal sealed class ProxyInputBinding : IInputBinding
                         ResponseData = ByteString.CopyFrom(request.ResponseData.ToArray())
                     };
 
+                    this.logger.LogInformation("Request received (ID = {0})", request.MessageId);
+
                     await stream.RequestStream.WriteAsync(grpcRequest, cancellationToken);
                 }
             };
@@ -65,6 +67,8 @@ internal sealed class ProxyInputBinding : IInputBinding
             {
                 await foreach (var response in stream.ResponseStream.AsEnumerable().WithCancellation(cancellationToken))
                 {
+                    this.logger.LogInformation("Response received (ID = {0})", response.MessageId);
+
                     await responses.WriteAsync(
                         new InputBindingReadResponse(response.MessageId)
                         {
