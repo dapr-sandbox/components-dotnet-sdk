@@ -9,6 +9,7 @@ namespace Dapr.PluggableComponents.Proxies.Components;
 internal sealed class ProxyStateStore : 
     IStateStore,
     IQueryableStateStore,
+    ITransactionalStateStore,
     IPluggableComponentFeatures,
     IPluggableComponentLiveness
 {
@@ -197,6 +198,38 @@ internal sealed class ProxyStateStore :
             Metadata = response.Metadata,
             Token = response.Token
         };
+    }
+
+    #endregion
+
+    #region ITransactionalStateStore Members
+
+    public async Task TransactAsync(StateStoreTransactRequest request, CancellationToken cancellationToken = default)
+    {
+        var client = new TransactionalStateStore.TransactionalStateStoreClient(this.grpcChannelProvider.GetChannel());
+
+        var grpcRequest = new TransactionalStateRequest();
+
+        grpcRequest.Operations.Add(
+            request
+                .Operations
+                .Select(
+                    operation =>
+                    {
+                        return operation.Type switch
+                        {
+                            StateStoreTransactOperationType.Delete => new TransactionalStateOperation { Delete = new DeleteRequest() },
+                            StateStoreTransactOperationType.Set => new TransactionalStateOperation { Set = new SetRequest() },
+                            // TODO: Use resource string.
+                            _ => throw new InvalidOperationException("An unexpected transact operation type was encountered.")
+                        };
+                    }));
+
+        grpcRequest.Metadata.Add(request.Metadata);
+
+        await client.TransactAsync(
+            grpcRequest,
+            cancellationToken: cancellationToken);
     }
 
     #endregion
