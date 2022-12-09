@@ -2,9 +2,9 @@ namespace Dapr.PluggableComponents.Components.StateStore;
 
 public interface IBulkStateStore
 {
-    Task BulkDeleteAsync(StateStoreBulkDeleteRequest request, CancellationToken cancellationToken = default);
+    Task BulkDeleteAsync(StateStoreDeleteRequest[] requests, CancellationToken cancellationToken = default);
 
-    Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreBulkGetRequest request, CancellationToken cancellationToken = default);
+    Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreGetRequest[] requests, CancellationToken cancellationToken = default);
 
-    Task BulkSetAsync(StateStoreBulkSetRequest request, CancellationToken cancellationToken = default);
+    Task BulkSetAsync(StateStoreSetRequest[] requests, CancellationToken cancellationToken = default);
 }

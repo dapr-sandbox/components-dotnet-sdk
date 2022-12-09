@@ -24,25 +24,24 @@ internal sealed class ProxyStateStore :
 
     #region IStateStore Members
 
-    public async Task BulkDeleteAsync(StateStoreBulkDeleteRequest request, CancellationToken cancellationToken = default)
+    public async Task BulkDeleteAsync(StateStoreDeleteRequest[] requests, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
+        this.logger.LogInformation("BulkGet request for {count} keys", requests.Length);
 
         var grpcRequest = new BulkDeleteRequest();
 
-        grpcRequest.Items.AddRange(
-            request.Items.Select(ToDeleteRequest));
+        grpcRequest.Items.AddRange(requests.Select(ToDeleteRequest));
 
         await this.GetClient().BulkDeleteAsync(grpcRequest, cancellationToken: cancellationToken);
     }
 
-    public async Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreBulkGetRequest request, CancellationToken cancellationToken = default)
+    public async Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreGetRequest[] requests, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("BulkGet request for {count} keys", request.Items.Count);
+        this.logger.LogInformation("BulkGet request for {count} keys", requests.Length);
 
         var grpcRequest = new BulkGetRequest();
 
-        grpcRequest.Items.Add(request.Items.Select(ToGetRequest));
+        grpcRequest.Items.Add(requests.Select(ToGetRequest));
 
         var grpcResponse = await this.GetClient().BulkGetAsync(
             grpcRequest,
@@ -69,16 +68,13 @@ internal sealed class ProxyStateStore :
         };
     }
 
-    public async Task BulkSetAsync(StateStoreBulkSetRequest request, CancellationToken cancellationToken = default)
+    public async Task BulkSetAsync(StateStoreSetRequest[] requests, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
+        this.logger.LogInformation("BulkSet request for {count} keys", requests.Length);
 
         var grpcRequest = new BulkSetRequest();
 
-        grpcRequest.Items.Add(
-            request
-                .Items
-                .Select(ToSetRequest));
+        grpcRequest.Items.Add(requests.Select(ToSetRequest));
 
         await this.GetClient().BulkSetAsync(
             grpcRequest,

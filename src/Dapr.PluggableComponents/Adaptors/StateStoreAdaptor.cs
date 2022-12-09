@@ -30,7 +30,7 @@ public class StateStoreAdaptor : StateStoreBase
         if (stateStore is IBulkStateStore bulkStateStore)
         {
             await bulkStateStore.BulkDeleteAsync(
-                StateStoreBulkDeleteRequest.FromBulkDeleteRequest(request),
+                request.Items.Select(StateStoreDeleteRequest.FromDeleteRequest).ToArray(),
                 context.CancellationToken);
         }
         else
@@ -55,7 +55,7 @@ public class StateStoreAdaptor : StateStoreBase
         if (stateStore is IBulkStateStore bulkStateStore)
         {
             var response = await bulkStateStore.BulkGetAsync(
-                StateStoreBulkGetRequest.FromBulkGetRequest(request),
+                request.Items.Select(StateStoreGetRequest.FromGetRequest).ToArray(),
                 context.CancellationToken);
             
             return StateStoreBulkGetResponse.ToBulkGetResponse(response);
@@ -111,7 +111,7 @@ public class StateStoreAdaptor : StateStoreBase
         if (stateStore is IBulkStateStore bulkStateStore)
         {
             await bulkStateStore.BulkSetAsync(
-                StateStoreBulkSetRequest.FromBulkSetRequest(request),
+                request.Items.Select(StateStoreSetRequest.FromSetRequest).ToArray(),
                 ctx.CancellationToken);
         }
         else

@@ -4,7 +4,7 @@ using Dapr.PluggableComponents.Components;
 
 namespace MemoryStateStoreSample.Services;
 
-internal sealed class MemoryStateStore : IStateStore, IQueryableStateStore, IFeatures, IPing
+internal sealed class MemoryStateStore : IStateStore
 {
     private readonly ILogger<MemoryStateStore>? logger;
 
@@ -15,78 +15,7 @@ internal sealed class MemoryStateStore : IStateStore, IQueryableStateStore, IFea
         this.logger = logger;
     }
 
-    #region IFeatures Members
-
-    public Task<string[]> GetFeaturesAsync(CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(Array.Empty<string>());
-    }
-
-    #endregion
-
-    #region IPing Members
-
-    public Task PingAsync(CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    #endregion
-
     #region IStateStore Members
-
-    public Task BulkDeleteAsync(StateStoreBulkDeleteRequest request, CancellationToken cancellationToken = default)
-    {
-        this.logger?.LogInformation("BulkGet request for {count} keys", request.Items.Count);
-
-        foreach (var item in request.Items)
-        {
-            this.storage.Remove(item.Key);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    public Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreBulkGetRequest request, CancellationToken cancellationToken = default)
-    {
-        this.logger?.LogInformation("BulkGet request for {count} keys", request.Items.Count);
-
-        var items = new List<StateStoreBulkStateItem>();
-
-        foreach (var itemRequest in request.Items)
-        {
-            var item = new StateStoreBulkStateItem();
-
-            if (this.storage.TryGetValue(itemRequest.Key, out var value))
-            {
-                item = new StateStoreBulkStateItem
-                {
-                    Data = Encoding.UTF8.GetBytes(value)
-                };
-            }
-
-            items.Add(item);
-        }
-
-        return Task.FromResult(
-            new StateStoreBulkGetResponse
-            {
-                Got = items.Any(item => item.Data != null),
-                Items = items
-            });
-    }
-
-    public Task BulkSetAsync(StateStoreBulkSetRequest request, CancellationToken cancellationToken = default)
-    {
-        this.logger?.LogInformation("BulkSet request for {count} keys", request.Items.Count);
-
-        foreach (var item in request.Items)
-        {
-            this.storage[item.Key] = Encoding.UTF8.GetString(item.Value.Span);
-        }
-
-        return Task.CompletedTask;
-    }
 
     public Task DeleteAsync(StateStoreDeleteRequest request, CancellationToken cancellationToken = default)
     {
@@ -114,7 +43,7 @@ internal sealed class MemoryStateStore : IStateStore, IQueryableStateStore, IFea
         return Task.FromResult(response);
     }
 
-    public Task InitAsync(StateStoreInitRequest request, CancellationToken cancellationToken = default)
+    public Task InitAsync(MetadataRequest request, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask;
     }
@@ -127,19 +56,6 @@ internal sealed class MemoryStateStore : IStateStore, IQueryableStateStore, IFea
 
         return Task.CompletedTask;
     }
-
-    #endregion
-
-    #region IQueryableStateStore Members
-
-    public Task<QueryResponse> QueryAsync(QueryRequest request, CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(
-            new QueryResponse
-            {
-            });
-    }
-
 
     #endregion
 }

@@ -17,21 +17,6 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "sample-proxycomponents-build",
-            "type": "shell",
-            "command": "dotnet",
-            "args": [
-                "build",
-                "${workspaceFolder}/samples/ProxyComponentsSample/ProxyComponentsSample.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "presentation": {
-                "reveal": "silent"
-            },
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "test-proxies-build",
             "type": "shell",
             "command": "dotnet",

@@ -5,7 +5,7 @@ var app = DaprPluggableComponentsApplication.Create("memstore");
 // app.AddStateStore<MemoryStateStore>();
 
 app.AddStateStore(
-    instanceId => 
+    (_, instanceId) => 
     {
         Console.WriteLine("Creating state store for instance: {0}", instanceId);
 

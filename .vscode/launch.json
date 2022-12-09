@@ -19,23 +19,6 @@
             "sourceFileMap": {
             }
         },
-                {
-            "name": "Launch Sample ProxyComponentsSample",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "sample-proxycomponents-build",
-            "program": "${workspaceFolder}/samples/ProxyComponentsSample/bin/Debug/net6.0/ProxyComponentsSample.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/samples/ProxyComponentsSample",
-            "stopAtEntry": false,
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "DAPR_HTTP_PORT": "<port>",
-                "DAPR_GRPC_PORT": "<port>"
-            },
-            "sourceFileMap": {
-            }
-        },
         {
             "name": "Launch Test Proxies",
             "type": "coreclr",
@@ -47,8 +30,7 @@
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
-                "DAPR_HTTP_PORT": "<port>",
-                "DAPR_GRPC_PORT": "<port>"
+                "DAPR_COMPONENTS_PROXIES_SOCKET_PATH": "<path to proxied component>"
             },
             "sourceFileMap": {
             }
