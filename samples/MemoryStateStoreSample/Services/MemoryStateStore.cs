@@ -6,11 +6,11 @@ namespace MemoryStateStoreSample.Services;
 
 internal sealed class MemoryStateStore : IStateStore
 {
-    private readonly ILogger<MemoryStateStore>? logger;
+    private readonly ILogger<MemoryStateStore> logger;
 
     private readonly IDictionary<string, string> storage = new ConcurrentDictionary<string, string>();
 
-    public MemoryStateStore(ILogger<MemoryStateStore>? logger = null)
+    public MemoryStateStore(ILogger<MemoryStateStore> logger)
     {
         this.logger = logger;
     }
@@ -19,7 +19,7 @@ internal sealed class MemoryStateStore : IStateStore
 
     public Task DeleteAsync(StateStoreDeleteRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("Delete request for key {key}", request.Key);
+        this.logger.LogInformation("Delete request for key {key}", request.Key);
 
         this.storage.Remove(request.Key);
 
@@ -28,7 +28,7 @@ internal sealed class MemoryStateStore : IStateStore
 
     public Task<StateStoreGetResponse?> GetAsync(StateStoreGetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("MemStateStore: Get request for key {key}", request.Key);
+        this.logger.LogInformation("MemStateStore: Get request for key {key}", request.Key);
 
         StateStoreGetResponse? response = null;
 
@@ -50,7 +50,7 @@ internal sealed class MemoryStateStore : IStateStore
 
     public Task SetAsync(StateStoreSetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger?.LogInformation("MemStore: Set request for key {key}", request.Key);
+        this.logger.LogInformation("MemStore: Set request for key {key}", request.Key);
 
         this.storage[request.Key] = Encoding.UTF8.GetString(request.Value.Span);
 
