@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
 using Dapr.PluggableComponents.Adaptors;
-using Dapr.PluggableComponents.Components.Bindings;
-using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,60 +32,6 @@ public sealed class DaprPluggableComponentsApplication
     {       
         this.options = options;
     }
-
-    #region Binding Members
-
-    public void AddBinding<TComponentImpl>(Func<IServiceProvider, string?, TComponentImpl> bindingFactory)
-        where TComponentImpl : class
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentImpl>>(serviceProvider => new MultiplexedComponentProvider<TComponentImpl>(serviceProvider, bindingFactory));
-            });
-
-        this.AddBindingServices<TComponentImpl>();
-    }
-
-    public void AddBinding<TComponentImpl>()
-        where TComponentImpl : class
-    {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<TComponentImpl, TComponentImpl>();
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentImpl>, SingletonComponentProvider<TComponentImpl>>();
-            });
-
-        this.AddBindingServices<TComponentImpl>();
-    }
-
-    private void AddBindingServices<TComponentImpl>()
-    {
-        if (typeof(TComponentImpl).IsAssignableTo(typeof(IInputBinding)))
-        {
-            this.AddRelatedService<IInputBinding, TComponentImpl, InputBindingAdaptor>();
-        }
-
-        if (typeof(TComponentImpl).IsAssignableTo(typeof(IOutputBinding)))
-        {
-            this.AddRelatedService<IOutputBinding, TComponentImpl, OutputBindingAdaptor>();
-        }
-    }
-
-    #endregion
-
-    #region PubSub Members
-
-    public void AddPubSub<TPubSub>(Func<IServiceProvider, string?, TPubSub> pubSubFactory)
-        where TPubSub : class, IPubSub
-        => this.AddComponent<IPubSub, TPubSub, PubSubAdaptor>(pubSubFactory);
-
-    public void AddPubSub<TPubSub>()
-        where TPubSub : class, IPubSub
-        => this.AddComponent<IPubSub, TPubSub, PubSubAdaptor>();
-
-    #endregion
 
     #region State Store Members
 
