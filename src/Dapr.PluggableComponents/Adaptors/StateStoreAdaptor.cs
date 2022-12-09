@@ -1,7 +1,9 @@
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.StateStore;
+using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
+using Google.Protobuf;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using static Dapr.Proto.Components.V1.StateStore;
@@ -23,9 +25,23 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("BulkDelete request for {count} keys", request.Items.Count);
 
-        await this.GetStateStore(context.RequestHeaders).BulkDeleteAsync(
-            StateStoreBulkDeleteRequest.FromBulkDeleteRequest(request),
-            context.CancellationToken);
+        var stateStore = this.GetStateStore(context.RequestHeaders);
+
+        if (stateStore is IBulkStateStore bulkStateStore)
+        {
+            await bulkStateStore.BulkDeleteAsync(
+                StateStoreBulkDeleteRequest.FromBulkDeleteRequest(request),
+                context.CancellationToken);
+        }
+        else
+        {
+            this.logger.LogInformation("Store does not support bulk operations; falling back to individual operations.");
+
+            foreach (var item in request.Items)
+            {
+                await stateStore.DeleteAsync(StateStoreDeleteRequest.FromDeleteRequest(item), context.CancellationToken);
+            }
+        }
 
         return new BulkDeleteResponse();
     }
@@ -34,20 +50,79 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Bulk get request for {count} keys", request.Items.Count);
 
-        var response = await this.GetStateStore(context.RequestHeaders).BulkGetAsync(
-            StateStoreBulkGetRequest.FromBulkGetRequest(request),
-            context.CancellationToken);
+        var stateStore = this.GetStateStore(context.RequestHeaders);
 
-        return StateStoreBulkGetResponse.ToBulkGetResponse(response);
+        if (stateStore is IBulkStateStore bulkStateStore)
+        {
+            var response = await bulkStateStore.BulkGetAsync(
+                StateStoreBulkGetRequest.FromBulkGetRequest(request),
+                context.CancellationToken);
+            
+            return StateStoreBulkGetResponse.ToBulkGetResponse(response);
+        }
+        else
+        {
+            this.logger.LogInformation("Store does not support bulk operations; falling back to individual operations.");
+
+            var responses = new List<BulkStateItem>();
+
+            foreach (var item in request.Items)
+            {
+                var response = await stateStore.GetAsync(StateStoreGetRequest.FromGetRequest(item), context.CancellationToken);
+
+                var stateItem = new BulkStateItem
+                {
+                    Key = item.Key
+                };
+
+                if (response != null)
+                {
+                    stateItem.ContentType = response.ContentType;
+                    stateItem.Data = ByteString.CopyFrom(response.Data);
+                    stateItem.Etag = response.ETag != null ? new Etag { Value = response.ETag } : null;
+                    
+                    stateItem.Metadata.Add(response.Metadata);
+                }
+                else
+                {
+                    stateItem.Error = "Unable to fetch the item.";
+                }
+
+                responses.Add(stateItem);        
+            }
+
+            var grpcResponse = new BulkGetResponse
+            {
+                Got = responses.Any(item => String.IsNullOrEmpty(item.Error))
+            };
+
+            grpcResponse.Items.Add(responses);
+
+            return grpcResponse;
+        }
     }
 
     public override async Task<BulkSetResponse> BulkSet(BulkSetRequest request, ServerCallContext ctx)
     {
         this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
 
-        await this.GetStateStore(ctx.RequestHeaders).BulkSetAsync(
-            StateStoreBulkSetRequest.FromBulkSetRequest(request),
-            ctx.CancellationToken);
+        var stateStore = this.GetStateStore(ctx.RequestHeaders);
+
+        if (stateStore is IBulkStateStore bulkStateStore)
+        {
+            await bulkStateStore.BulkSetAsync(
+                StateStoreBulkSetRequest.FromBulkSetRequest(request),
+                ctx.CancellationToken);
+        }
+        else
+        {
+            this.logger.LogInformation("Store does not support bulk operations; falling back to individual operations.");
+
+            foreach (var item in request.Items)
+            {
+                await stateStore.SetAsync(StateStoreSetRequest.FromSetRequest(item), ctx.CancellationToken);
+            }
+        }
 
         return new BulkSetResponse();
     }
