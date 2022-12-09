@@ -35,7 +35,7 @@ internal sealed class ProxyStateStore :
         await this.GetClient().BulkDeleteAsync(grpcRequest, cancellationToken: cancellationToken);
     }
 
-    public async Task<StateStoreBulkGetResponse> BulkGetAsync(StateStoreGetRequest[] requests, CancellationToken cancellationToken = default)
+    public async Task<StateStoreBulkStateItem[]> BulkGetAsync(StateStoreGetRequest[] requests, CancellationToken cancellationToken = default)
     {
         this.logger.LogInformation("BulkGet request for {count} keys", requests.Length);
 
@@ -47,25 +47,22 @@ internal sealed class ProxyStateStore :
             grpcRequest,
             cancellationToken: cancellationToken);
 
-        return new StateStoreBulkGetResponse(grpcResponse.Got)
-        {
-            Items =
-                grpcResponse
-                    .Items
-                    .Select(
-                        item =>
+        return 
+            grpcResponse
+                .Items
+                .Select(
+                    item =>
+                    {
+                        return new StateStoreBulkStateItem(item.Key)
                         {
-                            return new StateStoreBulkStateItem(item.Key)
-                            {
-                                ContentType = item.ContentType ?? String.Empty,
-                                Data = item.Data.Memory.ToArray(),
-                                ETag = item.Etag?.Value,
-                                Error = item.Error,
-                                Metadata = item.Metadata
-                            };
-                        })
-                    .ToList()
-        };
+                            ContentType = item.ContentType ?? String.Empty,
+                            Data = item.Data.Memory.ToArray(),
+                            ETag = item.Etag?.Value,
+                            Error = item.Error,
+                            Metadata = item.Metadata
+                        };
+                    })
+                .ToArray();
     }
 
     public async Task BulkSetAsync(StateStoreSetRequest[] requests, CancellationToken cancellationToken = default)

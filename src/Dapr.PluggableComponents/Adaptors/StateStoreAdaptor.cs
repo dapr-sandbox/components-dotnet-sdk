@@ -54,11 +54,18 @@ public class StateStoreAdaptor : StateStoreBase
 
         if (stateStore is IBulkStateStore bulkStateStore)
         {
-            var response = await bulkStateStore.BulkGetAsync(
+            var items = await bulkStateStore.BulkGetAsync(
                 request.Items.Select(StateStoreGetRequest.FromGetRequest).ToArray(),
                 context.CancellationToken);
             
-            return StateStoreBulkGetResponse.ToBulkGetResponse(response);
+            var response = new BulkGetResponse
+            {
+                Got = items.Any(item => String.IsNullOrEmpty(item.Error))
+            };
+
+            response.Items.Add(items.Select(StateStoreBulkStateItem.ToBulkStateItem));
+
+            return response;
         }
         else
         {
