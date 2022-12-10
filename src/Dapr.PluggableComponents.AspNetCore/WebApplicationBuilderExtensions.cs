@@ -7,7 +7,7 @@ namespace Dapr.PluggableComponents;
 
 public static class WebApplicationBuilderExtensions
 {
-    public static WebApplicationBuilder AddDaprPluggableComponentsServices(this WebApplicationBuilder builder, DaprPluggableComponentsApplicationOptions options)
+    public static string AddDaprPluggableComponentsServices(this WebApplicationBuilder builder, DaprPluggableComponentsApplicationOptions options)
     {
         string socketExtension = options.SocketExtension
             ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsExtension)
@@ -47,6 +47,6 @@ public static class WebApplicationBuilderExtensions
         // Dapr component discovery relies on the gRPC reflection service.
         builder.Services.AddGrpcReflection();
 
-        return builder;
+        return socketPath;
     }
 }

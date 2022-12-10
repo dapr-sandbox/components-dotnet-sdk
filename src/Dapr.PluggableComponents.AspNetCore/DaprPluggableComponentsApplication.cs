@@ -3,6 +3,7 @@ using Dapr.PluggableComponents.Adaptors;
 using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Mono.Unix;
 
 namespace Dapr.PluggableComponents;
 
@@ -146,7 +147,7 @@ public sealed class DaprPluggableComponentsApplication
 
         this.options.WebApplicationBuilderConfiguration?.Invoke(builder);
 
-        builder.AddDaprPluggableComponentsServices(options);
+        string socketPath = builder.AddDaprPluggableComponentsServices(options);
 
         foreach (var configurer in this.builderActions)
         {
@@ -163,6 +164,24 @@ public sealed class DaprPluggableComponentsApplication
         {
             configurer(app);
         }
+
+        app.Lifetime.ApplicationStarted.Register(
+            () =>
+            {
+                // NOTE:
+                //
+                // In Kubernetes, the creator of the socket file (this pluggable component) will not be the same user
+                // as the reader/writer of the socket file (the Dapr sidecar), unlike when running the component
+                // locally. Therefore, once the socket file has been created (after start), the permissions need be
+                // updated to allow global read/write.
+
+                var fileInfo = new UnixFileInfo(socketPath);
+
+                fileInfo.FileAccessPermissions =
+                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
+                    | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite
+                    | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherWrite;
+            });
 
         return app;
     }
