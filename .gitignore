@@ -13,6 +13,7 @@
 /samples/**/components/*.yaml
 
 # launchSettings.json for samples and tests
+/samples/**/Properties/launchSettings.json
 /test/**/Properties/launchSettings.json
 
 # Test logs
