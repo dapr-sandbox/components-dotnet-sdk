@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using Dapr.PluggableComponents.Adaptors;
-using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Mono.Unix;
@@ -30,6 +29,8 @@ public sealed class DaprPluggableComponentsApplication
     private readonly ConcurrentBag<Action<WebApplication>> appActions = new ConcurrentBag<Action<WebApplication>>();
 
     private readonly ConcurrentBag<DaprServiceRegistration> serviceBuilderActions = new ConcurrentBag<DaprServiceRegistration>();
+
+    private readonly ConcurrentDictionary<Type, bool> registeredAdaptors = new ConcurrentDictionary<Type, bool>();
 
     private DaprPluggableComponentsApplication(DaprPluggableComponentsApplicationOptions options)
     {       
@@ -70,11 +71,7 @@ public sealed class DaprPluggableComponentsApplication
                 builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentType>>(serviceProvider => new MultiplexedComponentProvider<TComponentType>(serviceProvider, pubSubFactory));
             });
 
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapDaprPluggableComponent<TAdaptor>();                
-            });
+        this.MapDaprPluggableComponentAdaptor<TAdaptor>();
     }
 
     private void AddComponent<TComponentType, TComponentImpl, TAdaptor>()
@@ -89,11 +86,7 @@ public sealed class DaprPluggableComponentsApplication
                 builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentType>, SingletonComponentProvider<TComponentType>>();
             });
 
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapDaprPluggableComponent<TAdaptor>();
-            });
+        this.MapDaprPluggableComponentAdaptor<TAdaptor>();
     }
 
     private void AddRelatedService<TComponent, TComponentImpl, TAdaptor>()
@@ -106,11 +99,20 @@ public sealed class DaprPluggableComponentsApplication
                 builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>, DelegatedComponentProvider<TComponent, TComponentImpl>>();
             });
 
-        this.ConfigureApplication(
-            app =>
-            {
-                app.MapDaprPluggableComponent<TAdaptor>();
-            });
+        this.MapDaprPluggableComponentAdaptor<TAdaptor>();
+    }
+
+    private void MapDaprPluggableComponentAdaptor<TAdaptor>()
+        where TAdaptor : class
+    {
+        if (this.registeredAdaptors.TryAdd(typeof(TAdaptor), true))
+        {
+            this.ConfigureApplication(
+                app =>
+                {
+                    app.MapDaprPluggableComponent<TAdaptor>();
+                });
+        }
     }
 
     private void ConfigureApplication(Action<WebApplication> configurer)
