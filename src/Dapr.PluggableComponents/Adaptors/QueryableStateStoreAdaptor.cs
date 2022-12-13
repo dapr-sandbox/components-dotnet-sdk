@@ -24,7 +24,7 @@ public class QueryableStateStoreAdaptor : QueriableStateStoreBase
 
     public override async Task<Proto.Components.V1.QueryResponse> Query(Proto.Components.V1.QueryRequest request, ServerCallContext context)
     {
-        var response = await this.GetStateStore(context.RequestHeaders).QueryAsync(
+        var response = await this.GetStateStore(context).QueryAsync(
             new Components.StateStore.StateStoreQueryRequest
             {
                 Metadata = request.Metadata
@@ -53,8 +53,8 @@ public class QueryableStateStoreAdaptor : QueriableStateStoreBase
         return grpcResponse;
     }
 
-    private IQueryableStateStore GetStateStore(Metadata metadata)
+    private IQueryableStateStore GetStateStore(ServerCallContext context)
     {
-        return this.componentProvider.GetComponent(key => metadata.Get(key));
+        return this.componentProvider.GetComponent(context);
     }
 }

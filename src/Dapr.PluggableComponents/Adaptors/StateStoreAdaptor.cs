@@ -27,7 +27,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("BulkDelete request for {count} keys", request.Items.Count);
 
-        var stateStore = this.GetStateStore(context.RequestHeaders);
+        var stateStore = this.GetStateStore(context);
 
         if (stateStore is IBulkStateStore bulkStateStore)
         {
@@ -52,7 +52,7 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Bulk get request for {count} keys", request.Items.Count);
 
-        var stateStore = this.GetStateStore(context.RequestHeaders);
+        var stateStore = this.GetStateStore(context);
 
         if (stateStore is IBulkStateStore bulkStateStore)
         {
@@ -111,17 +111,17 @@ public class StateStoreAdaptor : StateStoreBase
         }
     }
 
-    public override async Task<BulkSetResponse> BulkSet(BulkSetRequest request, ServerCallContext ctx)
+    public override async Task<BulkSetResponse> BulkSet(BulkSetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
 
-        var stateStore = this.GetStateStore(ctx.RequestHeaders);
+        var stateStore = this.GetStateStore(context);
 
         if (stateStore is IBulkStateStore bulkStateStore)
         {
             await bulkStateStore.BulkSetAsync(
                 request.Items.Select(StateStoreSetRequest.FromSetRequest).ToArray(),
-                ctx.CancellationToken);
+                context.CancellationToken);
         }
         else
         {
@@ -129,7 +129,7 @@ public class StateStoreAdaptor : StateStoreBase
 
             foreach (var item in request.Items)
             {
-                await stateStore.SetAsync(StateStoreSetRequest.FromSetRequest(item), ctx.CancellationToken);
+                await stateStore.SetAsync(StateStoreSetRequest.FromSetRequest(item), context.CancellationToken);
             }
         }
 
@@ -140,22 +140,22 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Delete request for key {key}", request.Key);
 
-        await this.GetStateStore(context.RequestHeaders).DeleteAsync(
+        await this.GetStateStore(context).DeleteAsync(
             StateStoreDeleteRequest.FromDeleteRequest(request),
             context.CancellationToken);
 
         return new DeleteResponse();
     }
 
-    public override async Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext ctx)
+    public override async Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Features request");
 
         var response = new FeaturesResponse();
 
-        if (this.GetStateStore(ctx.RequestHeaders) is IPluggableComponentFeatures features)
+        if (this.GetStateStore(context) is IPluggableComponentFeatures features)
         {
-            var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken);
+            var featuresResponse = await features.GetFeaturesAsync(context.CancellationToken);
     
             response.Features.AddRange(featuresResponse);
         }
@@ -163,55 +163,55 @@ public class StateStoreAdaptor : StateStoreBase
         return response;
     }
 
-    public override async Task<GetResponse> Get(GetRequest request, ServerCallContext ctx)
+    public override async Task<GetResponse> Get(GetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Get request for key {key}", request.Key);
 
-        var response = await this.GetStateStore(ctx.RequestHeaders).GetAsync(
+        var response = await this.GetStateStore(context).GetAsync(
             StateStoreGetRequest.FromGetRequest(request),
-            ctx.CancellationToken);
+            context.CancellationToken);
 
         return StateStoreGetResponse.ToGetResponse(response);
     }
 
-    public async override Task<InitResponse> Init(Proto.Components.V1.InitRequest request, ServerCallContext ctx)
+    public async override Task<InitResponse> Init(Proto.Components.V1.InitRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Init request");
         
-        var endPoint = this.endPointProvider.GetEndPoint(ctx);
+        var endPoint = this.endPointProvider.GetEndPoint(context);
 
-        await this.GetStateStore(ctx.RequestHeaders).InitAsync(
+        await this.GetStateStore(context).InitAsync(
             Components.MetadataRequest.FromMetadataRequest(request.Metadata),
-            ctx.CancellationToken);
+            context.CancellationToken);
         
         return new InitResponse();
     }
 
-    public override async Task<PingResponse> Ping(PingRequest request, ServerCallContext ctx)
+    public override async Task<PingResponse> Ping(PingRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Ping request");
 
-        if (this.GetStateStore(ctx.RequestHeaders) is IPluggableComponentLiveness ping)
+        if (this.GetStateStore(context) is IPluggableComponentLiveness ping)
         {
-            await ping.PingAsync(ctx.CancellationToken);
+            await ping.PingAsync(context.CancellationToken);
         }
 
         return new PingResponse();
     }
 
-    public override async Task<SetResponse> Set(SetRequest request, ServerCallContext ctx)
+    public override async Task<SetResponse> Set(SetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Set request for key {key}", request.Key);
 
-        await this.GetStateStore(ctx.RequestHeaders).SetAsync(
+        await this.GetStateStore(context).SetAsync(
             StateStoreSetRequest.FromSetRequest(request),
-            ctx.CancellationToken);
+            context.CancellationToken);
 
         return new SetResponse();
     }
 
-    private IStateStore GetStateStore(Metadata metadata)
+    private IStateStore GetStateStore(ServerCallContext context)
     {
-        return this.componentProvider.GetComponent(key => metadata.Get(key));
+        return this.componentProvider.GetComponent(context);
     }
 }

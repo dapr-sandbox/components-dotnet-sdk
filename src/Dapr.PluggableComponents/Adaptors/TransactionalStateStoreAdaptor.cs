@@ -20,7 +20,7 @@ public class TransactionalStateStoreAdaptor : TransactionalStateStoreBase
 
     public override async Task<TransactionalStateResponse> Transact(TransactionalStateRequest request, ServerCallContext context)
     {
-        await this.GetStateStore(context.RequestHeaders).TransactAsync(
+        await this.GetStateStore(context).TransactAsync(
             new StateStoreTransactRequest
             {
                 Metadata = request.Metadata,
@@ -31,9 +31,9 @@ public class TransactionalStateStoreAdaptor : TransactionalStateStoreBase
         return new TransactionalStateResponse();
     }
 
-    private ITransactionalStateStore GetStateStore(Metadata metadata)
+    private ITransactionalStateStore GetStateStore(ServerCallContext context)
     {
-        return this.componentProvider.GetComponent(key => metadata.Get(key));
+        return this.componentProvider.GetComponent(context);
     }
 
     public static StateStoreTransactOperation? ToOperation(TransactionalStateOperation operation)

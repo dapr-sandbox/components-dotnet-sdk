@@ -22,9 +22,9 @@ public sealed class MultiplexedComponentProvider<T> : IDaprPluggableComponentPro
 
     #region IDaprPluggableComponentProvider<T> Members
 
-    public T GetComponent(Func<string, Metadata.Entry?> metadataProvider)
+    public T GetComponent(ServerCallContext context)
     {
-        var entry = metadataProvider(metadataInstanceId);
+        var entry = context.RequestHeaders.Get(metadataInstanceId);
 
         var component =
             entry != null

@@ -14,9 +14,9 @@ public sealed class DelegatedComponentProvider<TDelegatingType, TDelegatedType> 
 
     #region IDaprPluggableComponentProvider<TDelegatingType> Members
 
-    public TDelegatingType GetComponent(Func<string, Metadata.Entry?> metadataProvider)
+    public TDelegatingType GetComponent(ServerCallContext context)
     {
-        return (this.provider.GetComponent(metadataProvider) as TDelegatingType)!;
+        return (this.provider.GetComponent(context) as TDelegatingType)!;
     }
 
     #endregion

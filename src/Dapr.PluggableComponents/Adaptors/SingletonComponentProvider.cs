@@ -13,7 +13,7 @@ public sealed class SingletonComponentProvider<T> : IDaprPluggableComponentProvi
 
     #region IDaprPluggableComponentProvider<T> Members
 
-    public T GetComponent(Func<string, Metadata.Entry?> metadataProvider)
+    public T GetComponent(ServerCallContext context)
     {
         return this.component;
     }
