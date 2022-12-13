@@ -14,11 +14,13 @@ public class StateStoreAdaptor : StateStoreBase
 {
     private readonly ILogger<StateStoreAdaptor> logger;
     private readonly IDaprPluggableComponentProvider<IStateStore> componentProvider;
+    private readonly IDaprPluggableComponentEndPointProvider endPointProvider;
 
-    public StateStoreAdaptor(ILogger<StateStoreAdaptor> logger, IDaprPluggableComponentProvider<IStateStore> componentProvider)
+    public StateStoreAdaptor(ILogger<StateStoreAdaptor> logger, IDaprPluggableComponentProvider<IStateStore> componentProvider, IDaprPluggableComponentEndPointProvider endPointProvider)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.componentProvider = componentProvider ?? throw new ArgumentNullException(nameof(componentProvider));
+        this.endPointProvider = endPointProvider ?? throw new ArgumentNullException(nameof(endPointProvider));
     }
 
     public override async Task<BulkDeleteResponse> BulkDelete(BulkDeleteRequest request, ServerCallContext context)
@@ -176,6 +178,8 @@ public class StateStoreAdaptor : StateStoreBase
     {
         this.logger.LogInformation("Init request");
         
+        var endPoint = this.endPointProvider.GetEndPoint(ctx);
+
         await this.GetStateStore(ctx.RequestHeaders).InitAsync(
             Components.MetadataRequest.FromMetadataRequest(request.Metadata),
             ctx.CancellationToken);

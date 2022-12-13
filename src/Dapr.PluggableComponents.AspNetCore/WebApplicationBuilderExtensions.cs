@@ -1,3 +1,5 @@
+using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -7,7 +9,19 @@ namespace Dapr.PluggableComponents;
 
 public static class WebApplicationBuilderExtensions
 {
-    public static string AddDaprPluggableComponentsServices(this WebApplicationBuilder builder, DaprPluggableComponentsApplicationOptions options)
+    public static WebApplicationBuilder AddDaprPluggableComponentsSupportServices(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<IDaprPluggableComponentEndPointProvider, SocketEndPointProvider>();
+
+        builder.Services.AddGrpc();
+
+        // Dapr component discovery relies on the gRPC reflection service.
+        builder.Services.AddGrpcReflection();
+
+        return builder;
+    }
+
+    public static string AddDaprService(this WebApplicationBuilder builder, DaprPluggableComponentsApplicationOptions options)
     {
         string socketExtension = options.SocketExtension
             ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsExtension)
@@ -41,11 +55,6 @@ public static class WebApplicationBuilderExtensions
                         listenOptions.Protocols = HttpProtocols.Http2;
                     });
             });
-
-        builder.Services.AddGrpc();
-
-        // Dapr component discovery relies on the gRPC reflection service.
-        builder.Services.AddGrpcReflection();
 
         return socketPath;
     }

@@ -29,42 +29,26 @@ public sealed class DaprPluggableComponentsApplication
     private readonly ConcurrentBag<Action<WebApplicationBuilder>> builderActions = new ConcurrentBag<Action<WebApplicationBuilder>>();
     private readonly ConcurrentBag<Action<WebApplication>> appActions = new ConcurrentBag<Action<WebApplication>>();
 
+    private readonly ConcurrentBag<DaprServiceRegistration> serviceBuilderActions = new ConcurrentBag<DaprServiceRegistration>();
+
     private DaprPluggableComponentsApplication(DaprPluggableComponentsApplicationOptions options)
     {       
         this.options = options;
     }
 
-    #region State Store Members
+    private sealed record DaprServiceRegistration(DaprPluggableComponentsApplicationOptions Options, Action<DaprPluggableComponentsServiceBuilder> Callback);
 
-    public void AddStateStore<TStateStore>(Func<IServiceProvider, string?, TStateStore> stateStoreFactory)
-        where TStateStore : class, IStateStore
+    public DaprPluggableComponentsApplication RegisterService(string socketName, Action<DaprPluggableComponentsServiceBuilder> callback)
     {
-        this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>(stateStoreFactory);
-
-        this.AddRelatedStateStoreServices<TStateStore>();
+        return this.RegisterService(new DaprPluggableComponentsApplicationOptions { SocketName = socketName }, callback);
     }
 
-    public void AddStateStore<TStateStore>() where TStateStore : class, IStateStore
+    public DaprPluggableComponentsApplication RegisterService(DaprPluggableComponentsApplicationOptions options, Action<DaprPluggableComponentsServiceBuilder> callback)
     {
-        this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>();
+        this.serviceBuilderActions.Add(new DaprServiceRegistration(options, callback));
 
-        this.AddRelatedStateStoreServices<TStateStore>();
+        return this;
     }
-
-    private void AddRelatedStateStoreServices<TStateStore>()
-    {
-        if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
-        {
-            this.AddRelatedService<IQueryableStateStore, IStateStore, QueryableStateStoreAdaptor>();
-        }
-
-        if (typeof(TStateStore).IsAssignableTo(typeof(ITransactionalStateStore)))
-        {
-            this.AddRelatedService<ITransactionalStateStore, IStateStore, TransactionalStateStoreAdaptor>();
-        }
-    }
-
-    #endregion
 
     public void Run()
     {
@@ -147,7 +131,20 @@ public sealed class DaprPluggableComponentsApplication
 
         this.options.WebApplicationBuilderConfiguration?.Invoke(builder);
 
-        string socketPath = builder.AddDaprPluggableComponentsServices(options);
+        builder.AddDaprPluggableComponentsSupportServices();
+
+        var socketPaths = new List<string>();
+
+        foreach (var registration in this.serviceBuilderActions)
+        {
+            string socketPath = builder.AddDaprService(registration.Options);
+            
+            socketPaths.Add(socketPath);
+
+            var serviceBuilder = new DaprPluggableComponentsServiceBuilder(socketPath, this.ConfigureApplicationBuilder, this.ConfigureApplication);
+
+            registration.Callback(serviceBuilder);
+        }
 
         foreach (var configurer in this.builderActions)
         {
@@ -175,12 +172,15 @@ public sealed class DaprPluggableComponentsApplication
                 // locally. Therefore, once the socket file has been created (after start), the permissions need be
                 // updated to allow global read/write.
 
-                var fileInfo = new UnixFileInfo(socketPath);
+                foreach (var socketPath in socketPaths)
+                {
+                    var fileInfo = new UnixFileInfo(socketPath);
 
-                fileInfo.FileAccessPermissions =
-                    FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
-                    | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite
-                    | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherWrite;
+                    fileInfo.FileAccessPermissions =
+                        FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
+                        | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite
+                        | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherWrite;
+                }
             });
 
         return app;
