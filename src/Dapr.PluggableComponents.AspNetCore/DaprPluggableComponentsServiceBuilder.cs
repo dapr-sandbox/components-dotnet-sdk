@@ -30,6 +30,16 @@ public sealed class DaprPluggableComponentsServiceBuilder
         return this;
     }
 
+    public DaprPluggableComponentsServiceBuilder RegisterStateStore<TStateStore>(Func<IServiceProvider, string?, TStateStore> stateStoreFactory)
+        where TStateStore : class, IStateStore
+    {
+        this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>(stateStoreFactory);
+
+        this.AddRelatedStateStoreServices<TStateStore>();
+        
+        return this;
+    }
+
     private void AddComponent<TComponentType, TComponentImpl, TAdaptor>()
         where TComponentType : class
         where TComponentImpl : class, TComponentType
@@ -46,6 +56,23 @@ public sealed class DaprPluggableComponentsServiceBuilder
             app =>
             {
                 app.MapDaprPluggableComponent<TAdaptor>();
+            });
+    }
+
+    private void AddComponent<TComponentType, TComponentImpl, TAdaptor>(Func<IServiceProvider, string?, TComponentImpl> pubSubFactory)
+        where TComponentImpl : class, TComponentType
+        where TAdaptor : class
+    {
+        this.configureApplicationBuilder(
+            builder =>
+            {
+                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentType>>(serviceProvider => new MultiplexedComponentProvider<TComponentType>(serviceProvider, pubSubFactory));
+            });
+
+        this.configureApplication(
+            app =>
+            {
+                app.MapDaprPluggableComponent<TAdaptor>();                
             });
     }
 
