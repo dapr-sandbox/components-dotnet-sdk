@@ -1,24 +1,19 @@
 using Dapr.PluggableComponents.Adaptors;
 using Dapr.PluggableComponents.Components.StateStore;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Dapr.PluggableComponents;
 
 public sealed class DaprPluggableComponentsServiceBuilder
 {
     private string socketPath;
-    private Action<Action<WebApplicationBuilder>> configureApplicationBuilder;
-    private Action<Action<WebApplication>> configureApplication;
+    private readonly IDaprPluggableComponentsRegistrar registrar;
 
     internal DaprPluggableComponentsServiceBuilder(
         string socketPath,
-        Action<Action<WebApplicationBuilder>> configureApplicationBuilder,
-        Action<Action<WebApplication>> configureApplication)
+        IDaprPluggableComponentsRegistrar registrar)
     {
         this.socketPath = socketPath;
-        this.configureApplicationBuilder = configureApplicationBuilder;
-        this.configureApplication = configureApplication;
+        this.registrar = registrar;
     }
 
     public DaprPluggableComponentsServiceBuilder RegisterStateStore<TStateStore>() where TStateStore : class, IStateStore
@@ -45,47 +40,35 @@ public sealed class DaprPluggableComponentsServiceBuilder
         where TComponentImpl : class, TComponentType
         where TAdaptor : class
     {
-        this.configureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<TComponentType, TComponentImpl>();
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentType>, SingletonComponentProvider<TComponentType>>();
-            });
+        this.registrar.RegisterComponent<TComponentImpl>();
 
-        this.configureApplication(
-            app =>
-            {
-                app.MapDaprPluggableComponent<TAdaptor>();
-            });
+        this.registrar.RegisterProvider<TComponentType, TComponentImpl>(this.socketPath);
+
+        this.registrar.RegisterAdaptor<TAdaptor>();
     }
 
     private void AddComponent<TComponentType, TComponentImpl, TAdaptor>(Func<IServiceProvider, string?, TComponentImpl> pubSubFactory)
+        where TComponentType : class
         where TComponentImpl : class, TComponentType
         where TAdaptor : class
     {
-        this.configureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponentType>>(serviceProvider => new MultiplexedComponentProvider<TComponentType>(serviceProvider, pubSubFactory));
-            });
+        this.registrar.RegisterComponent<TComponentImpl>(socketPath, pubSubFactory);
 
-        this.configureApplication(
-            app =>
-            {
-                app.MapDaprPluggableComponent<TAdaptor>();                
-            });
+        this.registrar.RegisterProvider<TComponentType, TComponentImpl>(this.socketPath);
+
+        this.registrar.RegisterAdaptor<TAdaptor>();
     }
 
     private void AddRelatedStateStoreServices<TStateStore>()
     {
         if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
         {
-            this.AddRelatedService<IQueryableStateStore, IStateStore, QueryableStateStoreAdaptor>();
+            this.AddRelatedService<IQueryableStateStore, TStateStore, QueryableStateStoreAdaptor>();
         }
 
         if (typeof(TStateStore).IsAssignableTo(typeof(ITransactionalStateStore)))
         {
-            this.AddRelatedService<ITransactionalStateStore, IStateStore, TransactionalStateStoreAdaptor>();
+            this.AddRelatedService<ITransactionalStateStore, TStateStore, TransactionalStateStoreAdaptor>();
         }
     }
 
@@ -93,16 +76,8 @@ public sealed class DaprPluggableComponentsServiceBuilder
         where TComponent : class
         where TAdaptor : class
     {
-        this.configureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>, DelegatedComponentProvider<TComponent, TComponentImpl>>();
-            });
+        this.registrar.RegisterProvider<TComponent, TComponentImpl>(this.socketPath);
 
-        this.configureApplication(
-            app =>
-            {
-                app.MapDaprPluggableComponent<TAdaptor>();
-            });
+        this.registrar.RegisterAdaptor<TAdaptor>();
     }
 }
