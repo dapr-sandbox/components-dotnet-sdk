@@ -11,8 +11,6 @@ public static class WebApplicationBuilderExtensions
 {
     public static WebApplicationBuilder AddDaprPluggableComponentsSupportServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IDaprPluggableComponentEndPointProvider, SocketEndPointProvider>();
-
         builder.Services.AddGrpc();
 
         // Dapr component discovery relies on the gRPC reflection service.
