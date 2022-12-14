@@ -3,6 +3,10 @@ using Dapr.PluggableComponents.Components.StateStore;
 
 namespace Dapr.PluggableComponents;
 
+public sealed record ComponentProviderContext(string? InstanceId, IServiceProvider ServiceProvider, string SocketPath);
+
+public delegate T ComponentProviderDelegate<T>(ComponentProviderContext context);
+
 public sealed class DaprPluggableComponentsServiceBuilder
 {
     private readonly string socketPath;

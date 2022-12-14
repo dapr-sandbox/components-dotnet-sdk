@@ -4,10 +4,6 @@ using Grpc.Core;
 
 namespace Dapr.PluggableComponents;
 
-public sealed record ComponentProviderContext(string? InstanceId, IServiceProvider ServiceProvider, string SocketPath);
-
-public delegate T ComponentProviderDelegate<T>(ComponentProviderContext context);
-
 internal sealed class MultiplexedComponentProvider<T> : IDaprPluggableComponentProvider<T>
 {
     private const string MetadataInstanceId = "x-component-instance";
