@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Builder;
 
 namespace Dapr.PluggableComponents;
 
-public sealed class DaprPluggableComponentsApplicationOptions
+public sealed record DaprPluggableComponentsApplicationOptions
 {
     public Action<WebApplication>? WebApplicationConfiguration { get; init; }
 

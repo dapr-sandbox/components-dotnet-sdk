@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Globalization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -7,6 +9,8 @@ namespace Dapr.PluggableComponents;
 
 public static class WebApplicationBuilderExtensions
 {
+    private static readonly ConcurrentDictionary<string, bool> SocketPaths = new ConcurrentDictionary<string, bool>();
+
     public static WebApplicationBuilder AddDaprPluggableComponentsSupportServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddGrpc();
@@ -28,7 +32,29 @@ public static class WebApplicationBuilderExtensions
             ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsFolder)
             ?? Constants.Defaults.DaprComponentsSocketsFolder;
 
-        string socketPath = Path.Join(socketFolder, options.SocketName + socketExtension);
+        string socketName = options.SocketName;
+
+        if (String.IsNullOrEmpty(socketExtension))
+        {
+            throw new ArgumentException("No valid socket extension was specified via options or environment variable.", nameof(options));
+        }
+
+        if (String.IsNullOrEmpty(socketFolder))
+        {
+            throw new ArgumentException("No valid socket folder was specified via options or environment variable.", nameof(options));
+        }
+
+        if (String.IsNullOrEmpty(socketName))
+        {
+            throw new ArgumentException("No valid socket name was specified via options or environment variable.", nameof(options));
+        }
+
+        string socketPath = Path.Join(socketFolder, socketName + socketExtension);
+
+        if (!SocketPaths.TryAdd(socketPath, true))
+        {
+            throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "A service was already added at socket path '{0}'.", socketPath), nameof(options));
+        }
 
         Directory.CreateDirectory(socketFolder);
 

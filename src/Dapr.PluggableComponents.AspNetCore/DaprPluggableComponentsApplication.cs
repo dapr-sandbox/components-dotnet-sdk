@@ -132,7 +132,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
         builder.AddDaprPluggableComponentsSupportServices();
 
-        var socketPaths = new List<string>();
+        var socketPaths = new HashSet<string>();
 
         foreach (var registration in this.serviceBuilderActions)
         {
