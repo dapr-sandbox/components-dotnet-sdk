@@ -68,7 +68,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
             this.ConfigureApplication(
                 app =>
                 {
-                    app.MapDaprPluggableComponent<TAdaptor>();
+                    app.MapDaprPluggableComponentAdaptor<TAdaptor>();
                 });
         }
     }

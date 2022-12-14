@@ -26,45 +26,34 @@ Add the Dapr Pluggable Components SDK NuGet package.
 In `Program.cs`, Replace the default application building logic with Dapr equivalents.
 
 ```csharp
-var componentName = "<component name>";
+var app = DaprPluggableComponentsApplication.Create();
 
-var options = new DaprPluggableComponentsOptions
+app.RegisterService(
+    "<socket name>",
+    serviceBuilder =>
     {
-        Args = args,
-        SocketName = componentName
-    };
-
-var app = DaprPluggableComponentsApplication.Create(options);
+        // TODO: Register Dapr Pluggable Components.
+    });
 
 app.Run();
 ```
 
 Implement one or more component interfaces.
 
-- `Dapr.PluggableComponents.Bindings.IInputBinding`: The interface for input binding components.
-- `Dapr.PluggableComponents.Bindings.IOuputBinding`: The interface for output binding components.
-- `Dapr.PluggableComponents.PubSub.IPubSub`: The interface for pub-sub components.
 - `Dapr.PluggableComponents.StateStore.IStateStore`: The interface for state store components.
 
-Register one or more component types.
-
-> NOTE: Only a single component of any given type can be registered.
+Register one or more component types with the service.
 
 ```csharp
-var componentName = "<component name>";
+var app = DaprPluggableComponentsApplication.Create();
 
-var options = new DaprPluggableComponentsOptions
+app.RegisterService(
+    "<socket name>",
+    serviceBuilder =>
     {
-        Args = args,
-        SocketName = componentName
-    };
-
-var app = DaprPluggableComponentsApplication.Create(options);
-
-app.AddInputBinding<MyInputBinding>     // Add an input binding.
-app.AddOutputBinding<MyOutputBinding>   // Add an output binding.
-app.AddPubSub<MyPubSub>                 // Add a pub-sub component.
-app.AddStateStore<MyStateStore>         // Add a state store.
+        // Register a state store with the service.
+        serviceBuilder.RegisterStateStore<MyStateStore>();
+    });
 
 app.Run();
 
@@ -73,6 +62,8 @@ class MyStateStore : IStateStore
     // ...
 }
 ```
+
+> NOTE: Only a single component of any given type can be registered with a given service.  However, you can register components of the same type on separate services, and you can have as many services as you need.
 
 ## Registering a Pluggable Component
 
@@ -96,3 +87,122 @@ In this example:
 - `<component name>` represents the name of the Dapr component.
 - `<component type>` represents the type of the Dapr component.
 - `<socket name>` represents the name of the socket associated with the Pluggable Component application hosting the Dapr component.
+
+## Pluggable Component Customization
+
+### Per-Component Instances
+
+By default, pluggable component implementations are singletons, so every invocation of a Dapr component will invoke the same Pluggable Component instance.  In some cases it might be preferable to have multiple instances serve each component.  This can be achieved by registering the component using a provider delegate.
+
+```csharp
+var app = DaprPluggableComponentsApplication.Create();
+
+app.RegisterService(
+    "<socket name>",
+    serviceBuilder =>
+    {
+        // Register a state store with the service.
+        serviceBuilder.RegisterStateStore<MyStateStore>(
+            context =>
+            {
+                // Return a new state store instance for each individual Dapr component.
+                return new MyStateStore();
+            });
+    });
+
+app.Run();
+
+class MyStateStore : IStateStore
+{
+    // ...
+}
+```
+
+The provider delegate is passed a context argument that allows delegate logic to determine how to create/return the component instance, such as the Dapr component instance ID and the socket path of the service.
+
+### Multiple Services
+
+Pluggable Components of the same type can be exposed from the same application at the same time by using separate services, each of which are hosted from a separate socket.
+
+```csharp
+var app = DaprPluggableComponentsApplication.Create();
+
+app.RegisterService(
+    "<socket A>",
+    serviceBuilder =>
+    {
+        // Register a state store with the service.
+        serviceBuilder.RegisterStateStore<StateStoreA>();
+    });
+
+app.RegisterService(
+    "<socket B>",
+    serviceBuilder =>
+    {
+        // Register a state store with the service.
+        serviceBuilder.RegisterStateStore<StateStoreB>();
+    });
+
+app.Run();
+
+class StateStoreA : IStateStore
+{
+    // ...
+}
+
+class StateStoreB : IStateStore
+{
+    // ...
+}
+```
+
+### Socket Path Customization
+
+Registering a service requires only the name of the socket to be created in Dapr's default location. In cases where you need to change path of the socket, you can pass an options argument when registering the service.
+
+```csharp
+var app = DaprPluggableComponentsApplication.Create();
+
+app.RegisterService(
+    new DaprPluggableComponentsServiceOptions("<socket name>")
+    {
+        SocketExtension = ".mysock",
+        SocketFolder = "/tmp/my-components"
+    },
+    serviceBuilder =>
+        // ...
+    });
+
+app.Run();
+```
+
+### ASP.NET Customization (Dependency Injection, Logging, and Configuration)
+
+As a Dapr Pluggable Component application is built upon ASP.NET, it may be necessary to access the underlying ASP.NET infrastructure to make use of dependency injection, logging, configuration, and other services.  These are exposed via an options object passed when creating the application.
+
+```csharp
+var app = DaprPluggableComponentsApplication.Create(
+    new DaprPluggableComponentsApplicationOptions
+    {
+        WebApplicationBuilderConfiguration =
+            builder =>
+            {
+                // Add builder logic...
+                // E.g. builder.Services.AddSingleton<MyService>();
+            },
+        WebApplicationConfiguration =
+            webApp =>
+            {
+                // Add application-related logic...
+            }
+    });
+
+app.RegisterService(
+    "<socket name>",
+    serviceBuilder =>
+    {
+        // ...
+    });
+
+app.Run();
+```
