@@ -16,7 +16,7 @@ internal sealed class DaprPluggableComponentsRegistry
             this.componentProviderFactory = componentProviderFactory ?? throw new ArgumentNullException(nameof(componentProviderFactory));
         }
 
-        public IDaprPluggableComponentProvider<object> GetComponentProvider(IServiceProvider serviceProvider)
+        public IDaprPluggableComponentProvider<object> GetComponentProvider(IServiceProvider serviceProvider, string socketPath)
         {
             if (this.componentProvider == null)
             {
@@ -70,7 +70,7 @@ internal sealed class DaprPluggableComponentsRegistry
         {
             if (registry.Types.TryGetValue(typeof(T), out var providerFactory))
             {
-                var componentProvider = providerFactory.GetComponentProvider(serviceProvider) as IDaprPluggableComponentProvider<T>;
+                var componentProvider = providerFactory.GetComponentProvider(serviceProvider, socketPath) as IDaprPluggableComponentProvider<T>;
 
                 if (componentProvider != null)
                 {

@@ -84,14 +84,14 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
                });
         }
 
-        ((IDaprPluggableComponentsRegistrar)this).RegisterComponent(socketPath, (serviceProvider, _) => serviceProvider.GetRequiredService<TComponent>());
+        ((IDaprPluggableComponentsRegistrar)this).RegisterComponent(socketPath, context => context.ServiceProvider.GetRequiredService<TComponent>());
     }
 
     private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();    
 
     void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>(string socketPath, ComponentProviderDelegate<TComponent> componentFactory) where TComponent : class
     {
-        this.registry.RegisterComponentProvider(socketPath, serviceProvider => new MultiplexedComponentProvider<TComponent>(serviceProvider, componentFactory));
+        this.registry.RegisterComponentProvider(socketPath, serviceProvider => new MultiplexedComponentProvider<TComponent>(componentFactory, serviceProvider, socketPath));
     }
 
     void IDaprPluggableComponentsRegistrar.RegisterProvider<TComponent, TComponentImpl>(string socketPath)

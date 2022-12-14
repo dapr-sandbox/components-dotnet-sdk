@@ -4,34 +4,40 @@ using Grpc.Core;
 
 namespace Dapr.PluggableComponents;
 
-public delegate T ComponentProviderDelegate<T>(IServiceProvider serviceProvider, string? instanceId);
+public sealed record ComponentProviderContext(string? InstanceId, IServiceProvider ServiceProvider, string SocketPath);
+
+public delegate T ComponentProviderDelegate<T>(ComponentProviderContext context);
 
 internal sealed class MultiplexedComponentProvider<T> : IDaprPluggableComponentProvider<T>
 {
-    private const string metadataInstanceId = "x-component-instance";
+    private const string MetadataInstanceId = "x-component-instance";
 
     private readonly ComponentProviderDelegate<T> componentProvider;
     private readonly ConcurrentDictionary<string, Lazy<T>> components = new ConcurrentDictionary<string, Lazy<T>>();
     private readonly Lazy<T> defaultComponent;
-    private readonly IServiceProvider serviceProvider;
+    private readonly ComponentProviderContext defaultComponentProviderContext;
 
-    public MultiplexedComponentProvider(IServiceProvider serviceProvider, ComponentProviderDelegate<T> componentProvider)
+    public MultiplexedComponentProvider(ComponentProviderDelegate<T> componentProvider, IServiceProvider serviceProvider, string socketPath)
     {
         this.componentProvider = componentProvider ?? throw new ArgumentNullException(nameof(componentProvider));
-        this.serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-        this.defaultComponent = new Lazy<T>(() => componentProvider(this.serviceProvider, null));
+        this.defaultComponentProviderContext = new ComponentProviderContext(
+            null,
+            serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider)),
+            socketPath ?? throw new ArgumentNullException(nameof(socketPath)));
+
+        this.defaultComponent = new Lazy<T>(() => componentProvider(this.defaultComponentProviderContext));
     }
 
     #region IDaprPluggableComponentProvider<T> Members
 
     public T GetComponent(ServerCallContext context)
     {
-        var entry = context.RequestHeaders.Get(metadataInstanceId);
+        var entry = context.RequestHeaders.Get(MetadataInstanceId);
 
         var component =
             entry != null
-                ? this.components.GetOrAdd(entry.Value, instanceId => new Lazy<T>(() => this.componentProvider(this.serviceProvider, instanceId)))
+                ? this.components.GetOrAdd(entry.Value, instanceId => new Lazy<T>(() => this.componentProvider(this.defaultComponentProviderContext with { InstanceId = instanceId })))
                 : this.defaultComponent;
 
         return component.Value;

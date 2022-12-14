@@ -11,11 +11,11 @@ app.RegisterService(
 
         // This registration method enables a state store instance per component instance.
         serviceBuilder.RegisterStateStore(
-            (serviceProvider, instanceId) => 
+            context => 
             {
-                Console.WriteLine("Creating state store for instance: {0}", instanceId);
+                Console.WriteLine("Creating state store for instance '{0}' on socket '{1}'...", context.InstanceId, context.SocketPath);
 
-                return new MemoryStateStore(serviceProvider.GetRequiredService<ILogger<MemoryStateStore>>());
+                return new MemoryStateStore(context.ServiceProvider.GetRequiredService<ILogger<MemoryStateStore>>());
             });
     });
 
