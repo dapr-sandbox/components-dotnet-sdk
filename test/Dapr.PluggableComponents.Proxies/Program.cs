@@ -13,7 +13,6 @@ if (String.IsNullOrEmpty(socketPath))
 
 var options = new DaprPluggableComponentsApplicationOptions
 {
-    SocketName = "proxies",
     WebApplicationBuilderConfiguration =
         builder =>
         {
@@ -23,6 +22,11 @@ var options = new DaprPluggableComponentsApplicationOptions
 
 var app = DaprPluggableComponentsApplication.Create(options);
 
-app.AddStateStore<ProxyStateStore>();
+app.RegisterService(
+    "proxies",
+    serviceBuilder =>
+    {
+        serviceBuilder.RegisterStateStore<ProxyStateStore>();
+    });
 
 app.Run();
