@@ -5,7 +5,7 @@ namespace Dapr.PluggableComponents;
 
 public sealed class DaprPluggableComponentsServiceBuilder
 {
-    private string socketPath;
+    private readonly string socketPath;
     private readonly IDaprPluggableComponentsRegistrar registrar;
 
     internal DaprPluggableComponentsServiceBuilder(
@@ -40,11 +40,9 @@ public sealed class DaprPluggableComponentsServiceBuilder
         where TComponentImpl : class, TComponentType
         where TAdaptor : class
     {
-        this.registrar.RegisterComponent<TComponentImpl>();
+        this.registrar.RegisterComponent<TComponentImpl>(this.socketPath);
 
-        this.registrar.RegisterProvider<TComponentType, TComponentImpl>(this.socketPath);
-
-        this.registrar.RegisterAdaptor<TAdaptor>();
+        this.AddRelatedService<TComponentType, TComponentImpl, TAdaptor>();
     }
 
     private void AddComponent<TComponentType, TComponentImpl, TAdaptor>(Func<IServiceProvider, string?, TComponentImpl> pubSubFactory)
@@ -54,12 +52,11 @@ public sealed class DaprPluggableComponentsServiceBuilder
     {
         this.registrar.RegisterComponent<TComponentImpl>(socketPath, pubSubFactory);
 
-        this.registrar.RegisterProvider<TComponentType, TComponentImpl>(this.socketPath);
-
-        this.registrar.RegisterAdaptor<TAdaptor>();
+        this.AddRelatedService<TComponentType, TComponentImpl, TAdaptor>();
     }
 
     private void AddRelatedStateStoreServices<TStateStore>()
+        where TStateStore : class
     {
         if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
         {
@@ -74,6 +71,7 @@ public sealed class DaprPluggableComponentsServiceBuilder
 
     private void AddRelatedService<TComponent, TComponentImpl, TAdaptor>()
         where TComponent : class
+        where TComponentImpl : class
         where TAdaptor : class
     {
         this.registrar.RegisterProvider<TComponent, TComponentImpl>(this.socketPath);

@@ -32,6 +32,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
     private readonly ConcurrentDictionary<Type, bool> registeredAdaptors = new ConcurrentDictionary<Type, bool>();
     private readonly ConcurrentDictionary<Type, bool> registeredComponents = new ConcurrentDictionary<Type, bool>();
+    private readonly ConcurrentDictionary<Type, bool> registeredProviders = new ConcurrentDictionary<Type, bool>();
 
     private DaprPluggableComponentsApplication(DaprPluggableComponentsApplicationOptions options)
     {       
@@ -77,7 +78,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
         }
     }
 
-    void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>() where TComponent : class
+    void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>(string socketPath) where TComponent : class
     {
         if (this.registeredComponents.TryAdd(typeof(TComponent), true))
         {
@@ -85,31 +86,33 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
                 builder =>
                 {
                     builder.Services.AddSingleton<TComponent, TComponent>();
-                    builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>, SingletonComponentProvider<TComponent>>();
                });
         }
+
+        ((IDaprPluggableComponentsRegistrar)this).RegisterComponent(socketPath, (serviceProvider, _) => serviceProvider.GetRequiredService<TComponent>());
     }
+
+    private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();    
 
     void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>(string socketPath, Func<IServiceProvider, string?, TComponent> componentFactory) where TComponent : class
     {
-        if (this.registeredComponents.TryAdd(typeof(TComponent), true))
-        {
-            this.ConfigureApplicationBuilder(
-                builder =>
-                {
-                    builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>>(serviceProvider => new MultiplexedComponentProvider<TComponent>(serviceProvider, componentFactory));
-                });
-        }
+        this.registry.RegisterComponentProvider(socketPath, serviceProvider => new MultiplexedComponentProvider<TComponent>(serviceProvider, componentFactory));
     }
 
     void IDaprPluggableComponentsRegistrar.RegisterProvider<TComponent, TComponentImpl>(string socketPath)
         where TComponent : class
+        where TComponentImpl : class
     {
-        this.ConfigureApplicationBuilder(
-            builder =>
-            {
-                builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>, DelegatedComponentProvider<TComponent, TComponentImpl>>();
-            });
+        if (this.registeredProviders.TryAdd(typeof(TComponent), true))
+        {
+            this.ConfigureApplicationBuilder(
+                builder =>
+                {
+                    builder.Services.AddSingleton<IDaprPluggableComponentProvider<TComponent>>(serviceProvider => new RegisteredComponentProvider<TComponent>(this.registry, serviceProvider));
+                });
+        }
+
+        this.registry.RegisterComponentProvider<TComponent, TComponentImpl>(socketPath);
     }
 
     #endregion
