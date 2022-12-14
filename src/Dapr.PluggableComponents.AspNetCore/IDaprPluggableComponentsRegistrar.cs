@@ -6,7 +6,7 @@ internal interface IDaprPluggableComponentsRegistrar
 
     void RegisterComponent<TComponent>(string socketPath) where TComponent : class;
 
-    void RegisterComponent<TComponent>(string socketPath, Func<IServiceProvider, string?, TComponent> componentFactory) where TComponent : class;
+    void RegisterComponent<TComponent>(string socketPath, ComponentProviderDelegate<TComponent> componentFactory) where TComponent : class;
 
     void RegisterProvider<TComponent, TComponentImpl>(string socketPath)
         where TComponent : class

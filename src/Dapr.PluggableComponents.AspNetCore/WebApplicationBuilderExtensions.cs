@@ -1,5 +1,3 @@
-using Dapr.PluggableComponents.Adaptors;
-using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -19,7 +17,7 @@ public static class WebApplicationBuilderExtensions
         return builder;
     }
 
-    public static string AddDaprService(this WebApplicationBuilder builder, DaprPluggableComponentsApplicationOptions options)
+    public static string AddDaprService(this WebApplicationBuilder builder, DaprPluggableComponentsServiceOptions options)
     {
         string socketExtension = options.SocketExtension
             ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsExtension)
@@ -30,11 +28,7 @@ public static class WebApplicationBuilderExtensions
             ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsFolder)
             ?? Constants.Defaults.DaprComponentsSocketsFolder;
 
-        string socketName = options.SocketName
-            ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsName)
-            ?? throw new ArgumentException("The socket name was not specified via the options or environment variable.", nameof(options));
-
-        string socketPath = Path.Join(socketFolder, socketName + socketExtension);
+        string socketPath = Path.Join(socketFolder, options.SocketName + socketExtension);
 
         Directory.CreateDirectory(socketFolder);
 

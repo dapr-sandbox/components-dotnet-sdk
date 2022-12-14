@@ -25,7 +25,7 @@ public sealed class DaprPluggableComponentsServiceBuilder
         return this;
     }
 
-    public DaprPluggableComponentsServiceBuilder RegisterStateStore<TStateStore>(Func<IServiceProvider, string?, TStateStore> stateStoreFactory)
+    public DaprPluggableComponentsServiceBuilder RegisterStateStore<TStateStore>(ComponentProviderDelegate<TStateStore> stateStoreFactory)
         where TStateStore : class, IStateStore
     {
         this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>(stateStoreFactory);
@@ -45,7 +45,7 @@ public sealed class DaprPluggableComponentsServiceBuilder
         this.AddRelatedService<TComponentType, TComponentImpl, TAdaptor>();
     }
 
-    private void AddComponent<TComponentType, TComponentImpl, TAdaptor>(Func<IServiceProvider, string?, TComponentImpl> pubSubFactory)
+    private void AddComponent<TComponentType, TComponentImpl, TAdaptor>(ComponentProviderDelegate<TComponentImpl> pubSubFactory)
         where TComponentType : class
         where TComponentImpl : class, TComponentType
         where TAdaptor : class

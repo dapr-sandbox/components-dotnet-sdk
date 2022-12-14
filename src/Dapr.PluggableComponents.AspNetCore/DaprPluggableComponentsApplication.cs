@@ -13,11 +13,6 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
         return Create(new DaprPluggableComponentsApplicationOptions());
     }
 
-    public static DaprPluggableComponentsApplication Create(string socketName)
-    {
-        return Create(new DaprPluggableComponentsApplicationOptions { SocketName = socketName });
-    }
-
     public static DaprPluggableComponentsApplication Create(DaprPluggableComponentsApplicationOptions options)
     {
         return new DaprPluggableComponentsApplication(options);
@@ -39,14 +34,14 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
         this.options = options;
     }
 
-    private sealed record DaprServiceRegistration(DaprPluggableComponentsApplicationOptions Options, Action<DaprPluggableComponentsServiceBuilder> Callback);
+    private sealed record DaprServiceRegistration(DaprPluggableComponentsServiceOptions Options, Action<DaprPluggableComponentsServiceBuilder> Callback);
 
     public DaprPluggableComponentsApplication RegisterService(string socketName, Action<DaprPluggableComponentsServiceBuilder> callback)
     {
-        return this.RegisterService(new DaprPluggableComponentsApplicationOptions { SocketName = socketName }, callback);
+        return this.RegisterService(new DaprPluggableComponentsServiceOptions(socketName), callback);
     }
 
-    public DaprPluggableComponentsApplication RegisterService(DaprPluggableComponentsApplicationOptions options, Action<DaprPluggableComponentsServiceBuilder> callback)
+    public DaprPluggableComponentsApplication RegisterService(DaprPluggableComponentsServiceOptions options, Action<DaprPluggableComponentsServiceBuilder> callback)
     {
         this.serviceBuilderActions.Add(new DaprServiceRegistration(options, callback));
 
@@ -94,7 +89,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
     private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();    
 
-    void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>(string socketPath, Func<IServiceProvider, string?, TComponent> componentFactory) where TComponent : class
+    void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>(string socketPath, ComponentProviderDelegate<TComponent> componentFactory) where TComponent : class
     {
         this.registry.RegisterComponentProvider(socketPath, serviceProvider => new MultiplexedComponentProvider<TComponent>(serviceProvider, componentFactory));
     }
@@ -159,7 +154,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
         this.options.WebApplicationConfiguration?.Invoke(app);
 
-        app.MapDaprPluggableComponentsServices();
+        app.MapDaprPluggableComponentsSupportServices();
 
         foreach (var configurer in this.appActions)
         {

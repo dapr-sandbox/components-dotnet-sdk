@@ -13,7 +13,5 @@ public static class Constants
         public const string DaprComponentsSocketsExtension = "DAPR_COMPONENTS_SOCKETS_EXTENSION";
 
         public const string DaprComponentsSocketsFolder = "DAPR_COMPONENTS_SOCKETS_FOLDER";
-
-        public const string DaprComponentsSocketsName = "DAPR_COMPONENTS_SOCKETS_NAME";
     }
 }
