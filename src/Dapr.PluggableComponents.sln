@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.AspNetCore", "Dapr.PluggableComponents.AspNetCore\Dapr.PluggableComponents.AspNetCore.csproj", "{F8E0AAC3-6E11-48B6-9548-BD172322E3DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.Protos", "Dapr.PluggableComponents.Protos\Dapr.PluggableComponents.Protos.csproj", "{162F5F8C-6A5B-4DED-A51E-52E2EBC9C3A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{F8E0AAC3-6E11-48B6-9548-BD172322E3DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8E0AAC3-6E11-48B6-9548-BD172322E3DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8E0AAC3-6E11-48B6-9548-BD172322E3DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{162F5F8C-6A5B-4DED-A51E-52E2EBC9C3A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{162F5F8C-6A5B-4DED-A51E-52E2EBC9C3A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{162F5F8C-6A5B-4DED-A51E-52E2EBC9C3A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{162F5F8C-6A5B-4DED-A51E-52E2EBC9C3A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

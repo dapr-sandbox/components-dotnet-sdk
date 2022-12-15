@@ -1,7 +1,8 @@
-﻿using Dapr.PluggableComponents.Components;
+﻿using Dapr.Client.Autogen.Grpc.v1;
+using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.StateStore;
-using Dapr.PluggableComponents.Proxies.Grpc.v1;
 using Dapr.PluggableComponents.Proxies.Utilities;
+using Dapr.Proto.Components.V1;
 using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
@@ -111,9 +112,9 @@ internal sealed class ProxyStateStore :
     {
         this.logger.LogInformation("Init request");
 
-        var grpcRequest = new Dapr.PluggableComponents.Proxies.Grpc.v1.InitRequest
+        var grpcRequest = new InitRequest
         {
-            Metadata = new Dapr.PluggableComponents.Proxies.Grpc.v1.MetadataRequest()
+            Metadata = new Client.Autogen.Grpc.v1.MetadataRequest()
         };
 
         grpcRequest.Metadata.Properties.Add(request.Properties);
@@ -163,7 +164,7 @@ internal sealed class ProxyStateStore :
                         sort => new Sorting
                         {
                             Key = sort.Key,
-                            Order = (Dapr.PluggableComponents.Proxies.Grpc.v1.Sorting.Types.Order)sort.Order
+                            Order = (Sorting.Types.Order)sort.Order
                         })
             );
         }
@@ -275,8 +276,8 @@ internal sealed class ProxyStateStore :
         return options != null
             ? new StateOptions
             {
-                Concurrency = (Dapr.PluggableComponents.Proxies.Grpc.v1.StateOptions.Types.StateConcurrency)options.Concurrency,
-                Consistency = (Dapr.PluggableComponents.Proxies.Grpc.v1.StateOptions.Types.StateConsistency)options.Consistency
+                Concurrency = (StateOptions.Types.StateConcurrency)options.Concurrency,
+                Consistency = (StateOptions.Types.StateConsistency)options.Consistency
             }
             : null;
     }
@@ -299,7 +300,7 @@ internal sealed class ProxyStateStore :
     {
         var grpcRequest = new GetRequest
         {
-            Consistency = (Dapr.PluggableComponents.Proxies.Grpc.v1.StateOptions.Types.StateConsistency)request.Consistency,
+            Consistency = (StateOptions.Types.StateConsistency)request.Consistency,
             Key = request.Key
         };
 
