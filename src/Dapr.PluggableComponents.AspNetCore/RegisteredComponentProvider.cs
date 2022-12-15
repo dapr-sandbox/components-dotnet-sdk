@@ -35,7 +35,7 @@ internal sealed class RegisteredComponentProvider<TComponent> : IDaprPluggableCo
     private static string GetSocketPath(ServerCallContext context)
     {
         var httpContext = context.GetHttpContext();
-        var socketFeature = httpContext.Features.Get<IConnectionSocketFeature>();        
+        var socketFeature = httpContext.Features.Get<IConnectionSocketFeature>();
         var socketPath = socketFeature?.Socket.LocalEndPoint?.ToString();
 
         if (socketPath == null)

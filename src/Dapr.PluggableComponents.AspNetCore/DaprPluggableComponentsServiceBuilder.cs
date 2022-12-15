@@ -35,7 +35,7 @@ public sealed class DaprPluggableComponentsServiceBuilder
         this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>(stateStoreFactory);
 
         this.AddRelatedStateStoreServices<TStateStore>();
-        
+
         return this;
     }
 

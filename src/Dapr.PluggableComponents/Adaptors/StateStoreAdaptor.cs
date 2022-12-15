@@ -57,7 +57,7 @@ public class StateStoreAdaptor : StateStoreBase
             var items = await bulkStateStore.BulkGetAsync(
                 request.Items.Select(StateStoreGetRequest.FromGetRequest).ToArray(),
                 context.CancellationToken);
-            
+
             var response = new BulkGetResponse
             {
                 Got = items.Any(item => String.IsNullOrEmpty(item.Error))
@@ -87,7 +87,7 @@ public class StateStoreAdaptor : StateStoreBase
                     stateItem.ContentType = response.ContentType;
                     stateItem.Data = ByteString.CopyFrom(response.Data);
                     stateItem.Etag = response.ETag != null ? new Etag { Value = response.ETag } : null;
-                    
+
                     stateItem.Metadata.Add(response.Metadata);
                 }
                 else
@@ -95,7 +95,7 @@ public class StateStoreAdaptor : StateStoreBase
                     stateItem.Error = "Unable to fetch the item.";
                 }
 
-                responses.Add(stateItem);        
+                responses.Add(stateItem);
             }
 
             var grpcResponse = new BulkGetResponse
@@ -154,7 +154,7 @@ public class StateStoreAdaptor : StateStoreBase
         if (this.GetStateStore(context) is IPluggableComponentFeatures features)
         {
             var featuresResponse = await features.GetFeaturesAsync(context.CancellationToken);
-    
+
             response.Features.AddRange(featuresResponse);
         }
 
@@ -175,11 +175,11 @@ public class StateStoreAdaptor : StateStoreBase
     public async override Task<InitResponse> Init(Proto.Components.V1.InitRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Init request");
-        
+
         await this.GetStateStore(context).InitAsync(
             Components.MetadataRequest.FromMetadataRequest(request.Metadata),
             context.CancellationToken);
-        
+
         return new InitResponse();
     }
 

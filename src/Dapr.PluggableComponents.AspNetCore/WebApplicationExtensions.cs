@@ -16,7 +16,7 @@ public static class WebApplicationExtensions
 
     public static GrpcServiceEndpointConventionBuilder MapDaprPluggableComponentAdaptor<T>(this IEndpointRouteBuilder app)
         where T : class
-        {
-            return app.MapGrpcService<T>();
-        }
+    {
+        return app.MapGrpcService<T>();
+    }
 }

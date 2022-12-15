@@ -6,7 +6,7 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Proxies.Components;
 
-internal sealed class ProxyStateStore : 
+internal sealed class ProxyStateStore :
     IStateStore,
     IQueryableStateStore,
     ITransactionalStateStore,
@@ -47,7 +47,7 @@ internal sealed class ProxyStateStore :
             grpcRequest,
             cancellationToken: cancellationToken);
 
-        return 
+        return
             grpcResponse
                 .Items
                 .Select(
@@ -300,7 +300,7 @@ internal sealed class ProxyStateStore :
         var grpcRequest = new GetRequest
         {
             Consistency = (Dapr.PluggableComponents.Proxies.Grpc.v1.StateOptions.Types.StateConsistency)request.Consistency,
-            Key = request.Key            
+            Key = request.Key
         };
 
         grpcRequest.Metadata.Add(request.Metadata);
@@ -324,3 +324,4 @@ internal sealed class ProxyStateStore :
         return grpcRequest;
     }
 }
+

@@ -27,7 +27,7 @@ internal sealed class SocketBasedGrpcChannelProvider : IGrpcChannelProvider, IDi
                                         try
                                         {
                                             await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath), cancellationToken).ConfigureAwait(false);
-                                            
+
                                             return new NetworkStream(socket, true);
                                         }
                                         catch
@@ -37,7 +37,7 @@ internal sealed class SocketBasedGrpcChannelProvider : IGrpcChannelProvider, IDi
                                         }
                                     }
                             }
-                    });        
+                    });
             });
     }
 

@@ -30,7 +30,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
     private readonly ConcurrentDictionary<Type, bool> registeredProviders = new ConcurrentDictionary<Type, bool>();
 
     private DaprPluggableComponentsApplication(DaprPluggableComponentsApplicationOptions options)
-    {       
+    {
         this.options = options;
     }
 
@@ -50,7 +50,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
     public void Run()
     {
-        this.CreateApplication().Run();        
+        this.CreateApplication().Run();
     }
 
     public Task RunAsync()
@@ -81,13 +81,13 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
                 builder =>
                 {
                     builder.Services.AddSingleton<TComponent, TComponent>();
-               });
+                });
         }
 
         ((IDaprPluggableComponentsRegistrar)this).RegisterComponent(socketPath, context => context.ServiceProvider.GetRequiredService<TComponent>());
     }
 
-    private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();    
+    private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();
 
     void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>(string socketPath, ComponentProviderDelegate<TComponent> componentFactory) where TComponent : class
     {
@@ -137,7 +137,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
         foreach (var registration in this.serviceBuilderActions)
         {
             string socketPath = builder.AddDaprService(registration.Options);
-            
+
             socketPaths.Add(socketPath);
 
             var serviceBuilder = new DaprPluggableComponentsServiceBuilder(socketPath, this);

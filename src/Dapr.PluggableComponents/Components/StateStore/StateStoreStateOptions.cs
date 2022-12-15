@@ -26,10 +26,10 @@ public sealed record StateStoreStateOptions
     {
         return options != null
             ? new StateStoreStateOptions
-                {
-                    Concurrency = (StateStoreConcurrency)options.Concurrency,
-                    Consistency = (StateStoreConsistency)options.Consistency
-                }
+            {
+                Concurrency = (StateStoreConcurrency)options.Concurrency,
+                Consistency = (StateStoreConsistency)options.Consistency
+            }
             : null;
     }
 }

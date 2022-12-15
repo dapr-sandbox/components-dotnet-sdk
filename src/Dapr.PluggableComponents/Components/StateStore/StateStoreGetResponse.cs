@@ -24,10 +24,10 @@ public sealed record StateStoreGetResponse
         {
             grpcResponse.Data = ByteString.CopyFrom(response.Data);
             grpcResponse.Etag = response.ETag != null ? new Etag { Value = response.ETag } : null;
-            
+
             grpcResponse.Metadata.Add(response.Metadata);
         }
-        
+
         return grpcResponse;
     }
 }

@@ -11,7 +11,7 @@ app.RegisterService(
 
         // This registration method enables a state store instance per component instance.
         serviceBuilder.RegisterStateStore(
-            context => 
+            context =>
             {
                 Console.WriteLine("Creating state store for instance '{0}' on socket '{1}'...", context.InstanceId, context.SocketPath);
 
