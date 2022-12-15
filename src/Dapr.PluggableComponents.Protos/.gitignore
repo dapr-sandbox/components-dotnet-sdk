@@ -1,4 +1,4 @@
 #
 # Protos are downloaded as part of build.
 #
-**/*.proto
+Protos/**/*.proto
