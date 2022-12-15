@@ -24,8 +24,6 @@ public sealed class DaprPluggableComponentsServiceBuilder
     {
         this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>();
 
-        this.AddRelatedStateStoreServices<TStateStore>();
-
         return this;
     }
 
@@ -33,8 +31,6 @@ public sealed class DaprPluggableComponentsServiceBuilder
         where TStateStore : class, IStateStore
     {
         this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>(stateStoreFactory);
-
-        this.AddRelatedStateStoreServices<TStateStore>();
 
         return this;
     }
@@ -57,20 +53,6 @@ public sealed class DaprPluggableComponentsServiceBuilder
         this.registrar.RegisterComponent<TComponentImpl>(socketPath, pubSubFactory);
 
         this.AddRelatedService<TComponentType, TComponentImpl, TAdaptor>();
-    }
-
-    private void AddRelatedStateStoreServices<TStateStore>()
-        where TStateStore : class
-    {
-        if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
-        {
-            this.AddRelatedService<IQueryableStateStore, TStateStore, QueryableStateStoreAdaptor>();
-        }
-
-        if (typeof(TStateStore).IsAssignableTo(typeof(ITransactionalStateStore)))
-        {
-            this.AddRelatedService<ITransactionalStateStore, TStateStore, TransactionalStateStoreAdaptor>();
-        }
     }
 
     private void AddRelatedService<TComponent, TComponentImpl, TAdaptor>()
