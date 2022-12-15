@@ -1,4 +1,4 @@
-using Google.Protobuf.Collections;
+﻿using Google.Protobuf.Collections;
 
 namespace Dapr.PluggableComponents.Proxies.Utilities;
 

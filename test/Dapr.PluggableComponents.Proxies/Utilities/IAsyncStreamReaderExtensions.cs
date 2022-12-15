@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Grpc.Core;
 
 namespace Dapr.PluggableComponents.Proxies.Utilities;

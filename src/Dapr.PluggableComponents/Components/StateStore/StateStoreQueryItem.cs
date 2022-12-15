@@ -1,4 +1,4 @@
-namespace Dapr.PluggableComponents.Components.StateStore;
+﻿namespace Dapr.PluggableComponents.Components.StateStore;
 
 public sealed record StateStoreQueryItem(string Key)
 {

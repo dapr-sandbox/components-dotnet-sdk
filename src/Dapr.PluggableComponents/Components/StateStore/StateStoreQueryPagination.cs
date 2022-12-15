@@ -1,4 +1,4 @@
-using Dapr.Proto.Components.V1;
+﻿using Dapr.Proto.Components.V1;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 

@@ -1,4 +1,4 @@
-using MemoryStateStoreSample.Services;
+﻿using MemoryStateStoreSample.Services;
 
 var app = DaprPluggableComponentsApplication.Create();
 

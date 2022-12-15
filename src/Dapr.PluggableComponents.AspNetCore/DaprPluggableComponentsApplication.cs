@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Dapr.PluggableComponents.Adaptors;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

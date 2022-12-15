@@ -1,4 +1,4 @@
-namespace Dapr.PluggableComponents;
+﻿namespace Dapr.PluggableComponents;
 
 public sealed record DaprPluggableComponentsServiceOptions(string SocketName)
 {

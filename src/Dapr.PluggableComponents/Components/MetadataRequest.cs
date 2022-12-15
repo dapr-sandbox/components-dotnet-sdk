@@ -1,4 +1,4 @@
-namespace Dapr.PluggableComponents.Components;
+﻿namespace Dapr.PluggableComponents.Components;
 
 public sealed record MetadataRequest
 {

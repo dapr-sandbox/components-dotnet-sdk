@@ -1,4 +1,4 @@
-namespace Dapr.PluggableComponents.Utilities;
+﻿namespace Dapr.PluggableComponents.Utilities;
 
 internal static class IEnumerableExtensions
 {

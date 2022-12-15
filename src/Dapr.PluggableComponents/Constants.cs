@@ -1,4 +1,4 @@
-namespace Dapr.PluggableComponents;
+﻿namespace Dapr.PluggableComponents;
 
 public static class Constants
 {
