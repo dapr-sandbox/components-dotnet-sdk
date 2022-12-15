@@ -1,9 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-      <ProtosVersion>1</ProtosVersion>
-      <ProtosRootDir>Protos</ProtosRootDir>
+    <ProtosVersion>v1</ProtosVersion>
+    <ProtosTag>v1.9.0</ProtosTag>
+    <ProtosBaseUrl>https://raw.githubusercontent.com/dapr/dapr/$(ProtosTag)/dapr/proto/components/$(ProtosVersion)</ProtosBaseUrl>
+    <ProtosRootDir>Protos</ProtosRootDir>
+    <ProtosComponentsDir>$(ProtosRootDir)\dapr\proto\components\$(ProtosVersion)</ProtosComponentsDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Protos Include="bindings.proto" />
+    <Protos Include="common.proto" />
+    <Protos Include="pubsub.proto" />
+    <Protos Include="state.proto" />
+  </ItemGroup>
 
   <!-- Additional Nuget package properties. -->
   <PropertyGroup>
@@ -25,19 +35,7 @@
     </PackageReference>
   </ItemGroup>
 
-  <Target Name="DownloadComponentProtos" BeforeTargets="Build">
-    <PropertyGroup>
-      <ProtosVersion>v1</ProtosVersion>
-      <ProtosTag>v1.9.0</ProtosTag>
-      <ProtosBaseUrl>https://raw.githubusercontent.com/dapr/dapr/$(ProtosTag)/dapr/proto/components/$(ProtosVersion)</ProtosBaseUrl>
-      <ProtosComponentsDir>$(ProtosRootDir)\dapr\proto\components\$(ProtosVersion)</ProtosComponentsDir>
-    </PropertyGroup>
-    <ItemGroup>
-      <Protos Include="bindings.proto" />
-      <Protos Include="common.proto" />
-      <Protos Include="pubsub.proto" />
-      <Protos Include="state.proto" />
-    </ItemGroup>
+  <Target Name="DownloadComponentProtos" BeforeTargets="Build" Condition="!Exists('$(ProtosComponentsDir)')">
     <MakeDir
       Directories="$(ProtosComponentsDir)" />
     <DownloadFile
