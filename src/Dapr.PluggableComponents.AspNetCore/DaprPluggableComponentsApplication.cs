@@ -1,7 +1,9 @@
 ﻿using System.Collections.Concurrent;
 using Dapr.PluggableComponents.Adaptors;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Mono.Unix;
 
 namespace Dapr.PluggableComponents;
@@ -10,31 +12,29 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 {
     public static DaprPluggableComponentsApplication Create()
     {
-        return Create(new DaprPluggableComponentsApplicationOptions());
+        return new DaprPluggableComponentsApplication(WebApplication.CreateBuilder());
     }
-
-    public static DaprPluggableComponentsApplication Create(DaprPluggableComponentsApplicationOptions options)
-    {
-        return new DaprPluggableComponentsApplication(options);
-    }
-
-    private readonly DaprPluggableComponentsApplicationOptions options;
 
     private readonly ConcurrentBag<Action<WebApplicationBuilder>> builderActions = new ConcurrentBag<Action<WebApplicationBuilder>>();
     private readonly ConcurrentBag<Action<WebApplication>> appActions = new ConcurrentBag<Action<WebApplication>>();
-
-    private readonly ConcurrentBag<DaprServiceRegistration> serviceBuilderActions = new ConcurrentBag<DaprServiceRegistration>();
-
     private readonly ConcurrentDictionary<Type, bool> registeredAdaptors = new ConcurrentDictionary<Type, bool>();
     private readonly ConcurrentDictionary<Type, bool> registeredComponents = new ConcurrentDictionary<Type, bool>();
     private readonly ConcurrentDictionary<Type, bool> registeredProviders = new ConcurrentDictionary<Type, bool>();
+    private readonly ConcurrentBag<DaprServiceRegistration> serviceBuilderActions = new ConcurrentBag<DaprServiceRegistration>();
+    private readonly WebApplicationBuilder webApplicationBuilder;
 
-    private DaprPluggableComponentsApplication(DaprPluggableComponentsApplicationOptions options)
+    private DaprPluggableComponentsApplication(WebApplicationBuilder webApplicationBuilder)
     {
-        this.options = options;
+        this.webApplicationBuilder = webApplicationBuilder ?? throw new ArgumentNullException(nameof(webApplicationBuilder));
     }
 
     private sealed record DaprServiceRegistration(DaprPluggableComponentsServiceOptions Options, Action<DaprPluggableComponentsServiceBuilder> Callback);
+
+    public ConfigurationManager Configuration => this.webApplicationBuilder.Configuration;
+
+    public ILoggingBuilder Logging => this.webApplicationBuilder.Logging;
+
+    public IServiceCollection Services => this.webApplicationBuilder.Services;
 
     public DaprPluggableComponentsApplication RegisterService(string socketName, Action<DaprPluggableComponentsServiceBuilder> callback)
     {
@@ -124,19 +124,13 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
     private WebApplication CreateApplication()
     {
-        var builder = this.options.WebApplicationOptions != null
-            ? WebApplication.CreateBuilder(this.options.WebApplicationOptions)
-            : WebApplication.CreateBuilder();
-
-        this.options.WebApplicationBuilderConfiguration?.Invoke(builder);
-
-        builder.AddDaprPluggableComponentsSupportServices();
+        this.webApplicationBuilder.AddDaprPluggableComponentsSupportServices();
 
         var socketPaths = new HashSet<string>();
 
         foreach (var registration in this.serviceBuilderActions)
         {
-            string socketPath = builder.AddDaprService(registration.Options);
+            string socketPath = this.webApplicationBuilder.AddDaprService(registration.Options);
 
             socketPaths.Add(socketPath);
 
@@ -147,12 +141,10 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
         foreach (var configurer in this.builderActions)
         {
-            configurer(builder);
+            configurer(this.webApplicationBuilder);
         }
 
-        var app = builder.Build();
-
-        this.options.WebApplicationConfiguration?.Invoke(app);
+        var app = this.webApplicationBuilder.Build();
 
         app.MapDaprPluggableComponentsSupportServices();
 

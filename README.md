@@ -176,26 +176,21 @@ app.RegisterService(
 app.Run();
 ```
 
-### ASP.NET Customization (Dependency Injection, Logging, and Configuration)
+### Dependency Injection, Logging, and Configuration
 
-As a Dapr Pluggable Component application is built upon ASP.NET, it may be necessary to access the underlying ASP.NET infrastructure to make use of dependency injection, logging, configuration, and other services.  These are exposed via an options object passed when creating the application.
+A Dapr Pluggable Component application can make use of dependency injection, logging, and configuration, similar to ASP.NET applications.  These are exposed via properties on `DaprPluggableComponentsApplication`.
 
 ```csharp
-var app = DaprPluggableComponentsApplication.Create(
-    new DaprPluggableComponentsApplicationOptions
-    {
-        WebApplicationBuilderConfiguration =
-            builder =>
-            {
-                // Add builder logic...
-                // E.g. builder.Services.AddSingleton<MyService>();
-            },
-        WebApplicationConfiguration =
-            webApp =>
-            {
-                // Add application-related logic...
-            }
-    });
+var app = DaprPluggableComponentsApplication.Create();
+
+// Add configuration providers...
+app.Configuration.AddJsonFile("config.json");
+
+// Add logging sinks...
+app.Logging.AddConsole();
+
+// Register services...
+app.Services.AddSingleton<MyService>();
 
 app.RegisterService(
     "<socket name>",
@@ -205,4 +200,9 @@ app.RegisterService(
     });
 
 app.Run();
+
+class MyService
+{
+    // ...
+}
 ```
