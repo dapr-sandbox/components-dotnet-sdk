@@ -15,10 +15,23 @@ using Dapr.Proto.Components.V1;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
+/// <summary>
+/// Represents properties associated with a request to retrieve state from a state store.
+/// </summary>
+/// <param name="Key">The key that should be retrieved.</param>
 public sealed record StateStoreGetRequest(string Key)
 {
+    /// <summary>
+    /// Gets the consistency level for the request.
+    /// </summary>
+    /// <remarks>
+    /// By default, the consistency level is <see cref="StateStoreConsistency.Unspecified"/>.
+    /// </remarks>
     public StateStoreConsistency Consistency { get; init; } = StateStoreConsistency.Unspecified;
 
+    /// <summary>
+    /// Gets the metadata associated with the request.
+    /// </summary>
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 
     internal static StateStoreGetRequest FromGetRequest(GetRequest request)

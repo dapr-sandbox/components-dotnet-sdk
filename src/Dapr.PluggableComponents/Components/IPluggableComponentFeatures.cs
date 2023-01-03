@@ -13,7 +13,18 @@
 
 namespace Dapr.PluggableComponents.Components;
 
+/// <summary>
+/// Represents a Dapr Pluggable Component that can describe its supported features.
+/// </summary>
+/// <remarks>
+/// This interface is optional. If not implemented, the component will report no specific features.
+/// </remarks>
 public interface IPluggableComponentFeatures
 {
+    /// <summary>
+    /// Gets the features supported by this component.
+    /// </summary>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation, resulting in the features supported by this component.</returns>
     Task<string[]> GetFeaturesAsync(CancellationToken cancellationToken = default);
 }

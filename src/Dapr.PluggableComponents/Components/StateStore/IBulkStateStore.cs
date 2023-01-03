@@ -13,11 +13,35 @@
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
+/// <summary>
+/// Represents a state store Dapr Pluggable Component that supports bulk operations.
+/// </summary>
+/// <remarks>
+/// This interface is optional. If not implmented, bulk operations will be performed via repeated calls to individual <see cref="IStateStore"/> methods.
+/// </remarks>
 public interface IBulkStateStore
 {
+    /// <summary>
+    /// Called to delete state.
+    /// </summary>
+    /// <param name="requests">Properties related to the state to be deleted.</param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task BulkDeleteAsync(StateStoreDeleteRequest[] requests, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Called to get state.
+    /// </summary>
+    /// <param name="requests">Properties related to the state to be retrieved.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     Task<StateStoreBulkStateItem[]> BulkGetAsync(StateStoreGetRequest[] requests, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Called to set or change state.
+    /// </summary>
+    /// <param name="requests">Properties related to the state to be set.</param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     Task BulkSetAsync(StateStoreSetRequest[] requests, CancellationToken cancellationToken = default);
 }

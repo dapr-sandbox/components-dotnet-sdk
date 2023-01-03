@@ -15,12 +15,25 @@ using Dapr.Proto.Components.V1;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
+/// <summary>
+/// Represents properties associated with a request to delete state from a state store.
+/// </summary>
+/// <param name="Key">The key that should be deleted.</param>
 public sealed record StateStoreDeleteRequest(string Key)
 {
+    /// <summary>
+    /// Gets the ETag used as an If-Match header, to allow certain levels of consistency.
+    /// </summary>
     public string? ETag { get; init; }
 
+    /// <summary>
+    /// Gets the metadata associated with the request.
+    /// </summary>
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 
+    /// <summary>
+    /// Gets options related to the deletion.
+    /// </summary>
     public StateStoreStateOptions? Options { get; init; }
 
     internal static StateStoreDeleteRequest FromDeleteRequest(DeleteRequest request)

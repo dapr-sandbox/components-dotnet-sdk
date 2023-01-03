@@ -17,16 +17,35 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
+/// <summary>
+/// Represents properties associated with a response to retrieving bulk state from a state store.
+/// </summary>
+/// <param name="Key">The key associated with the retrieved value.</param>
 public sealed record StateStoreBulkStateItem(string Key)
 {
+    /// <summary>
+    /// Gets the key's content type.
+    /// </summary>
     public string? ContentType { get; init; }
 
+    /// <summary>
+    /// Gets the key's value.
+    /// </summary>
     public byte[] Data { get; init; } = Array.Empty<byte>();
 
+    /// <summary>
+    /// Gets the error message, if retrieval failed.
+    /// </summary>
     public string? Error { get; init; }
 
+    /// <summary>
+    /// Gets the ETag used as an If-Match header, to allow certain levels of consistency.
+    /// </summary>
     public string? ETag { get; init; }
 
+    /// <summary>
+    /// Gets the metadata associated with the request.
+    /// </summary>
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 
     internal static BulkStateItem ToBulkStateItem(StateStoreBulkStateItem item)

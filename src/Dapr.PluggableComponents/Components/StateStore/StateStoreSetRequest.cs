@@ -15,14 +15,31 @@ using Dapr.Proto.Components.V1;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
+/// <summary>
+/// Represents properties associated with a request to set or change state in a state store.
+/// </summary>
+/// <param name="Key">The key that should be set.</param>
+/// <param name="Value">The value to which the key should be set.</param>
 public sealed record StateStoreSetRequest(string Key, ReadOnlyMemory<byte> Value)
 {
+    /// <summary>
+    /// Gets the key's content type.
+    /// </summary>
     public string? ContentType { get; init; }
 
+    /// <summary>
+    /// Gets the ETag used as an If-Match header, to allow certain levels of consistency.
+    /// </summary>
     public string? ETag { get; init; }
 
+    /// <summary>
+    /// Gets the metadata associated with the request.
+    /// </summary>
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 
+    /// <summary>
+    /// Gets options related to the change.
+    /// </summary>
     public StateStoreStateOptions? Options { get; init; }
 
     internal static StateStoreSetRequest FromSetRequest(SetRequest request)

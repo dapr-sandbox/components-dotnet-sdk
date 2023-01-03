@@ -13,7 +13,21 @@
 
 namespace Dapr.PluggableComponents.Components;
 
+/// <summary>
+/// Represents a Dapr Pluggable Component that can respond to liveness checks.
+/// </summary>
+/// <remarks>
+/// This interface is optional. If not implemented, the component is always considered "live".
+/// </remarks>
 public interface IPluggableComponentLiveness
 {
+    /// <summary>
+    /// Called to determine the "liveness" of this component.
+    /// </summary>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation. A task that results in
+    /// <see cref="TaskStatus.RanToCompletion"/> indicates this component is "live". Implementors should
+    /// return a task that results in <see cref="TaskStatus.Faulted"/> to indicate this component is not
+    /// healthy.</returns>
     Task PingAsync(CancellationToken cancellationToken = default);
 }

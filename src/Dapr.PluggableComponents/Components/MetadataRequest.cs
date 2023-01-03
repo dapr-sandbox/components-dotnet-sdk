@@ -13,8 +13,14 @@
 
 namespace Dapr.PluggableComponents.Components;
 
+/// <summary>
+/// Represents metadata associated with a Dapr Pluggable Component during initialization.
+/// </summary>
 public sealed record MetadataRequest
 {
+    /// <summary>
+    /// Gets the component configuration metadata properties.
+    /// </summary>
     public IReadOnlyDictionary<string, string> Properties { get; init; } = new Dictionary<string, string>();
 
     internal static MetadataRequest FromMetadataRequest(Dapr.Client.Autogen.Grpc.v1.MetadataRequest? request)

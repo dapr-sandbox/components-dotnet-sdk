@@ -17,14 +17,41 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
+/// <summary>
+/// Represents properties associated with a response to retrieving state from a state store.
+/// </summary>
 public sealed record StateStoreGetResponse
 {
+    /// <summary>
+    /// Gets or sets the key's content type.
+    /// </summary>
+    /// <remarks>
+    /// If omitted, defaults to null.
+    /// </remarks>
     public string? ContentType { get; init; }
 
+    /// <summary>
+    /// Gets or sets the key's value.
+    /// </summary>
+    /// <remarks>
+    /// If omitted, defaults to an empty array.
+    /// </remarks>
     public byte[] Data { get; init; } = Array.Empty<byte>();
 
+    /// <summary>
+    /// Gets or sets the ETag used as an If-Match header, to allow certain levels of consistency.
+    /// </summary>
+    /// <remarks>
+    /// If omitted, defaults to null.
+    /// </remarks>
     public string? ETag { get; init; }
 
+    /// <summary>
+    /// Gets or sets the metadata associated with the request.
+    /// </summary>
+    /// <remarks>
+    /// If omitted, defaults to an empty dictionary.
+    /// </remarks>
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 
     internal static GetResponse ToGetResponse(StateStoreGetResponse? response)

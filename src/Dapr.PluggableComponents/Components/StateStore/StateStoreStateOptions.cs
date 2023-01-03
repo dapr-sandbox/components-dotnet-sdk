@@ -15,27 +15,70 @@ using Dapr.Proto.Components.V1;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
+/// <summary>
+/// Represents the concurrency level associated with a state store operation.
+/// </summary>
 public enum StateStoreConcurrency
 {
+    /// <summary>
+    /// Unspecified.
+    /// </summary>
     Unspecified = 0,
+
+    /// <summary>
+    /// First write wins (i.e. optimistic concurrency via ETags).
+    /// </summary>
     FirstWrite = 1,
+
+    /// <summary>
+    /// Last write wins (i.e. no ETags).
+    /// </summary>
     LastWrite = 2
 }
 
+/// <summary>
+/// Represents the consistency level associated with a state store operation.
+/// </summary>
 public enum StateStoreConsistency
 {
+    /// <summary>
+    /// Unspecified.
+    /// </summary>
     Unspecified = 0,
+
+    /// <summary>
+    /// State stores are eventually consistent.
+    /// </summary>
     Eventual = 1,
+
+    /// <summary>
+    /// State stores are updated before completing a write request.
+    /// </summary>
     Strong = 2
 }
 
+/// <summary>
+/// Represents options related to state store operation concurrency and consistency.
+/// </summary>
 public sealed record StateStoreStateOptions
 {
+    /// <summary>
+    /// Gets the concurrency level related to the operation.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see cref="StateStoreConcurrency.Unspecified"/>.
+    /// </remarks>
     public StateStoreConcurrency Concurrency { get; init; } = StateStoreConcurrency.Unspecified;
 
+    /// <summary>
+    /// Gets the consistency level related to the operation.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see cref="StateStoreConsistency.Unspecified"/>.
+    /// </remarks>
     public StateStoreConsistency Consistency { get; init; } = StateStoreConsistency.Unspecified;
 
-    public static StateStoreStateOptions? FromStateOptions(StateOptions options)
+    internal static StateStoreStateOptions? FromStateOptions(StateOptions options)
     {
         return options != null
             ? new StateStoreStateOptions

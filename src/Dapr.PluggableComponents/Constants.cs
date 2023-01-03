@@ -13,18 +13,49 @@
 
 namespace Dapr.PluggableComponents;
 
+/// <summary>
+/// Represents constant values related to Dapr Pluggable Components.
+/// </summary>
 public static class Constants
 {
+    /// <summary>
+    /// Represents default values for Dapr Pluggable Components.
+    /// </summary>
     public static class Defaults
     {
+        /// <summary>
+        /// The default extension for socket files created by Dapr Pluggable Components.
+        /// </summary>
         public const string DaprComponentsSocketsExtension = ".sock";
+
+        /// <summary>
+        /// The default directory in which Dapr Pluggable Components create their socket files.
+        /// </summary>
+        /// <remarks>
+        /// This location is applicable only to Mac OS and Linux platforms.
+        /// </remarks>
         public const string DaprComponentsSocketsFolder = "/tmp/dapr-components-sockets";
     }
 
+    /// <summary>
+    /// Represents names of environment variables related to Dapr Pluggable Components.
+    /// </summary>
     public static class EnvironmentVariables
     {
+        /// <summary>
+        /// The environment variable name that defines the exension for socket files created by Dapr Pluggable Components.
+        /// </summary>
+        /// <remarks>
+        /// If not specified, the default value <see cref="Constants.Defaults.DaprComponentsSocketsExtension"/> will be used.
+        /// </remarks>
         public const string DaprComponentsSocketsExtension = "DAPR_COMPONENTS_SOCKETS_EXTENSION";
 
+        /// <summary>
+        /// The environment variable name that defines the folder in which Dapr Pluggable Components create their socket files.
+        /// </summary>
+        /// <remarks>
+        /// If not specified, the default value <see cref="Constants.Defaults.DaprComponentsSocketsFolder"/> will be used.
+        /// </remarks>
         public const string DaprComponentsSocketsFolder = "DAPR_COMPONENTS_SOCKETS_FOLDER";
     }
 }
