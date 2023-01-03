@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="$(ProtosRootDir)\**\*.proto" ProtoRoot="Protos" GrpcServices="Client,Server" />
+    <Protobuf Include="@(Protos->'$(ProtosComponentsDir)/%(Identity)')" ProtoRoot="Protos" GrpcServices="Client,Server" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,10 +35,11 @@
     </PackageReference>
   </ItemGroup>
 
-  <Target Name="DownloadComponentProtos" BeforeTargets="Build" Condition="!Exists('$(ProtosComponentsDir)')">
+  <Target Name="DownloadComponentProtos" BeforeTargets="Protobuf_BeforeCompile">
     <MakeDir
       Directories="$(ProtosComponentsDir)" />
     <DownloadFile
+      Condition="!Exists('$(ProtosComponentsDir)/%(Protos.Identity)')"
       SourceUrl="$(ProtosBaseUrl)/%(Protos.Identity)"
       DestinationFolder="$(ProtosComponentsDir)" />
   </Target>
