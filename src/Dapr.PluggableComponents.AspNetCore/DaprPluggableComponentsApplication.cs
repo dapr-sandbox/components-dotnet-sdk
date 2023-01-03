@@ -20,6 +20,7 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
     private readonly ConcurrentDictionary<Type, bool> registeredAdaptors = new ConcurrentDictionary<Type, bool>();
     private readonly ConcurrentDictionary<Type, bool> registeredComponents = new ConcurrentDictionary<Type, bool>();
     private readonly ConcurrentDictionary<Type, bool> registeredProviders = new ConcurrentDictionary<Type, bool>();
+    private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();
     private readonly ConcurrentBag<DaprServiceRegistration> serviceBuilderActions = new ConcurrentBag<DaprServiceRegistration>();
     private readonly WebApplicationBuilder webApplicationBuilder;
 
@@ -86,8 +87,6 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
         ((IDaprPluggableComponentsRegistrar)this).RegisterComponent(socketPath, context => context.ServiceProvider.GetRequiredService<TComponent>());
     }
-
-    private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();
 
     void IDaprPluggableComponentsRegistrar.RegisterComponent<TComponent>(string socketPath, ComponentProviderDelegate<TComponent> componentFactory) where TComponent : class
     {
