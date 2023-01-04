@@ -16,8 +16,17 @@ using Microsoft.AspNetCore.Routing;
 
 namespace Dapr.PluggableComponents;
 
+/// <summary>
+/// Represents extension methods for registering Dapr Pluggable Component related services with <see cref="WebApplication"/> instances.
+/// </summary>
 public static class WebApplicationExtensions
 {
+    /// <summary>
+    /// Maps services needed to host Dapr Pluggable Components via an ASP.NET application.
+    /// </summary>
+    /// <typeparam name="TBuilder">The type of ASP.NET endpoint builder.</typeparam>
+    /// <param name="app">An ASP.NET endpoint builder.</param>
+    /// <returns>The current builder instance.</returns>
     public static TBuilder MapDaprPluggableComponentsSupportServices<TBuilder>(this TBuilder app)
         where TBuilder : IEndpointRouteBuilder
     {
@@ -27,6 +36,12 @@ public static class WebApplicationExtensions
         return app;
     }
 
+    /// <summary>
+    /// Maps a gRPC "adaptor" service through which Dapr Pluggable Component calls are made.
+    /// </summary>
+    /// <typeparam name="T">The type of gRPC service.</typeparam>
+    /// <param name="app">An ASP.NET endpoint builder.</param>
+    /// <returns>A <see cref="GrpcServiceEndpointConventionBuilder"/> through which the service can be further configured.</returns>
     public static GrpcServiceEndpointConventionBuilder MapDaprPluggableComponentAdaptor<T>(this IEndpointRouteBuilder app)
         where T : class
     {

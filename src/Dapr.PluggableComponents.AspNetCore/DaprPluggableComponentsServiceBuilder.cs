@@ -20,6 +20,9 @@ public sealed record ComponentProviderContext(string? InstanceId, IServiceProvid
 
 public delegate T ComponentProviderDelegate<T>(ComponentProviderContext context);
 
+/// <summary>
+/// A builder for Dapr Pluggable Component services.
+/// </summary>
 public sealed class DaprPluggableComponentsServiceBuilder
 {
     private readonly string socketPath;
@@ -33,6 +36,16 @@ public sealed class DaprPluggableComponentsServiceBuilder
         this.registrar = registrar;
     }
 
+    /// <summary>
+    /// Registers a singleton state store with this service.
+    /// </summary>
+    /// <typeparam name="TStateStore">The type of state store to register.</typeparam>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// A single instance of the state store will be created to service all configured Dapr components.
+    ///
+    /// Only a single state store type can be associated with a given service.
+    /// </remarks>
     public DaprPluggableComponentsServiceBuilder RegisterStateStore<TStateStore>() where TStateStore : class, IStateStore
     {
         this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>();
@@ -40,6 +53,18 @@ public sealed class DaprPluggableComponentsServiceBuilder
         return this;
     }
 
+    /// <summary>
+    /// Registers a state store with this service.
+    /// </summary>
+    /// <typeparam name="TStateStore">The type of state store to register.</typeparam>
+    /// <param name="stateStoreFactory">A factory method called when creating new state store instances.</param>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// The factory method will be called once for each configured Dapr component; the returned instance will be
+    /// associated with that Dapr component and methods invoked when the component receives requests.
+    ///
+    /// Only a single state store type can be associated with a given service.
+    /// </remarks>
     public DaprPluggableComponentsServiceBuilder RegisterStateStore<TStateStore>(ComponentProviderDelegate<TStateStore> stateStoreFactory)
         where TStateStore : class, IStateStore
     {

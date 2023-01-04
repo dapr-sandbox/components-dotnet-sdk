@@ -21,8 +21,15 @@ using Mono.Unix;
 
 namespace Dapr.PluggableComponents;
 
+/// <summary>
+/// Represents an application that hosts Dapr Pluggable Components.
+/// </summary>
 public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponentsRegistrar
 {
+    /// <summary>
+    /// Creates a <see cref="DaprPluggableComponentsApplication"/> instance.
+    /// </summary>
+    /// <returns></returns>
     public static DaprPluggableComponentsApplication Create()
     {
         return new DaprPluggableComponentsApplication(WebApplication.CreateBuilder());
@@ -44,17 +51,38 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
 
     private sealed record DaprServiceRegistration(DaprPluggableComponentsServiceOptions Options, Action<DaprPluggableComponentsServiceBuilder> Callback);
 
+    /// <summary>
+    /// Gets a collection of configuration providers hosted by the application.
+    /// </summary>
     public ConfigurationManager Configuration => this.webApplicationBuilder.Configuration;
 
+    /// <summary>
+    /// Gets a collection of logging providers hosted by the application.
+    /// </summary>
     public ILoggingBuilder Logging => this.webApplicationBuilder.Logging;
 
+    /// <summary>
+    /// Gets a collection of services hosted by the application.
+    /// </summary>
     public IServiceCollection Services => this.webApplicationBuilder.Services;
 
+    /// <summary>
+    /// Registers a "service" (i.e. a set of Dapr Pluggable Components) exposed via a specific socket.
+    /// </summary>
+    /// <param name="socketName">The name of the socket (without extension).</param>
+    /// <param name="callback">A callback from which to register components with the service.</param>
+    /// <returns>The current <see cref="DaprPluggableComponentsApplication"/> instance.</returns>
     public DaprPluggableComponentsApplication RegisterService(string socketName, Action<DaprPluggableComponentsServiceBuilder> callback)
     {
         return this.RegisterService(new DaprPluggableComponentsServiceOptions(socketName), callback);
     }
 
+    /// <summary>
+    /// Registers a "service" (i.e. a set of Dapr Pluggable Components) exposed via a specific socket.
+    /// </summary>
+    /// <param name="options">Options related to the creation of the socket file.</param>
+    /// <param name="callback">A callback from which to register components with the service.</param>
+    /// <returns>The current <see cref="DaprPluggableComponentsApplication"/> instance.</returns>
     public DaprPluggableComponentsApplication RegisterService(DaprPluggableComponentsServiceOptions options, Action<DaprPluggableComponentsServiceBuilder> callback)
     {
         this.serviceBuilderActions.Add(new DaprServiceRegistration(options, callback));
@@ -62,11 +90,18 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
         return this;
     }
 
+    /// <summary>
+    /// Runs the application and blocks the calling thread until shutdown.
+    /// </summary>
     public void Run()
     {
         this.CreateApplication().Run();
     }
 
+    /// <summary>
+    /// Runs the application asynchronously.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> that completes when shutdown.</returns>
     public Task RunAsync()
     {
         return this.CreateApplication().RunAsync();
