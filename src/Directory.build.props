@@ -3,13 +3,13 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Product>Microsoft Dapr</Product>
-    <Copyright>Copyright (c) Microsoft Corporation.  All rights reserved.</Copyright>
-    <Company>Microsoft</Company>
-    <Authors>Microsoft</Authors>
+    <Product>Dapr</Product>
+    <Copyright>Copyright 2023 The Dapr Authors</Copyright>
+    <Company>dapr.io</Company>
   </PropertyGroup>
 
   <PropertyGroup>
