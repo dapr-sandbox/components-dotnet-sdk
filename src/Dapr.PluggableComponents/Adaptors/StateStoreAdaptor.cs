@@ -23,17 +23,30 @@ using static Dapr.Proto.Components.V1.StateStore;
 
 namespace Dapr.PluggableComponents.Adaptors;
 
+/// <summary>
+/// Represents the gRPC protocol adaptor for a state store Dapr Pluggable Component.
+/// </summary>
+/// <remarks>
+/// An instances of this class is created for every request made to the component.
+/// </remarks>
 public class StateStoreAdaptor : StateStoreBase
 {
     private readonly ILogger<StateStoreAdaptor> logger;
     private readonly IDaprPluggableComponentProvider<IStateStore> componentProvider;
 
+    /// <summary>
+    /// Creates a new instance of the <see cref="StateStoreAdaptor"/> class.
+    /// </summary>
+    /// <param name="logger">A logger used for internal purposes.</param>
+    /// <param name="componentProvider">A means to obtain the Dapr Pluggable Component associated with this adapter instance.</param>
+    /// <exception cref="ArgumentNullException"></exception>
     public StateStoreAdaptor(ILogger<StateStoreAdaptor> logger, IDaprPluggableComponentProvider<IStateStore> componentProvider)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.componentProvider = componentProvider ?? throw new ArgumentNullException(nameof(componentProvider));
     }
 
+    /// <inheritdoc/>
     public override async Task<BulkDeleteResponse> BulkDelete(BulkDeleteRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("BulkDelete request for {count} keys", request.Items.Count);
@@ -59,6 +72,7 @@ public class StateStoreAdaptor : StateStoreBase
         return new BulkDeleteResponse();
     }
 
+    /// <inheritdoc/>
     public override async Task<BulkGetResponse> BulkGet(BulkGetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Bulk get request for {count} keys", request.Items.Count);
@@ -122,6 +136,7 @@ public class StateStoreAdaptor : StateStoreBase
         }
     }
 
+    /// <inheritdoc/>
     public override async Task<BulkSetResponse> BulkSet(BulkSetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("BulkSet request for {count} keys", request.Items.Count);
@@ -147,6 +162,7 @@ public class StateStoreAdaptor : StateStoreBase
         return new BulkSetResponse();
     }
 
+    /// <inheritdoc/>
     public override async Task<DeleteResponse> Delete(DeleteRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Delete request for key {key}", request.Key);
@@ -158,6 +174,7 @@ public class StateStoreAdaptor : StateStoreBase
         return new DeleteResponse();
     }
 
+    /// <inheritdoc/>
     public override async Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Features request");
@@ -174,6 +191,7 @@ public class StateStoreAdaptor : StateStoreBase
         return response;
     }
 
+    /// <inheritdoc/>
     public override async Task<GetResponse> Get(GetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Get request for key {key}", request.Key);
@@ -185,6 +203,7 @@ public class StateStoreAdaptor : StateStoreBase
         return StateStoreGetResponse.ToGetResponse(response);
     }
 
+    /// <inheritdoc/>
     public async override Task<InitResponse> Init(Proto.Components.V1.InitRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Init request");
@@ -196,6 +215,7 @@ public class StateStoreAdaptor : StateStoreBase
         return new InitResponse();
     }
 
+    /// <inheritdoc/>
     public override async Task<PingResponse> Ping(PingRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Ping request");
@@ -208,6 +228,7 @@ public class StateStoreAdaptor : StateStoreBase
         return new PingResponse();
     }
 
+    /// <inheritdoc/>
     public override async Task<SetResponse> Set(SetRequest request, ServerCallContext context)
     {
         this.logger.LogInformation("Set request for key {key}", request.Key);

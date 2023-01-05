@@ -16,8 +16,20 @@ using Dapr.PluggableComponents.Components.StateStore;
 
 namespace Dapr.PluggableComponents;
 
+/// <summary>
+/// Context related to the creation of a Dapr Pluggable Component.
+/// </summary>
+/// <param name="InstanceId">The Dapr component ID (from its configuration) to associate with the Dapr Pluggable Component.</param>
+/// <param name="ServiceProvider">A service provider from which to retrieve dependencies of the created Dapr Pluggable Component.</param>
+/// <param name="SocketPath">The Unix domain socket file to associate with the Dapr Pluggable Component.</param>
 public sealed record ComponentProviderContext(string? InstanceId, IServiceProvider ServiceProvider, string SocketPath);
 
+/// <summary>
+/// Represents a factory method that returns a Dapr Pluggable Component instance for a given Dapr component configuration and service socket.
+/// </summary>
+/// <typeparam name="T">The type of Dapr Pluggable Component being created.</typeparam>
+/// <param name="context">The context related to creation.</param>
+/// <returns>A Dapr Pluggable Component instance to be associated with the specified context.</returns>
 public delegate T ComponentProviderDelegate<T>(ComponentProviderContext context);
 
 /// <summary>
