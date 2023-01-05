@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents", "src\Dapr.PluggableComponents\Dapr.PluggableComponents.csproj", "{E54270BE-EF83-47BE-B29C-29BC89701099}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.AspNetCore", "src\Dapr.PluggableComponents.AspNetCore\Dapr.PluggableComponents.AspNetCore.csproj", "{26D29BDF-8453-411F-B91F-C13BF24E5203}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{6F4E950F-E4CD-4FA4-BA3D-528F0022C03B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MemoryStateStoreSample", "samples\MemoryStateStoreSample\MemoryStateStoreSample.csproj", "{B9AC2D9C-6E9D-42BC-92D2-7427646F28D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FFFE01DC-86D1-495B-B1DE-3320F7B501AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.Protos", "src\Dapr.PluggableComponents.Protos\Dapr.PluggableComponents.Protos.csproj", "{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E54270BE-EF83-47BE-B29C-29BC89701099}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E54270BE-EF83-47BE-B29C-29BC89701099}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E54270BE-EF83-47BE-B29C-29BC89701099}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E54270BE-EF83-47BE-B29C-29BC89701099}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26D29BDF-8453-411F-B91F-C13BF24E5203}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26D29BDF-8453-411F-B91F-C13BF24E5203}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26D29BDF-8453-411F-B91F-C13BF24E5203}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26D29BDF-8453-411F-B91F-C13BF24E5203}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9AC2D9C-6E9D-42BC-92D2-7427646F28D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9AC2D9C-6E9D-42BC-92D2-7427646F28D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9AC2D9C-6E9D-42BC-92D2-7427646F28D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9AC2D9C-6E9D-42BC-92D2-7427646F28D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E54270BE-EF83-47BE-B29C-29BC89701099} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
+		{26D29BDF-8453-411F-B91F-C13BF24E5203} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
+		{B9AC2D9C-6E9D-42BC-92D2-7427646F28D9} = {6F4E950F-E4CD-4FA4-BA3D-528F0022C03B}
+		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
+	EndGlobalSection
+EndGlobal

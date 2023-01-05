@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <!-- Additional Nuget package properties. -->
+  <PropertyGroup>
+    <Description>This package contains the reference assemblies for developing pluggable components for Dapr.</Description>
+    <PackageTags>$(PackageTags);</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dapr.PluggableComponents.Protos\Dapr.PluggableComponents.Protos.csproj" />
+  </ItemGroup>
+
+</Project>

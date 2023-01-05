@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <ProtosVersion>v1</ProtosVersion>
+    <ProtosTag>v1.9.0</ProtosTag>
+    <ProtosBaseUrl>https://raw.githubusercontent.com/dapr/dapr/$(ProtosTag)/dapr/proto/components/$(ProtosVersion)</ProtosBaseUrl>
+    <ProtosRootDir>Protos</ProtosRootDir>
+    <ProtosComponentsDir>$(ProtosRootDir)\dapr\proto\components\$(ProtosVersion)</ProtosComponentsDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Protos Include="bindings.proto" />
+    <Protos Include="common.proto" />
+    <Protos Include="pubsub.proto" />
+    <Protos Include="state.proto" />
+  </ItemGroup>
+
+  <!-- Additional Nuget package properties. -->
+  <PropertyGroup>
+    <Description>This package contains the gRPC generated types for developing pluggable components for Dapr.</Description>
+    <PackageTags>$(PackageTags);</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Protobuf Include="@(Protos->'$(ProtosComponentsDir)/%(Identity)')" ProtoRoot="Protos" GrpcServices="Client,Server" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Api.CommonProtos" Version="2.6.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.21.9" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.50.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.50.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <Target Name="DownloadComponentProtos" BeforeTargets="Protobuf_BeforeCompile">
+    <MakeDir
+      Directories="$(ProtosComponentsDir)" />
+    <DownloadFile
+      Condition="!Exists('$(ProtosComponentsDir)/%(Protos.Identity)')"
+      SourceUrl="$(ProtosBaseUrl)/%(Protos.Identity)"
+      DestinationFolder="$(ProtosComponentsDir)" />
+  </Target>
+
+</Project>

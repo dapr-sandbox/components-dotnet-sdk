@@ -1,0 +1,57 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Product>Dapr</Product>
+    <Copyright>Copyright 2023 The Dapr Authors</Copyright>
+    <Company>dapr.io</Company>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RepoRoot>$(MSBuildThisFileDirectory)..\</RepoRoot>
+  </PropertyGroup>
+
+  <!-- Nuget package properties when packed using dotnet pack. -->
+  <PropertyGroup>
+    <Authors>dapr.io</Authors>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://dapr.io</PackageProjectUrl>
+    <PackageIcon>images\logo-transparent.png</PackageIcon>
+    <PackageTags>Dapr;PluggableComponents</PackageTags>
+    <RepositoryUrl>https://github.com/dapr-sandbox/components-dotnet-sdk</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageOutputPath>$(RepoRoot)bin\$(Configuration)\nugets</PackageOutputPath>
+  </PropertyGroup>
+
+  <!-- Icon for nuget packages -->
+  <ItemGroup>
+    <None Include="$(RepoRoot)assets\logo-transparent.png" Pack="true" Visible="false" PackagePath="images" />
+  </ItemGroup>
+
+  <!-- Enable symbols package generation. https://docs.microsoft.com/nuget/create-packages/symbol-packages-snupkg -->
+  <PropertyGroup>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <!-- Use MinVer for assembly, nuget versioning based on git tags -->
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="4.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Configure properties for MinVer -->
+  <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleasePhase>rc</MinVerDefaultPreReleasePhase>
+    <!-- <MinVerVerbosity>detailed</MinVerVerbosity>-->
+  </PropertyGroup>
+</Project>
