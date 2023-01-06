@@ -39,7 +39,7 @@ public class StateStoreAdaptor : StateStoreBase
     /// </summary>
     /// <param name="logger">A logger used for internal purposes.</param>
     /// <param name="componentProvider">A means to obtain the Dapr Pluggable Component associated with this adapter instance.</param>
-    /// <exception cref="ArgumentNullException"></exception>
+    /// <exception cref="ArgumentNullException">If any parameter is null.</exception>
     public StateStoreAdaptor(ILogger<StateStoreAdaptor> logger, IDaprPluggableComponentProvider<IStateStore> componentProvider)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -12,6 +12,7 @@
 // ------------------------------------------------------------------------
 
 using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 
 namespace Dapr.PluggableComponents;
@@ -47,6 +48,49 @@ public sealed class DaprPluggableComponentsServiceBuilder
         this.socketPath = socketPath;
         this.registrar = registrar;
     }
+
+    #region Pub-Sub Registration
+
+    /// <summary>
+    /// Registers a singleton pub-sub component with this service.
+    /// </summary>
+    /// <typeparam name="TPubSub">The type of pub-sub component to register.</typeparam>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// A single instance of the pub-sub component will be created to service all configured Dapr components.
+    ///
+    /// Only a single pub-sub component type can be associated with a given service.
+    /// </remarks>
+    public DaprPluggableComponentsServiceBuilder RegisterPubSub<TPubSub>() where TPubSub : class, IPubSub
+    {
+        this.AddComponent<IPubSub, TPubSub, PubSubAdaptor>();
+
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a pub-sub component with this service.
+    /// </summary>
+    /// <typeparam name="TPubSub">The type of pub-sub component to register.</typeparam>
+    /// <param name="pubSubFactory">A factory method called when creating new pub-sub component instances.</param>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// The factory method will be called once for each configured Dapr component; the returned instance will be
+    /// associated with that Dapr component and methods invoked when the component receives requests.
+    ///
+    /// Only a single pub-sub component type can be associated with a given service.
+    /// </remarks>
+    public DaprPluggableComponentsServiceBuilder RegisterPubSub<TPubSub>(ComponentProviderDelegate<TPubSub> pubSubFactory)
+        where TPubSub : class, IPubSub
+    {
+        this.AddComponent<IPubSub, TPubSub, PubSubAdaptor>(pubSubFactory);
+
+        return this;
+    }
+
+    #endregion
+
+    #region State Store Registration
 
     /// <summary>
     /// Registers a singleton state store with this service.
@@ -84,6 +128,8 @@ public sealed class DaprPluggableComponentsServiceBuilder
 
         return this;
     }
+
+    #endregion
 
     private void AddComponent<TComponentType, TComponentImpl, TAdaptor>()
         where TComponentType : class
