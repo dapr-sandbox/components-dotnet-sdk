@@ -12,6 +12,7 @@
 // ------------------------------------------------------------------------
 
 using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 
@@ -48,6 +49,51 @@ public sealed class DaprPluggableComponentsServiceBuilder
         this.socketPath = socketPath;
         this.registrar = registrar;
     }
+
+    #region Binding Registration
+
+    /// <summary>
+    /// Registers a singleton binding with this service.
+    /// </summary>
+    /// <typeparam name="TBinding">The type of binding to register.</typeparam>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// A single instance of the binding will be created to service all configured Dapr components.
+    ///
+    /// Only a single binding type can be associated with a given service.
+    /// </remarks>
+    public DaprPluggableComponentsServiceBuilder RegisterBinding<TBinding>() where TBinding : class
+    {
+        this.registrar.RegisterComponent<TBinding>(this.socketPath);
+
+        AddBindingServices<TBinding>();
+
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a binding with this service.
+    /// </summary>
+    /// <typeparam name="TBinding">The type of binding to register.</typeparam>
+    /// <param name="bindingFactory">A factory method called when creating new binding instances.</param>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// The factory method will be called once for each configured Dapr component; the returned instance will be
+    /// associated with that Dapr component and methods invoked when the component receives requests.
+    ///
+    /// Only a single binding type can be associated with a given service.
+    /// </remarks>
+    public DaprPluggableComponentsServiceBuilder RegisterBinding<TBinding>(ComponentProviderDelegate<TBinding> bindingFactory)
+        where TBinding : class
+    {
+        this.registrar.RegisterComponent<TBinding>(socketPath, bindingFactory);
+
+        AddBindingServices<TBinding>();
+
+        return this;
+    }
+
+    #endregion
 
     #region Pub-Sub Registration
 
@@ -159,5 +205,18 @@ public sealed class DaprPluggableComponentsServiceBuilder
         this.registrar.RegisterProvider<TComponent, TComponentImpl>(this.socketPath);
 
         this.registrar.RegisterAdaptor<TAdaptor>();
+    }
+
+    private void AddBindingServices<TBinding>() where TBinding : class
+    {
+        if (typeof(TBinding).IsAssignableTo(typeof(IInputBinding)))
+        {
+            this.AddRelatedService<IInputBinding, TBinding, InputBindingAdaptor>();
+        }
+
+        if (typeof(TBinding).IsAssignableTo(typeof(IOutputBinding)))
+        {
+            this.AddRelatedService<IOutputBinding, TBinding, OutputBindingAdaptor>();
+        }
     }
 }

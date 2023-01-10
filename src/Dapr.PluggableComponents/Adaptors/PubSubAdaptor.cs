@@ -124,7 +124,7 @@ public class PubSubAdaptor : PubSubBase
             throw new InvalidOperationException("The component expects the first request to specify the topic.");
         }
 
-        var pendingMessages = new ConcurrentDictionary<string, MessageAcknowledgementHandler>();
+        var pendingMessages = new ConcurrentDictionary<string, MessageAcknowledgementHandler<string?>>();
 
         var acknowledgeTask =
             async () =>
@@ -148,9 +148,10 @@ public class PubSubAdaptor : PubSubBase
 
                 var response = PubSubPullMessagesResponse.ToPullMessagesResponse(messageId, message);
 
-                response.Metadata.Add(message.Metadata);
-
-                pendingMessages[messageId] = onAcknowledgement;
+                if (onAcknowledgement != null)
+                {
+                    pendingMessages[messageId] = onAcknowledgement;
+                }
 
                 try
                 {
