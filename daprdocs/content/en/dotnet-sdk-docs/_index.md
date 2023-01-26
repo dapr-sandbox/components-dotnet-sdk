@@ -5,18 +5,21 @@ linkTitle: ".NET"
 weight: 1000
 description: How to get up and running with the Dapr Pluggable Components .NET SDK
 no_list: true
+is_preview: true
 ---
 
 Dapr offers NuGet packages to help with the development of .NET Pluggable Components.
 
 ## Prerequisites
 
-- [.NET 6 SDK](https://dotnet.microsoft.com/) or later
+- [.NET 6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet) or later
 - [Dapr 1.9 CLI]({{< ref install-dapr-cli.md >}}) or later
 - Initialized [Dapr environment]({{< ref install-dapr-selfhost.md >}})
 - Linux, Mac, or Windows (with WSL)
 
-> Development of Dapr Pluggable Components on Windows requires doing so through WSL as some development platforms do not fully support Unix Domain Sockets on "native" Windows.
+{{% alert title="Note" color="primary" %}}
+Development of Dapr Pluggable Components on Windows requires WSL as some development platforms do not fully support Unix Domain Sockets on "native" Windows.
+{{% /alert %}}
 
 ## Project Creation
 
@@ -55,7 +58,9 @@ app.Run();
 
 This creates an application with a single service--each service corresponds to a single Unix Domain Socket, and can host one or more component types.
 
-> Note that only a single component of each type can be registered with an individual service. However, multiple components of the same type can be spread across multiple services.
+{{% alert title="Note" color="primary" %}}
+Note that only a single component of each type can be registered with an individual service. However, [multiple components of the same type can be spread across multiple services]({{< ref dotnet-multiple-services >}}).
+{{% /alert %}}
 
 ## Implement and Register Components
 
@@ -90,6 +95,8 @@ spec:
     value: value2
 ```
 
+Any `metadata` properties will be passed to the component via its `IPluggableComponent.InitAsync()` method when the component is instantiated.
+
 To start Dapr (and, optionally, the service making use of the service):
 
 ```bash
@@ -97,3 +104,75 @@ dapr run --app-id <app id> --components-path <components path> ...
 ```
 
 At this point, the Dapr sidecar will have started and connected via Unix Domain Socket to the component. You can then interact with the component either through the service using the component (if started) or by using the Dapr HTTP or gRPC API directly.
+
+## Create Container
+
+There are several ways to create a container for your component for eventual deployment.
+
+### Use .NET SDK
+
+The [.NET 7 and later SDKs](https://dotnet.microsoft.com/en-us/download/dotnet) enable you to create a .NET-based container for your application *without* a `Dockerfile`, even for those targeting earlier versions of the .NET SDK (e.g. 6). This is probably the simplest way of generating a container for your component today.
+
+{{% alert title="Note" color="primary" %}}
+Currently, the .NET 7 SDK requires Docker Desktop on the local machine as well as addition of a special NuGet package, as well as Docker Desktop on the local machine to build containers. Future versions of .NET SDK plan to eliminate those requirements.
+
+Multiple versions of the .NET SDK can be installed on the local machine at the same time.
+{{% /alert %}}
+
+Add the `Microsoft.NET.Build.Containers` NuGet package to the component project.
+
+```bash
+dotnet add package Microsoft.NET.Build.Containers
+```
+
+Publish the application as a container:
+
+```bash
+dotnet publish --os linux --arch x64 /t:PublishContainer -c Release
+```
+
+{{% alert title="Note" color="primary" %}}
+Ensure the architecture argument `--arch x64` matches that of the component's ultimate deployment target. By default, the architecture of the generated container matches that of the local machine. For example, if the local machine is ARM64-based (e.g. a M1 or M2 Mac) and the argument omitted, an ARM64 container will be generated which may not be compatible with deployment targets expecting an AMD64 container.
+{{% /alert %}}
+
+For more configuration options, such as controlling the container name, tag, and base image, see the [.NET publish as container guide](https://learn.microsoft.com/en-us/dotnet/core/docker/publish-as-container).
+
+### Use a Dockerfile
+
+While there are tools that can generate a `Dockerfile` for a .NET application, the .NET SDK itself does not. A typical `Dockerfile` might look like:
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:<runtime> AS base
+WORKDIR /app
+
+# Creates a non-root user with an explicit UID and adds permission to access the /app folder
+# For more info, please refer to https://aka.ms/vscode-docker-dotnet-configure-containers
+RUN adduser -u 5678 --disabled-password --gecos "" appuser && chown -R appuser /app
+USER appuser
+
+FROM mcr.microsoft.com/dotnet/sdk:<runtime> AS build
+WORKDIR /src
+COPY ["<application>.csproj", "<application folder>/"]
+RUN dotnet restore "<application folder>/<application>.csproj"
+COPY . .
+WORKDIR "/src/<application folder>"
+RUN dotnet build "<application>.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "<application>.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "<application>.dll"]
+```
+
+Build the image:
+
+```bash
+docker build -f Dockerfile -t <image name>:<tag> .
+```
+
+{{% alert title="Note" color="primary" %}}
+Paths for `COPY` operations in the `Dockerfile` are relative to the Docker context passed when building the image, while the Docker context itself will vary depending on the needs of the project being built (e.g. if it has referenced projects). In the example above, the assumption is that the Docker context is the component directory.
+{{% /alert %}}

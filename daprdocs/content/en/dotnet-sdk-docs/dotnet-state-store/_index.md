@@ -5,6 +5,7 @@ linkTitle: "State Store"
 weight: 1000
 description: How to create a state store with the Dapr Pluggable Components .NET SDK
 no_list: true
+is_preview: true
 ---
 
 ## Add State Store Namespaces

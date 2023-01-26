@@ -5,6 +5,7 @@ linkTitle: "Bindings"
 weight: 1000
 description: How to create an input/output binding with the Dapr Pluggable Components .NET SDK
 no_list: true
+is_preview: true
 ---
 
 ## Add Bindings Namespaces
