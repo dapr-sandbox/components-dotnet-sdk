@@ -174,5 +174,5 @@ docker build -f Dockerfile -t <image name>:<tag> .
 ```
 
 {{% alert title="Note" color="primary" %}}
-Paths for `COPY` operations in the `Dockerfile` are relative to the Docker context passed when building the image, while the Docker context itself will vary depending on the needs of the project being built (e.g. if it has referenced projects). In the example above, the assumption is that the Docker context is the component directory.
+Paths for `COPY` operations in the `Dockerfile` are relative to the Docker context passed when building the image, while the Docker context itself will vary depending on the needs of the project being built (e.g. if it has referenced projects). In the example above, the assumption is that the Docker context is the component project directory.
 {{% /alert %}}

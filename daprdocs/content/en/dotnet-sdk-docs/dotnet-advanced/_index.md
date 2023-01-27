@@ -7,4 +7,4 @@ description: How to use advanced techniques with with the Dapr Pluggable Compone
 is_preview: true
 ---
 
-While not typically needed by most, these guides show various ways in which you can configure your .NET Pluggable Components.
+While not typically needed by most, these guides show advanced ways to can configure your .NET Pluggable Components.
