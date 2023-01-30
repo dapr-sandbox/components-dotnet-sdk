@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{FFFE01DC-8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.Protos", "src\Dapr.PluggableComponents.Protos\Dapr.PluggableComponents.Protos.csproj", "{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureStorageQueuesPubSubSample", "samples\AzureStorageQueuesPubSubSample\AzureStorageQueuesPubSubSample.csproj", "{A6565BA8-E05C-4B4E-A908-C4B86232F9AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,11 +44,16 @@ Global
 		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6565BA8-E05C-4B4E-A908-C4B86232F9AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6565BA8-E05C-4B4E-A908-C4B86232F9AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6565BA8-E05C-4B4E-A908-C4B86232F9AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6565BA8-E05C-4B4E-A908-C4B86232F9AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E54270BE-EF83-47BE-B29C-29BC89701099} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
 		{26D29BDF-8453-411F-B91F-C13BF24E5203} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
 		{B9AC2D9C-6E9D-42BC-92D2-7427646F28D9} = {6F4E950F-E4CD-4FA4-BA3D-528F0022C03B}
 		{D4EEE026-43B8-42F7-B704-388CA4A0E6EE} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
+		{A6565BA8-E05C-4B4E-A908-C4B86232F9AB} = {6F4E950F-E4CD-4FA4-BA3D-528F0022C03B}
 	EndGlobalSection
 EndGlobal

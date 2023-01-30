@@ -41,6 +41,7 @@ app.Run();
 Implement one or more component interfaces.
 
 - `Dapr.PluggableComponents.StateStore.IStateStore`: The interface for state store components.
+- `Dapr.PluggableComponents.PubSub.IPubSub`: The interface for pub-sub components.
 
 Register one or more component types with the service.
 
@@ -53,11 +54,19 @@ app.RegisterService(
     {
         // Register a state store with the service.
         serviceBuilder.RegisterStateStore<MyStateStore>();
+
+        // Register a pub-sub component with the service.
+        serviceBuilder.RegisterPubSub<MyPubSub>();
     });
 
 app.Run();
 
 class MyStateStore : IStateStore
+{
+    // ...
+}
+
+class MyPubSub : IPubSub
 {
     // ...
 }
