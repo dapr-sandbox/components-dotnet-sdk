@@ -226,6 +226,11 @@ public sealed class DaprPluggableComponentsServiceBuilder
 
     private void AddRelatedStateStoreServices<TStateStore>() where TStateStore : class
     {
+        if (typeof(TStateStore).IsAssignableTo(typeof(ITransactionalStateStore)))
+        {
+            this.AddRelatedService<ITransactionalStateStore, TStateStore, TransactionalStateStoreAdaptor>();
+        }
+
         if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
         {
             this.AddRelatedService<IQueryableStateStore, TStateStore, QueryableStateStoreAdaptor>();
