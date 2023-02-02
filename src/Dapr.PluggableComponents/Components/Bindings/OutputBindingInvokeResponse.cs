@@ -15,44 +15,37 @@ using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
 using Google.Protobuf;
 
-namespace Dapr.PluggableComponents.Components.PubSub;
+namespace Dapr.PluggableComponents.Components.Bindings;
 
 /// <summary>
-/// Represents a message being "pulled" from the source and delivered to the (Dapr) client.
+/// Represents properties associated with the response to an output binding invocation.
 /// </summary>
-/// <param name="TopicName">Gets the name of the topic on which the message was published.</param>
-/// <remarks>
-/// This type is considered a "response" because it is sent by the component in response to the (Dapr) client calling
-/// <see cref="IPubSub.PullMessagesAsync(PubSubPullMessagesTopic, MessageDeliveryHandler{string?, PubSubPullMessagesResponse}, CancellationToken)" />.
-/// </remarks>
-public sealed record PubSubPullMessagesResponse(string TopicName)
+public sealed record OutputBindingInvokeResponse
 {
     /// <summary>
-    /// Gets the message data.
+    /// Gets or sets data associated with the response, if any.
     /// </summary>
     public byte[] Data { get; init; } = Array.Empty<byte>();
 
     /// <summary>
-    /// Gets the metadata associated with the response.
+    /// Gets or sets the metadata associated with the response.
     /// </summary>
     public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 
     /// <summary>
-    /// Gets the content type of the message.
+    /// Gets or sets the content type of the response data.
     /// </summary>
     public string? ContentType { get; init; }
 
-    internal static PullMessagesResponse ToPullMessagesResponse(string messageId, PubSubPullMessagesResponse message)
+    internal static InvokeResponse ToInvokeResponse(OutputBindingInvokeResponse response)
     {
-        var grpcResponse = new PullMessagesResponse
+        var grpcResponse = new InvokeResponse
         {
-            ContentType = message.ContentType ?? String.Empty,
-            Data = message.Data != null ? ByteString.CopyFrom(message.Data) : ByteString.Empty,
-            Id = messageId,
-            TopicName = message.TopicName
+            ContentType = response.ContentType ?? String.Empty,
+            Data = ByteString.CopyFrom(response.Data ?? Array.Empty<byte>())
         };
 
-        grpcResponse.Metadata.Add(message.Metadata);
+        grpcResponse.Metadata.Add(response.Metadata);
 
         return grpcResponse;
     }

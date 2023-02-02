@@ -11,27 +11,18 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-namespace Dapr.PluggableComponents.Components.PubSub;
+namespace Dapr.PluggableComponents.Components.Bindings;
 
 /// <summary>
-/// Represents a pub-sub Dapr Pluggable Component.
+/// Represents an input binding Dapr Pluggable Component.
 /// </summary>
-public interface IPubSub : IPluggableComponent
+public interface IInputBinding : IPluggableComponent
 {
-    /// <summary>
-    /// Called to publish a message.
-    /// </summary>
-    /// <param name="request">Properties related to the message being published.</param>
-    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    Task PublishAsync(PubSubPublishRequest request, CancellationToken cancellationToken = default);
-
     /// <summary>
     /// Called to establish a stream through which messages can be returned to the (Dapr) client and Dapr acknowledgements returned to the component.
     /// </summary>
-    /// <param name="topic">The topic for which to pull messages.</param>
     /// <param name="deliveryHandler">The handler used to deliver messages to the (Dapr) client.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken = default);
+    Task ReadAsync(MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse> deliveryHandler, CancellationToken cancellationToken = default);
 }

@@ -49,7 +49,7 @@ internal sealed class AzureStorageQueuesPubSub : IPubSub
         await queueClient.SendMessageAsync(Encoding.UTF8.GetString(request.Data.Span), cancellationToken);
     }
 
-    public async Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler handler, CancellationToken cancellationToken = default)
+    public async Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> handler, CancellationToken cancellationToken = default)
     {
         this.logger.LogInformation("Pull messages request for topic \"{0}\"", topic.Name);
 

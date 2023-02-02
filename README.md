@@ -40,8 +40,10 @@ app.Run();
 
 Implement one or more component interfaces.
 
-- `Dapr.PluggableComponents.StateStore.IStateStore`: The interface for state store components.
+- `Dapr.PluggableComponents.Bindings.IInputBinding`: The interface for input bindings.
+- `Dapr.PluggableComponents.Bindings.IOuputBinding`: The interface for output bindings.
 - `Dapr.PluggableComponents.PubSub.IPubSub`: The interface for pub-sub components.
+- `Dapr.PluggableComponents.StateStore.IStateStore`: The interface for state store components.
 
 Register one or more component types with the service.
 
@@ -52,16 +54,19 @@ app.RegisterService(
     "<socket name>",
     serviceBuilder =>
     {
-        // Register a state store with the service.
-        serviceBuilder.RegisterStateStore<MyStateStore>();
+        // Register an input and/or output binding with the service.
+        serviceBuilder.RegisterBinding<MyBindings>();
 
         // Register a pub-sub component with the service.
         serviceBuilder.RegisterPubSub<MyPubSub>();
+
+        // Register a state store with the service.
+        serviceBuilder.RegisterStateStore<MyStateStore>();
     });
 
 app.Run();
 
-class MyStateStore : IStateStore
+class MyBinding : IInputBinding, IOutputBinding
 {
     // ...
 }
@@ -70,6 +75,12 @@ class MyPubSub : IPubSub
 {
     // ...
 }
+
+class MyStateStore : IStateStore
+{
+    // ...
+}
+
 ```
 
 > NOTE: Only a single component of any given type can be registered with a given service.  However, you can register components of the same type on separate services, and you can have as many services as you need.
