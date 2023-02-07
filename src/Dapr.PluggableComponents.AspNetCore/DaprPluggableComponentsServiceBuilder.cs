@@ -152,6 +152,8 @@ public sealed class DaprPluggableComponentsServiceBuilder
     {
         this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>();
 
+        this.AddRelatedStateStoreServices<TStateStore>();
+
         return this;
     }
 
@@ -171,6 +173,8 @@ public sealed class DaprPluggableComponentsServiceBuilder
         where TStateStore : class, IStateStore
     {
         this.AddComponent<IStateStore, TStateStore, StateStoreAdaptor>(stateStoreFactory);
+
+        this.AddRelatedStateStoreServices<TStateStore>();
 
         return this;
     }
@@ -217,6 +221,14 @@ public sealed class DaprPluggableComponentsServiceBuilder
         if (typeof(TBinding).IsAssignableTo(typeof(IOutputBinding)))
         {
             this.AddRelatedService<IOutputBinding, TBinding, OutputBindingAdaptor>();
+        }
+    }
+
+    private void AddRelatedStateStoreServices<TStateStore>() where TStateStore : class
+    {
+        if (typeof(TStateStore).IsAssignableTo(typeof(IQueryableStateStore)))
+        {
+            this.AddRelatedService<IQueryableStateStore, TStateStore, QueryableStateStoreAdaptor>();
         }
     }
 }

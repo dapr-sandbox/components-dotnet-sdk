@@ -33,8 +33,8 @@ public interface IBulkStateStore
     /// Called to get state.
     /// </summary>
     /// <param name="requests">Properties related to the state to be retrieved.</param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation, resulting in the values returned by the operation.</returns>
     Task<StateStoreBulkStateItem[]> BulkGetAsync(StateStoreGetRequest[] requests, CancellationToken cancellationToken = default);
 
     /// <summary>
