@@ -17,7 +17,7 @@ namespace Dapr.PluggableComponents.Components.StateStore;
 /// Represents a state store Dapr Pluggable Component that supports bulk operations.
 /// </summary>
 /// <remarks>
-/// This interface is optional. If not implmented, bulk operations will be performed via repeated calls to individual <see cref="IStateStore"/> methods.
+/// This interface is optional. If not implemented, bulk operations will be performed via repeated calls to individual <see cref="IStateStore"/> methods.
 /// </remarks>
 public interface IBulkStateStore
 {
