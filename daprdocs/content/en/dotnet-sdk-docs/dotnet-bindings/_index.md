@@ -95,7 +95,7 @@ internal sealed class MyBinding : IOutputBinding
 }
 ```
 
-### Input *and* Output Bindings Components
+## Input *and* Output Binding Components
 
 A component can be *both* an input *and* output binding, simply by implementing both interfaces.
 
