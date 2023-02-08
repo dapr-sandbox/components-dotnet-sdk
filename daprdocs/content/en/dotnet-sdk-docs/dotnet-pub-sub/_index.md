@@ -8,7 +8,11 @@ no_list: true
 is_preview: true
 ---
 
+Creating a pub-sub component requires just a few basic steps.
+
 ## Add Pub-Sub Namespaces
+
+Add `using` statements for the pub-sub related namespaces.
 
 ```csharp
 using Dapr.PluggableComponents.Components;
@@ -17,26 +21,68 @@ using Dapr.PluggableComponents.Components.PubSub;
 
 ## Implement `IPubSub`
 
+Create a class that implements the `IPubSub` interface.
+
 ```csharp
 internal sealed class MyPubSub : IPubSub
 {
     public Task InitAsync(MetadataRequest request, CancellationToken cancellationToken = default)
     {
+        // Called to initialize the component with its configured metadata...
     }
 
-    public async Task PublishAsync(PubSubPublishRequest request, CancellationToken cancellationToken = default)
+    public Task PublishAsync(PubSubPublishRequest request, CancellationToken cancellationToken = default)
     {
+        // Send the message to the "topic"...
     }
 
-    public async Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler handler, CancellationToken cancellationToken = default)
+    public Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken = default)
     {
+        // Until canceled, check the topic for messages and deliver them to the Dapr runtime...
     }
 }
 ```
 
+Calls to the `PullMessagesAsync()` method are "long-lived" in that the method is not expected to return until canceled (i.e. via the `cancellationToken`). The "topic" from which messages should be pulled is passed via the `topic` argument, while the delivery to the Dapr runtime performed via the `deliveryHandler` callback. Delivery allows the component to receive notification if/when the application (served by the Dapr runtime) acknowledges processing of the  message.
+
+```csharp
+    public async Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken = default)
+    {
+        TimeSpan pollInterval = // Polling interval (e.g. from initalization metadata)...
+
+        // Poll the topic until canceled...
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var messages = // Poll topic for messages...
+
+            foreach (var message in messages)
+            {
+                // Deliver the message to the Dapr runtime...
+                await deliveryHandler(
+                    new PubSubPullMessagesResponse(topicName)
+                    {
+                        // Set the message content...
+                    },
+                    // Callback invoked when application acknowledges the message...
+                    async errorMessage =>
+                    {
+                        // An empty message indicates the application successfully processed the message...
+                        if (String.IsNullOrEmpty(errorMessage))
+                        {
+                            // Delete the message from the topic...
+                        }
+                    })
+            }
+
+            // Wait for the next poll (or cancellation)...
+            await Task.Delay(pollInterval, cancellationToken);
+        }
+    }
+```
+
 ## Register Pub-Sub Component
 
-In `Program.cs`, register the pub-sub component in an application service.
+In the main program file (e.g. `Program.cs`), register the pub-sub component with an application service.
 
 ```csharp
 using Dapr.PluggableComponents;
