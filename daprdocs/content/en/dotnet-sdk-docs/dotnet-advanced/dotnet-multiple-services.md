@@ -1,20 +1,24 @@
 ---
 type: docs
-title: "Multiple services in a .NET Dapr Pluggable Component"
+title: "Multiple services in a .NET Dapr pluggable component"
 linkTitle: "Multiple services"
 weight: 1000
-description: How to expose multiple services from a .NET Pluggable Component
+description: How to expose multiple services from a .NET pluggable component
 no_list: true
 is_preview: true
 ---
 
-A Dapr Pluggable Component can host multiple components of varying types. This might be done for efficiency reasons, to minimize the number of sidecars running in a cluster. It might also be done for implementation reasons, to group related components such as a database exposed both as a general state store as well as output bindings that allow more specific operations, where components are likely to share libraries and implementation.
+A pluggable component can host multiple components of varying types. You might do this:
+- To minimize the number of sidecars running in a cluster
+- To group related components that are likely to share libraries and implementation, such as:
+   - A database exposed both as a general state store, and
+   - Output bindings that allow more specific operations.
 
-Each Unix Domain Socket can manage calls to, at most, one component of each type. To host multiple components of the *same* type, those types can be spread across multiple sockets. The SDK binds each socket to a "service", with each service composed of one or more component types.
+Each Unix Domain Socket can manage calls to one component of each type. To host multiple components of the _same_ type, you can spread those types across multiple sockets. The SDK binds each socket to a "service", with each service composed of one or more component types.
 
-## Registering Multiple Services
+## Registering multiple services
 
-Each call to `RegisterService()` binds a socket to a set of registered components, where, at most, one of each type of component can be registered per service.
+Each call to `RegisterService()` binds a socket to a set of registered components, where one of each type of component can be registered per service.
 
 ```csharp
 var app = DaprPluggableComponentsApplication.Create();
@@ -54,7 +58,7 @@ class AnotherStateStore : IStateStore
 
 ## Configuring Multiple Components
 
-Configuring Dapr to use the hosted components is the same as for any single component; the component YAML just refers to the associated socket.
+Configuring Dapr to use the hosted components is the same as for any single component - the component YAML refers to the associated socket.
 
 ```yaml
 #

@@ -3,14 +3,14 @@ type: docs
 title: "Implementing a .NET input/output binding component"
 linkTitle: "Bindings"
 weight: 1000
-description: How to create an input/output binding with the Dapr Pluggable Components .NET SDK
+description: How to create an input/output binding with the Dapr pluggable components .NET SDK
 no_list: true
 is_preview: true
 ---
 
 Creating a binding component requires just a few basic steps.
 
-## Add Bindings Namespaces
+## Add bindings namespaces
 
 Add `using` statements for the bindings related namespaces.
 
@@ -19,7 +19,7 @@ using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.Bindings;
 ```
 
-## Input Bindings: Implement `IInputBinding`
+## Input bindings: Implement `IInputBinding`
 
 Create a class that implements the `IInputBinding` interface.
 
@@ -38,7 +38,7 @@ internal sealed class MyBinding : IInputBinding
 }
 ```
 
-Calls to the `ReadAsync()` method are "long-lived" in that the method is not expected to return until canceled (i.e. via the `cancellationToken`). As messages are read from the underlying store of the component, they are delivered to the Dapr runtime via the `deliveryHandler` callback. Delivery allows the component to receive notification if/when the application (served by the Dapr runtime) acknowledges processing of the message.
+Calls to the `ReadAsync()` method are "long-lived", in that the method is not expected to return until canceled (for example, via the `cancellationToken`). As messages are read from the underlying store of the component, they are delivered to the Dapr runtime via the `deliveryHandler` callback. Delivery allows the component to receive notification if/when the application (served by the Dapr runtime) acknowledges processing of the message.
 
 ```csharp
     public async Task ReadAsync(MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse> deliveryHandler, CancellationToken cancellationToken = default)
@@ -71,7 +71,7 @@ Calls to the `ReadAsync()` method are "long-lived" in that the method is not exp
     }
 ```
 
-## Output Bindings: Implement `IOutputBinding`
+## Output bindings: Implement `IOutputBinding`
 
 Create a class that implements the `IOutputBinding` interface.
 
@@ -95,9 +95,9 @@ internal sealed class MyBinding : IOutputBinding
 }
 ```
 
-## Input *and* Output Binding Components
+## Input and output binding components
 
-A component can be *both* an input *and* output binding, simply by implementing both interfaces.
+A component can be _both_ an input _and_ output binding, simply by implementing both interfaces.
 
 ```csharp
 internal sealed class MyBinding : IInputBinding, IOutputBinding
@@ -108,9 +108,9 @@ internal sealed class MyBinding : IInputBinding, IOutputBinding
 }
 ```
 
-## Register Binding Component
+## Register binding component
 
-In the main program file (e.g. `Program.cs`), register the binding component in an application service.
+In the main program file (for example, `Program.cs`), register the binding component in an application service.
 
 ```csharp
 using Dapr.PluggableComponents;

@@ -1,14 +1,14 @@
 ---
 type: docs
-title: "Getting started with the Dapr Pluggable Components .NET SDK"
+title: "Getting started with the Dapr pluggable components .NET SDK"
 linkTitle: ".NET"
 weight: 1000
-description: How to get up and running with the Dapr Pluggable Components .NET SDK
+description: How to get up and running with the Dapr pluggable components .NET SDK
 no_list: true
 is_preview: true
 ---
 
-Dapr offers NuGet packages to help with the development of .NET Pluggable Components.
+Dapr offers NuGet packages to help with the development of .NET pluggable components.
 
 ## Prerequisites
 
@@ -18,28 +18,28 @@ Dapr offers NuGet packages to help with the development of .NET Pluggable Compon
 - Linux, Mac, or Windows (with WSL)
 
 {{% alert title="Note" color="primary" %}}
-Development of Dapr Pluggable Components on Windows requires WSL as some development platforms do not fully support Unix Domain Sockets on "native" Windows.
+Development of Dapr pluggable components on Windows requires WSL as some development platforms do not fully support Unix Domain Sockets on "native" Windows.
 {{% /alert %}}
 
-## Project Creation
+## Project creation
 
-Creating a Dapr Pluggable Component starts with an empty ASP.NET project.
+Creating a pluggable component starts with an empty ASP.NET project.
 
 ```bash
 dotnet new web --name <project name>
 ```
 
-## Add NuGet Packages
+## Add NuGet packages
 
-Add the Dapr .NET Pluggable Components NuGet package.
+Add the Dapr .NET pluggable components NuGet package.
 
 ```bash
 dotnet add package Dapr.PluggableComponents.AspNetCore
 ```
 
-## Create Application and Service
+## Create application and service
 
-Creating a Dapr Pluggable Component application is similar to creating an ASP.NET application.  In, `Program.cs`, replace the `WebApplication` related code with the Dapr `DaprPluggableComponentsApplication` equivalent.
+Creating a Dapr pluggable component application is similar to creating an ASP.NET application.  In `Program.cs`, replace the `WebApplication` related code with the Dapr `DaprPluggableComponentsApplication` equivalent.
 
 ```csharp
 using Dapr.PluggableComponents;
@@ -56,21 +56,24 @@ app.RegisterService(
 app.Run();
 ```
 
-This creates an application with a single service--each service corresponds to a single Unix Domain Socket, and can host one or more component types.
+This creates an application with a single service. Each service:
+
+- Corresponds to a single Unix Domain Socket
+- Can host one or more component types
 
 {{% alert title="Note" color="primary" %}}
-Note that only a single component of each type can be registered with an individual service. However, [multiple components of the same type can be spread across multiple services]({{< ref dotnet-multiple-services >}}).
+Only a single component of each type can be registered with an individual service. However, [multiple components of the same type can be spread across multiple services]({{< ref dotnet-multiple-services >}}).
 {{% /alert %}}
 
-## Implement and Register Components
+## Implement and register components
 
  - [Implementing an input/output binding component]({{< ref dotnet-bindings >}})
  - [Implementing a pub-sub component]({{< ref dotnet-pub-sub >}})
  - [Implementing a state store component]({{< ref dotnet-state-store >}})
 
-## Testing Components Locally
+## Test components locally
 
-Dapr Pluggable Components can be tested by starting the application on the command line and configuring a Dapr sidecar to use it.
+Pluggable components can be tested by starting the application on the command line and configuring a Dapr sidecar to use it.
 
 To start the component, in the application directory:
 
@@ -78,7 +81,7 @@ To start the component, in the application directory:
 dotnet run
 ```
 
-To configure Dapr to use the component, in the components path directory:
+To configure Dapr to use the component, in the resources path directory:
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -100,10 +103,12 @@ Any `metadata` properties will be passed to the component via its `IPluggableCom
 To start Dapr (and, optionally, the service making use of the service):
 
 ```bash
-dapr run --app-id <app id> --components-path <components path> ...
+dapr run --app-id <app id> --resources-path <resources path> ...
 ```
 
-At this point, the Dapr sidecar will have started and connected via Unix Domain Socket to the component. You can then interact with the component either through the service using the component (if started) or by using the Dapr HTTP or gRPC API directly.
+At this point, the Dapr sidecar will have started and connected via Unix Domain Socket to the component. You can then interact with the component either:
+- Through the service using the component (if started), or 
+- By using the Dapr HTTP or gRPC API directly
 
 ## Create Container
 
@@ -111,10 +116,10 @@ There are several ways to create a container for your component for eventual dep
 
 ### Use .NET SDK
 
-The [.NET 7 and later SDKs](https://dotnet.microsoft.com/en-us/download/dotnet) enable you to create a .NET-based container for your application *without* a `Dockerfile`, even for those targeting earlier versions of the .NET SDK (e.g. 6). This is probably the simplest way of generating a container for your component today.
+The [.NET 7 and later SDKs](https://dotnet.microsoft.com/en-us/download/dotnet) enable you to create a .NET-based container for your application *without* a `Dockerfile`, even for those targeting earlier versions of the .NET SDK. This is probably the simplest way of generating a container for your component today.
 
 {{% alert title="Note" color="primary" %}}
-Currently, the .NET 7 SDK requires Docker Desktop on the local machine as well as addition of a special NuGet package, as well as Docker Desktop on the local machine to build containers. Future versions of .NET SDK plan to eliminate those requirements.
+Currently, the .NET 7 SDK requires Docker Desktop on the local machine, a special NuGet package, and Docker Desktop on the local machine to build containers. Future versions of .NET SDK plan to eliminate those requirements.
 
 Multiple versions of the .NET SDK can be installed on the local machine at the same time.
 {{% /alert %}}
@@ -132,7 +137,7 @@ dotnet publish --os linux --arch x64 /t:PublishContainer -c Release
 ```
 
 {{% alert title="Note" color="primary" %}}
-Ensure the architecture argument `--arch x64` matches that of the component's ultimate deployment target. By default, the architecture of the generated container matches that of the local machine. For example, if the local machine is ARM64-based (e.g. a M1 or M2 Mac) and the argument omitted, an ARM64 container will be generated which may not be compatible with deployment targets expecting an AMD64 container.
+Ensure the architecture argument `--arch x64` matches that of the component's ultimate deployment target. By default, the architecture of the generated container matches that of the local machine. For example, if the local machine is ARM64-based (for example, a M1 or M2 Mac) and the argument is omitted, an ARM64 container will be generated which may not be compatible with deployment targets expecting an AMD64 container.
 {{% /alert %}}
 
 For more configuration options, such as controlling the container name, tag, and base image, see the [.NET publish as container guide](https://learn.microsoft.com/en-us/dotnet/core/docker/publish-as-container).
@@ -174,5 +179,5 @@ docker build -f Dockerfile -t <image name>:<tag> .
 ```
 
 {{% alert title="Note" color="primary" %}}
-Paths for `COPY` operations in the `Dockerfile` are relative to the Docker context passed when building the image, while the Docker context itself will vary depending on the needs of the project being built (e.g. if it has referenced projects). In the example above, the assumption is that the Docker context is the component project directory.
+Paths for `COPY` operations in the `Dockerfile` are relative to the Docker context passed when building the image, while the Docker context itself will vary depending on the needs of the project being built (for example, if it has referenced projects). In the example above, the assumption is that the Docker context is the component project directory.
 {{% /alert %}}

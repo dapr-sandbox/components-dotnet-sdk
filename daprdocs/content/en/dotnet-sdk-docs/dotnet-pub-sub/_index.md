@@ -1,18 +1,18 @@
 ---
 type: docs
-title: "Implementing a .NET pub-sub component"
-linkTitle: "Pub-Sub"
+title: "Implementing a .NET pub/sub component"
+linkTitle: "Pub/sub"
 weight: 1000
-description: How to create a pub-sub with the Dapr Pluggable Components .NET SDK
+description: How to create a pub/sub with the Dapr pluggable components .NET SDK
 no_list: true
 is_preview: true
 ---
 
-Creating a pub-sub component requires just a few basic steps.
+Creating a pub/sub component requires just a few basic steps.
 
-## Add Pub-Sub Namespaces
+## Add pub/sub namespaces
 
-Add `using` statements for the pub-sub related namespaces.
+Add `using` statements for the pub/sub related namespaces.
 
 ```csharp
 using Dapr.PluggableComponents.Components;
@@ -43,7 +43,7 @@ internal sealed class MyPubSub : IPubSub
 }
 ```
 
-Calls to the `PullMessagesAsync()` method are "long-lived" in that the method is not expected to return until canceled (i.e. via the `cancellationToken`). The "topic" from which messages should be pulled is passed via the `topic` argument, while the delivery to the Dapr runtime performed via the `deliveryHandler` callback. Delivery allows the component to receive notification if/when the application (served by the Dapr runtime) acknowledges processing of the  message.
+Calls to the `PullMessagesAsync()` method are "long-lived", in that the method is not expected to return until canceled (for example, via the `cancellationToken`). The "topic" from which messages should be pulled is passed via the `topic` argument, while the delivery to the Dapr runtime is performed via the `deliveryHandler` callback. Delivery allows the component to receive notification if/when the application (served by the Dapr runtime) acknowledges processing of the  message.
 
 ```csharp
     public async Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken = default)
@@ -80,9 +80,9 @@ Calls to the `PullMessagesAsync()` method are "long-lived" in that the method is
     }
 ```
 
-## Register Pub-Sub Component
+## Register pub/sub component
 
-In the main program file (e.g. `Program.cs`), register the pub-sub component with an application service.
+In the main program file (for example, `Program.cs`), register the pub/sub component with an application service.
 
 ```csharp
 using Dapr.PluggableComponents;

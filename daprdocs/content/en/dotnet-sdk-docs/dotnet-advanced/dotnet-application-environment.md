@@ -1,18 +1,18 @@
 ---
 type: docs
-title: "Application Environment of a .NET Dapr Pluggable Component"
+title: "Application Environment of a .NET Dapr pluggable component"
 linkTitle: "Application environment"
 weight: 1000
-description: How to configure the environment of a .NET Pluggable Component
+description: How to configure the environment of a .NET pluggable component
 no_list: true
 is_preview: true
 ---
 
-A .NET Dapr Pluggable Component application can be configured, i.e. for dependency injection, logging, and configuration values, in a manner similar to ASP.NET applications.  The `DaprPluggableComponentsApplcation` exposes a similar set of configuration properties to that exposed by `WebApplicationBuilder`.
+A .NET Dapr pluggable component application can be configured for dependency injection, logging, and configuration values similarly to ASP.NET applications.  The `DaprPluggableComponentsApplication` exposes a similar set of configuration properties to that exposed by `WebApplicationBuilder`.
 
-## Dependency Injection
+## Dependency injection
 
-Components registered with services can participate in dependency injection; arguments in the components constructor will be injected during creation, assuming those types themselves have been registered with the application, which can be done through the `IServiceCollection` exposed by `DaprPluggableComponentsApplication`.
+Components registered with services can participate in dependency injection. Arguments in the components constructor will be injected during creation, assuming those types have been registered with the application. You can register them through the `IServiceCollection` exposed by `DaprPluggableComponentsApplication`.
 
 ```csharp
 var app = DaprPluggableComponentsApplication.Create();
@@ -52,15 +52,15 @@ class MyStateStore : IStateStore
 ```
 
 {{% alert title="Warning" color="warning" %}}
-Use of `IServiceCollection.AddScoped()` is not recommended as such instances' lifetimes are bound to a single gRPC method call which does not match the lifetime of an individual component instance.
+Use of `IServiceCollection.AddScoped()` is not recommended. Such instances' lifetimes are bound to a single gRPC method call, which does not match the lifetime of an individual component instance.
 {{% /alert %}}
 
 ## Logging
 
-.NET Dapr Pluggable Components can use the [standard .NET logging mechanisms](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging). The `DaprPluggableComponentsApplication` exposes an `ILoggingBuilder` through which it can be configured.
+.NET Dapr pluggable components can use the [standard .NET logging mechanisms](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging). The `DaprPluggableComponentsApplication` exposes an `ILoggingBuilder`, through which it can be configured.
 
 {{% alert title="Note" color="primary" %}}
-Like with ASP.NET, logger services (e.g. `ILogger<T>`) are pre-registered.
+Like with ASP.NET, logger services (for example, `ILogger<T>`) are pre-registered.
 {{% /alert %}}
 
 ```csharp
@@ -93,7 +93,7 @@ class MyStateStore : IStateStore
 
 ## Configuration Values
 
-As .NET Dapr Pluggable Components are built on ASP.NET, they can use its [standard configuration mechanisms](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration) and default to the same set of [pre-registered providers](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources).  The `DaprPluggableComponentsApplication` exposes an `IConfigurationManager` through which it can be configured.
+Since .NET pluggable components are built on ASP.NET, they can use its [standard configuration mechanisms](https://learn.microsoft.com/en-us/dotnet/core/extensions/configuration) and default to the same set of [pre-registered providers](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0#default-application-configuration-sources). The `DaprPluggableComponentsApplication` exposes an `IConfigurationManager` through which it can be configured.
 
 ```csharp
 var app = DaprPluggableComponentsApplication.Create();
