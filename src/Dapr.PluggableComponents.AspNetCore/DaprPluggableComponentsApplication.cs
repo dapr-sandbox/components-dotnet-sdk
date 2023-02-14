@@ -24,7 +24,7 @@ namespace Dapr.PluggableComponents;
 /// <summary>
 /// Represents an application that hosts Dapr Pluggable Components.
 /// </summary>
-public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponentsRegistrar
+public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponentsRegistrar, IAsyncDisposable, IDisposable
 {
     /// <summary>
     /// Creates a <see cref="DaprPluggableComponentsApplication"/> instance.
@@ -43,10 +43,12 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
     private readonly DaprPluggableComponentsRegistry registry = new DaprPluggableComponentsRegistry();
     private readonly ConcurrentBag<DaprServiceRegistration> serviceBuilderActions = new ConcurrentBag<DaprServiceRegistration>();
     private readonly WebApplicationBuilder webApplicationBuilder;
+    private readonly Lazy<WebApplication> webApplicationProvider;
 
     private DaprPluggableComponentsApplication(WebApplicationBuilder webApplicationBuilder)
     {
         this.webApplicationBuilder = webApplicationBuilder ?? throw new ArgumentNullException(nameof(webApplicationBuilder));
+        this.webApplicationProvider = new Lazy<WebApplication>(this.CreateApplication);
     }
 
     private sealed record DaprServiceRegistration(DaprPluggableComponentsServiceOptions Options, Action<DaprPluggableComponentsServiceBuilder> Callback);
@@ -95,16 +97,53 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
     /// </summary>
     public void Run()
     {
-        this.CreateApplication().Run();
+        this.webApplicationProvider.Value.Run();
     }
 
     /// <summary>
     /// Runs the application asynchronously.
     /// </summary>
     /// <returns>A <see cref="Task"/> that completes when shutdown.</returns>
-    public Task RunAsync()
+    public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        return this.CreateApplication().RunAsync();
+        var application = this.webApplicationProvider.Value;
+
+        var listener = cancellationToken.Register(
+            () =>
+            {
+                application.Lifetime.StopApplication();
+            });
+
+        try
+        {
+            // NOTE: RunAsync() doesn't accept a cancellation token (despite the docs); that's slated for .NET 8.
+            //       See: https://github.com/dotnet/aspnetcore/issues/44083
+            await application.RunAsync();
+        }
+        finally
+        {
+            listener.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Start the application.
+    /// </summary>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task"/> that represents the startup of the application. Successfull completion indicates the server is ready to accept new requests.</returns>
+    public Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        return this.webApplicationProvider.Value.StartAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Shuts down the application.
+    /// </summary>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task"/> that represents the shutdown of the application. Successfull completion indicates the server has stopped.</returns>
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        return this.webApplicationProvider.Value.StopAsync(cancellationToken);
     }
 
     #region IDaprPluggableComponentsRegistrar Members
@@ -155,6 +194,36 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
         }
 
         this.registry.RegisterComponentProvider<TComponent, TComponentImpl>(socketPath);
+    }
+
+    #endregion
+
+    #region IAsyncDisposable Members
+
+    /// <summary>
+    /// Disposes the application.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> that completes when the application is disposed.</returns>
+    public ValueTask DisposeAsync()
+    {
+        if (this.webApplicationProvider.IsValueCreated)
+        {
+            return this.webApplicationProvider.Value.DisposeAsync();
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
+    #endregion
+
+    #region IDisposable Members
+
+    void IDisposable.Dispose()
+    {
+        if (this.webApplicationProvider.IsValueCreated && this.webApplicationProvider.Value is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
     }
 
     #endregion
