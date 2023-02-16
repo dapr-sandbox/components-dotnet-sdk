@@ -53,7 +53,7 @@ jobs:
         - dotnet-version: '7.0'
           install-3: false
           display-name: '.NET 7.0'
-          framework: 'net7'
+          framework: 'net7.0'
           prefix: 'net7'
           install-version: '7.0.x'
     steps:
