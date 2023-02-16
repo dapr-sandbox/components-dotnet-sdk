@@ -68,7 +68,7 @@ public class PubSubAdaptor : PubSubBase
     public async override Task<PubSubInitResponse> Init(Proto.Components.V1.PubSubInitRequest request, ServerCallContext ctx)
     {
         this.logger.LogDebug("Init request");
-        
+
         await this.GetPubSub(ctx).InitAsync(
             Components.MetadataRequest.FromMetadataRequest(request.Metadata),
             ctx.CancellationToken);

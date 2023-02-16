@@ -37,6 +37,61 @@ jobs:
           name: packages
           path: ${{ env.NUPKG_OUTDIR }}
 
+  test:
+    name: Test .NET ${{ matrix.dotnet-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dotnet-version: ['6.0']
+        include:
+        - dotnet-version: '6.0'
+          install-3: false
+          display-name: '.NET 6.0'
+          framework: 'net6.0'
+          prefix: 'net6'
+          install-version: '6.0.x'
+    steps:
+    - uses: actions/checkout@v1
+    - name: Parse release version
+      run: python ./.github/scripts/get_release_version.py
+    - name: Setup ${{ matrix.display-name }}
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ matrix.install-version }}
+    - name: Setup .NET 7.0 # net7 is always required.
+      uses: actions/setup-dotnet@v1
+      if: ${{ matrix.install-version != '7.0.x' }}
+      with:
+        dotnet-version: 7.0.x
+    - name: Build
+      # disable deterministic builds, just for test run. Deterministic builds break coverage for some reason
+      run: dotnet build --configuration release /p:GITHUB_ACTIONS=false
+    - name: Test
+      id: tests
+      continue-on-error: true # proceed if tests fail to allow for the report generation in master or next step failure in PR
+      run: |
+        dotnet test \
+          --configuration release \
+          --framework ${{ matrix.framework }} \
+          --no-build \
+          --no-restore \
+          --logger "trx;LogFilePrefix=${{ matrix.prefix }}" \
+          --logger "GitHubActions;report-warnings=false" \
+          --results-directory "${{ github.workspace }}/TestResults" \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=opencover \
+          /p:GITHUB_ACTIONS=false
+    - name: Check test failure in PR
+      if: github.event_name == 'pull_request' && steps.tests.outcome != 'success'
+      run: exit 1
+    - name: Parse Trx files
+      uses: NasAmin/trx-parser@v0.2.0
+      id: trx-parser
+      if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository # does not work on PRs from forks
+      with:
+        TRX_PATH: ${{ github.workspace }}/TestResults
+        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish:
     name: Publish Packages
     needs: ['build']
