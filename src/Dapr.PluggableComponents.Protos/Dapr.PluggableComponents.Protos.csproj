@@ -4,15 +4,15 @@
     <ProtosVersion>v1</ProtosVersion>
     <ProtosTag>v1.9.0</ProtosTag>
     <ProtosBaseUrl>https://raw.githubusercontent.com/dapr/dapr/$(ProtosTag)/dapr/proto/components/$(ProtosVersion)</ProtosBaseUrl>
-    <ProtosRootDir>Protos</ProtosRootDir>
+    <ProtosRootDir>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\Protos</ProtosRootDir>
     <ProtosComponentsDir>$(ProtosRootDir)\dapr\proto\components\$(ProtosVersion)</ProtosComponentsDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <Protos Include="bindings.proto" />
-    <Protos Include="common.proto" />
-    <Protos Include="pubsub.proto" />
-    <Protos Include="state.proto" />
+    <Protos Include="bindings.proto" Visible="false" />
+    <Protos Include="common.proto" Visible="false" />
+    <Protos Include="pubsub.proto" Visible="false" />
+    <Protos Include="state.proto" Visible="false" />
   </ItemGroup>
 
   <!-- Additional Nuget package properties. -->
@@ -22,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="@(Protos->'$(ProtosComponentsDir)/%(Identity)')" ProtoRoot="Protos" GrpcServices="Client,Server" />
+    <Protobuf Include="@(Protos->'$(ProtosComponentsDir)/%(Identity)')" ProtoRoot="$(ProtosRootDir)" GrpcServices="Client,Server" />
   </ItemGroup>
 
   <ItemGroup>

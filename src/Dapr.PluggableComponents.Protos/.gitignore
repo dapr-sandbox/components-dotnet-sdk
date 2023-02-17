@@ -1,4 +1,0 @@
-#
-# Protos are downloaded as part of build.
-#
-Protos/**/*.proto
