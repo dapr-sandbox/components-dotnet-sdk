@@ -11,6 +11,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using System.Globalization;
 using Dapr.Proto.Components.V1;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
@@ -28,12 +29,12 @@ public enum StateStoreConcurrency
     /// <summary>
     /// First write wins (i.e. optimistic concurrency via ETags).
     /// </summary>
-    FirstWrite = 1,
+    FirstWrite,
 
     /// <summary>
     /// Last write wins (i.e. no ETags).
     /// </summary>
-    LastWrite = 2
+    LastWrite
 }
 
 /// <summary>
@@ -49,12 +50,12 @@ public enum StateStoreConsistency
     /// <summary>
     /// State stores are eventually consistent.
     /// </summary>
-    Eventual = 1,
+    Eventual,
 
     /// <summary>
     /// State stores are updated before completing a write request.
     /// </summary>
-    Strong = 2
+    Strong
 }
 
 /// <summary>
@@ -78,14 +79,36 @@ public sealed record StateStoreStateOptions
     /// </remarks>
     public StateStoreConsistency Consistency { get; init; } = StateStoreConsistency.Unspecified;
 
-    internal static StateStoreStateOptions? FromStateOptions(StateOptions options)
+    internal static StateStoreStateOptions? FromStateOptions(StateOptions? options)
     {
         return options != null
             ? new StateStoreStateOptions
             {
-                Concurrency = (StateStoreConcurrency)options.Concurrency,
-                Consistency = (StateStoreConsistency)options.Consistency
+                Concurrency = FromConcurrency(options.Concurrency),
+                Consistency = FromConsistency(options.Consistency)
             }
             : null;
+    }
+
+    internal static StateStoreConcurrency FromConcurrency(StateOptions.Types.StateConcurrency concurrency)
+    {
+        return concurrency switch
+        {
+            StateOptions.Types.StateConcurrency.ConcurrencyFirstWrite => StateStoreConcurrency.FirstWrite,
+            StateOptions.Types.StateConcurrency.ConcurrencyLastWrite => StateStoreConcurrency.LastWrite,
+            StateOptions.Types.StateConcurrency.ConcurrencyUnspecified => StateStoreConcurrency.Unspecified,
+            _ => throw new ArgumentOutOfRangeException(nameof(concurrency), String.Format(CultureInfo.CurrentCulture, "The concurrency \"{0}\" was not recognized.", concurrency))
+        };
+    }
+
+    internal static StateStoreConsistency FromConsistency(StateOptions.Types.StateConsistency consistency)
+    {
+        return consistency switch
+        {
+            StateOptions.Types.StateConsistency.ConsistencyEventual => StateStoreConsistency.Eventual,
+            StateOptions.Types.StateConsistency.ConsistencyStrong => StateStoreConsistency.Strong,
+            StateOptions.Types.StateConsistency.ConsistencyUnspecified => StateStoreConsistency.Unspecified,
+            _ => throw new ArgumentOutOfRangeException(nameof(consistency), String.Format(CultureInfo.CurrentCulture, "The consistency \"{0}\" was not recognized.", consistency))
+        };
     }
 }
