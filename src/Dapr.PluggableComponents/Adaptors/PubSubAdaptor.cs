@@ -57,7 +57,7 @@ public class PubSubAdaptor : PubSubBase
         if (this.GetPubSub(ctx) is IPluggableComponentFeatures features)
         {
             var featuresResponse = await features.GetFeaturesAsync(ctx.CancellationToken);
-    
+
             response.Features.AddRange(featuresResponse);
         }
 
@@ -72,7 +72,7 @@ public class PubSubAdaptor : PubSubBase
         await this.GetPubSub(ctx).InitAsync(
             Components.MetadataRequest.FromMetadataRequest(request.Metadata),
             ctx.CancellationToken);
-        
+
         return new PubSubInitResponse();
     }
 
