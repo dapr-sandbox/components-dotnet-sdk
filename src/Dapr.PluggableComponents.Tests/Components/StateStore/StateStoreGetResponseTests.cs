@@ -125,10 +125,25 @@ public sealed class StateStoreGetResponseTests
     [Fact]
     public void ToBulkStateItemTests()
     {
+        TestConversion(
+            key => new StateStoreGetResponse(),
+            (source, response) => StateStoreGetResponse.ToBulkStateItem(source, response),
+            result => result.Key,
+            new[]
+            {
+                ("", ""),
+                ("key", "key")
+            });
+
         TestGrpcContentConversion(
             contentType => new StateStoreGetResponse { ContentType = contentType },
             response => StateStoreGetResponse.ToBulkStateItem("key", response),
             response => response.ContentType);
+
+        TestGrpcDataConversion(
+            data => new StateStoreGetResponse { Data = data },
+            response => StateStoreGetResponse.ToBulkStateItem("key", response),
+            response => response.Data);
 
         TestGrpcETagConversion(
             etag => new StateStoreGetResponse { ETag = etag },
@@ -150,13 +165,32 @@ public sealed class StateStoreGetResponseTests
     {
         TestConversion(
             sourceFactory,
-            converter,
+            (_, source) => converter(source),
             contentTypeAccessor,
             new[]
             {
                 (null, ""),
                 ("", ""),
                 ("application/json", "application/json")
+            });
+    }
+
+    private static void TestGrpcDataConversion<TSource, TResult>(
+        Func<byte[], TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, IEnumerable<byte>> dataAccessor)
+    {
+        var empty = new byte[] { };
+        var nonEmpty = new byte[] { 0x01, 0x02, 0x03 };
+
+        TestConversion(
+            sourceFactory,
+            (_, source) => converter(source),
+            dataAccessor,
+            new (byte[], IEnumerable<byte>)[]
+            {
+                (empty, empty),
+                (nonEmpty, nonEmpty)
             });
     }
 
@@ -167,7 +201,7 @@ public sealed class StateStoreGetResponseTests
     {
         TestConversion(
             sourceFactory,
-            converter,
+            (_, source) => converter(source),
             contentTypeAccessor,
             new[]
             {
@@ -205,7 +239,7 @@ public sealed class StateStoreGetResponseTests
 
         TestConversion(
             sourceFactory,
-            converter,
+            (_, source) => converter(source),
             metadataAccessor,
             new (IReadOnlyDictionary<string, string>, IReadOnlyDictionary<string, string>)[]
             {
@@ -216,7 +250,7 @@ public sealed class StateStoreGetResponseTests
 
     private static void TestConversion<TSourceProperty, TSource, TResult, TResultProperty>(
         Func<TSourceProperty, TSource> sourceFactory,
-        Func<TSource, TResult> converter,
+        Func<TSourceProperty, TSource, TResult> converter,
         Func<TResult, TResultProperty> resultPropertyAccessor,
         IEnumerable<(TSourceProperty Source, TResultProperty Expected)> tests)
     {
@@ -230,7 +264,7 @@ public sealed class StateStoreGetResponseTests
 
     private static void TestConversion<TSourceProperty, TSource, TResult, TResultProperty, TExpected>(
         Func<TSourceProperty, TSource> sourceFactory,
-        Func<TSource, TResult> converter,
+        Func<TSourceProperty, TSource, TResult> converter,
         Func<TResult, TResultProperty> resultPropertyAccessor,
         IEnumerable<(TSourceProperty Source, TExpected Expected)> tests,
         Action<TExpected, TResultProperty> assertion)
@@ -239,7 +273,7 @@ public sealed class StateStoreGetResponseTests
         {
             var source = sourceFactory(test.Source);
 
-            var result = converter(source);
+            var result = converter(test.Source, source);
 
             var resultProperty = resultPropertyAccessor(result);
 
