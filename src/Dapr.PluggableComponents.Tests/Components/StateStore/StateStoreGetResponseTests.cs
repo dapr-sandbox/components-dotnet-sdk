@@ -121,4 +121,42 @@ public sealed class StateStoreGetResponseTests
 
         Assert.Equal(metadata, grpcResponse.Metadata);
     }
+
+    [Fact]
+    public void ToBulkStateItemTests()
+    {
+        TestGrpcMetadataConversion(
+            data => new StateStoreGetResponse { Metadata = data },
+            response => StateStoreGetResponse.ToBulkStateItem("key", response),
+            response => response.Metadata);
+
+        // TODO: Test other properties.
+    }
+
+    private static void TestGrpcMetadataConversion<TSource, TResult>(
+        Func<IReadOnlyDictionary<string, string>, TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, Google.Protobuf.Collections.MapField<string, string>> metadataAccessor)
+    {
+        var expectedMetadata = new[]
+            {
+                new Dictionary<string, string>(),
+                new Dictionary<string, string>
+                {
+                    { "key1", "value1" },
+                    { "key2", "value2" }
+                }
+            };
+
+        foreach (var expected in expectedMetadata)
+        {
+            var source = sourceFactory(expected);
+
+            var result = converter(source);
+
+            var metadata = metadataAccessor(result);
+
+            Assert.Equal(expected, metadata);
+        }
+    }
 }

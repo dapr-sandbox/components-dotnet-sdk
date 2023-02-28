@@ -104,25 +104,7 @@ public class StateStoreAdaptor : StateStoreBase
             {
                 var response = await stateStore.GetAsync(StateStoreGetRequest.FromGetRequest(item), context.CancellationToken);
 
-                var stateItem = new BulkStateItem
-                {
-                    Key = item.Key
-                };
-
-                if (response != null)
-                {
-                    stateItem.ContentType = response.ContentType;
-                    stateItem.Data = ByteString.CopyFrom(response.Data);
-                    stateItem.Etag = response.ETag != null ? new Etag { Value = response.ETag } : null;
-
-                    stateItem.Metadata.Add(response.Metadata);
-                }
-                else
-                {
-                    stateItem.Error = "Unable to fetch the item.";
-                }
-
-                responses.Add(stateItem);
+                responses.Add(StateStoreGetResponse.ToBulkStateItem(item.Key, response));
             }
 
             var grpcResponse = new BulkGetResponse

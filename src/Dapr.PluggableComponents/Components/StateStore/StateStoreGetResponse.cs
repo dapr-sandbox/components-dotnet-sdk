@@ -71,4 +71,27 @@ public sealed record StateStoreGetResponse
 
         return grpcResponse;
     }
+
+    internal static BulkStateItem ToBulkStateItem(string key, StateStoreGetResponse? response)
+    {
+        var stateItem = new BulkStateItem
+        {
+            Key = key
+        };
+
+        if (response != null)
+        {
+            stateItem.ContentType = response.ContentType ?? String.Empty;
+            stateItem.Data = ByteString.CopyFrom(response.Data);
+            stateItem.Etag = response.ETag != null ? new Etag { Value = response.ETag } : null;
+
+            stateItem.Metadata.Add(response.Metadata);
+        }
+        else
+        {
+            stateItem.Error = "Unable to fetch the item.";
+        }
+
+        return stateItem;
+    }
 }

@@ -11,6 +11,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using System.Text;
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components.StateStore;
 using Grpc.Core;
@@ -124,6 +125,116 @@ public sealed class StateStoreAdaptorTests
             .Verify(component => component.BulkDeleteAsync(
                 It.Is<StateStoreDeleteRequest[]>(request => request.Length == 2 && request[0].Key == key1 && request[1].Key == key2),
                 It.Is<CancellationToken>(cancellationToken => cancellationToken == context.CancellationToken)), Times.Once);
+    }
+
+    [Fact]
+    public async Task SimulatedBulkSet()
+    {
+        var mockStateStore = new Mock<IStateStore>(MockBehavior.Strict);
+
+        var sequence = new MockSequence();
+
+        string key1 = "key1";
+        string key2 = "key2";
+
+        using var context = new TestServerCallContext();
+
+        mockStateStore
+            .InSequence(sequence)
+            .Setup(component => component.SetAsync(It.Is<StateStoreSetRequest>(request => request.Key == key1), It.Is<CancellationToken>(token => token == context.CancellationToken)))
+            .Returns(Task.CompletedTask);
+
+        mockStateStore
+            .InSequence(sequence)
+            .Setup(component => component.SetAsync(It.Is<StateStoreSetRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == context.CancellationToken)))
+            .Returns(Task.CompletedTask);
+
+        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+
+        var bulkSetRequest = new Proto.Components.V1.BulkSetRequest();
+
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key1 });
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key2 });
+
+        await adaptor.BulkSet(
+            bulkSetRequest,
+            context);
+
+        mockStateStore.VerifyAll();
+    }
+
+    [Fact]
+    public async Task BulkSet()
+    {
+        var mockStateStore = new Mock<IStateStore>();
+        var mockBulkStateStore = mockStateStore.As<IBulkStateStore>();
+
+        mockBulkStateStore
+            .Setup(component => component.BulkSetAsync(It.IsAny<StateStoreSetRequest[]>(), It.IsAny<CancellationToken>()));
+
+        string key1 = "key1";
+        string key2 = "key2";
+
+        using var context = new TestServerCallContext();
+
+        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+
+        var bulkSetRequest = new Proto.Components.V1.BulkSetRequest();
+
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key1 });
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key2 });
+
+        await adaptor.BulkSet(
+            bulkSetRequest,
+            context);
+
+        mockBulkStateStore
+            .Verify(component => component.BulkSetAsync(
+                It.Is<StateStoreSetRequest[]>(request => request.Length == 2 && request[0].Key == key1 && request[1].Key == key2),
+                It.Is<CancellationToken>(cancellationToken => cancellationToken == context.CancellationToken)), Times.Once);
+    }
+
+    [Fact]
+    public async Task SimulatedBulkGet()
+    {
+        var mockStateStore = new Mock<IStateStore>(MockBehavior.Strict);
+
+        var sequence = new MockSequence();
+
+        string key1 = "key1";
+        string key2 = "key2";
+
+        string value1 = "value1";
+        string value2 = "value2";
+
+        using var context = new TestServerCallContext();
+
+        mockStateStore
+            .InSequence(sequence)
+            .Setup(component => component.GetAsync(It.Is<StateStoreGetRequest>(request => request.Key == key1), It.Is<CancellationToken>(token => token == context.CancellationToken)))
+            .ReturnsAsync(new StateStoreGetResponse { Data = Encoding.UTF8.GetBytes(value1) });
+
+        mockStateStore
+            .InSequence(sequence)
+            .Setup(component => component.GetAsync(It.Is<StateStoreGetRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == context.CancellationToken)))
+            .ReturnsAsync(new StateStoreGetResponse { Data = Encoding.UTF8.GetBytes(value2) });
+
+        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+
+        var bulkGetRequest = new Proto.Components.V1.BulkGetRequest();
+
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key1 });
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key2 });
+
+        var response = await adaptor.BulkGet(
+            bulkGetRequest,
+            context);
+
+        Assert.True(response.Got);
+        Assert.Contains(response.Items, item => item.Key == key1 && item.Data.ToStringUtf8() == value1);
+        Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
+
+        mockStateStore.VerifyAll();
     }
 
     private static bool AssertMetadataEqual(IReadOnlyDictionary<string, string> expected, IReadOnlyDictionary<string, string> actual)
