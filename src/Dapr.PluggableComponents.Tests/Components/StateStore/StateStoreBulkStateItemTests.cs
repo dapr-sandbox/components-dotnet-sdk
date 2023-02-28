@@ -33,7 +33,7 @@ public sealed class StateStoreBulkStateItemTests
     [InlineData(null, "")]
     [InlineData("", "")]
     [InlineData("application/json", "application/json")]
-    public void ToBulkStateItemeContentTypeTests(string? contentType, string expectedContentType)
+    public void ToBulkStateItemContentTypeTests(string? contentType, string expectedContentType)
     {
         var response = new StateStoreBulkStateItem("key")
         {
