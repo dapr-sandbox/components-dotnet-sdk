@@ -23,7 +23,7 @@ public sealed class StateStoreGetResponseTests
         var grpcResponse = StateStoreGetResponse.ToGetResponse(null);
 
         Assert.Equal(String.Empty, grpcResponse.ContentType);
-        Assert.Equal(new byte[] {}, grpcResponse.Data);
+        Assert.Equal(new byte[] { }, grpcResponse.Data);
         Assert.Null(grpcResponse.Etag);
         Assert.Empty(grpcResponse.Metadata);
     }
