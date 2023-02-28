@@ -117,7 +117,7 @@ public class InputBindingAdaptor : InputBindingBase
             },
             context.CancellationToken);
 
-            await Task.WhenAll(acknowledeTask(), pullTask);
+        await Task.WhenAll(acknowledeTask(), pullTask);
     }
 
     private IInputBinding GetInputBinding(ServerCallContext context)

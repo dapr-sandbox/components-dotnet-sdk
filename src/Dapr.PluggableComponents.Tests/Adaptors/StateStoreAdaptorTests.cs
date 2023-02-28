@@ -97,7 +97,7 @@ public sealed class StateStoreAdaptorTests
         protected override Metadata ResponseTrailersCore => throw new NotImplementedException();
 
         protected override Status StatusCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        
+
         protected override WriteOptions? WriteOptionsCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         protected override AuthContext AuthContextCore => throw new NotImplementedException();
