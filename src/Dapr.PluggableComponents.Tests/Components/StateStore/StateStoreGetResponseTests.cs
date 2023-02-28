@@ -125,12 +125,68 @@ public sealed class StateStoreGetResponseTests
     [Fact]
     public void ToBulkStateItemTests()
     {
+        TestGrpcContentConversion(
+            contentType => new StateStoreGetResponse { ContentType = contentType },
+            response => StateStoreGetResponse.ToBulkStateItem("key", response),
+            response => response.ContentType);
+
+        TestGrpcETagConversion(
+            etag => new StateStoreGetResponse { ETag = etag },
+            response => StateStoreGetResponse.ToBulkStateItem("key", response),
+            response => response.Etag);
+
         TestGrpcMetadataConversion(
-            data => new StateStoreGetResponse { Metadata = data },
+            metadata => new StateStoreGetResponse { Metadata = metadata },
             response => StateStoreGetResponse.ToBulkStateItem("key", response),
             response => response.Metadata);
 
         // TODO: Test other properties.
+    }
+
+    private static void TestGrpcContentConversion<TSource, TResult>(
+        Func<string?, TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, string> contentTypeAccessor)
+    {
+        TestConversion(
+            sourceFactory,
+            converter,
+            contentTypeAccessor,
+            new[]
+            {
+                (null, ""),
+                ("", ""),
+                ("application/json", "application/json")
+            });
+    }
+
+    private static void TestGrpcETagConversion<TSource, TResult>(
+        Func<string?, TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, Dapr.Proto.Components.V1.Etag> contentTypeAccessor)
+    {
+        TestConversion(
+            sourceFactory,
+            converter,
+            contentTypeAccessor,
+            new[]
+            {
+                (null, null),
+                ("", ""),
+                ("value", "value")
+            },
+            (expected, actual) =>
+            {
+                if (expected == null)
+                {
+                    Assert.Null(actual);
+                }
+                else
+                {
+                    Assert.NotNull(actual);
+                    Assert.Equal(expected, actual.Value);
+                }
+            });
     }
 
     private static void TestGrpcMetadataConversion<TSource, TResult>(
@@ -138,25 +194,56 @@ public sealed class StateStoreGetResponseTests
         Func<TSource, TResult> converter,
         Func<TResult, Google.Protobuf.Collections.MapField<string, string>> metadataAccessor)
     {
-        var expectedMetadata = new[]
+        var empty = new Dictionary<string, string>();
+
+        var nonEmpty =
+            new Dictionary<string, string>
             {
-                new Dictionary<string, string>(),
-                new Dictionary<string, string>
-                {
-                    { "key1", "value1" },
-                    { "key2", "value2" }
-                }
+                { "key1", "value1" },
+                { "key2", "value2" }
             };
 
-        foreach (var expected in expectedMetadata)
+        TestConversion(
+            sourceFactory,
+            converter,
+            metadataAccessor,
+            new (IReadOnlyDictionary<string, string>, IReadOnlyDictionary<string, string>)[]
+            {
+                (empty, empty),
+                (nonEmpty, nonEmpty)
+            });
+    }
+
+    private static void TestConversion<TSourceProperty, TSource, TResult, TResultProperty>(
+        Func<TSourceProperty, TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, TResultProperty> resultPropertyAccessor,
+        IEnumerable<(TSourceProperty Source, TResultProperty Expected)> tests)
+    {
+        TestConversion(
+            sourceFactory,
+            converter,
+            resultPropertyAccessor,
+            tests,
+            (expected, actual) => Assert.Equal(expected, actual));
+    }
+
+    private static void TestConversion<TSourceProperty, TSource, TResult, TResultProperty, TExpected>(
+        Func<TSourceProperty, TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, TResultProperty> resultPropertyAccessor,
+        IEnumerable<(TSourceProperty Source, TExpected Expected)> tests,
+        Action<TExpected, TResultProperty> assertion)
+    {
+        foreach (var test in tests)
         {
-            var source = sourceFactory(expected);
+            var source = sourceFactory(test.Source);
 
             var result = converter(source);
 
-            var metadata = metadataAccessor(result);
+            var resultProperty = resultPropertyAccessor(result);
 
-            Assert.Equal(expected, metadata);
+            assertion(test.Expected, resultProperty);
         }
     }
 }
