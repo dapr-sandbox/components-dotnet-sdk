@@ -18,7 +18,7 @@ internal interface IMockStateStore<T> : IStateStore where T : class
     void Create();
 }
 
-internal class MockStateStore<T> : IStateStore where T: class
+internal class MockStateStore<T> : IStateStore where T : class
 {
     private readonly IMockStateStore<T> proxy;
 

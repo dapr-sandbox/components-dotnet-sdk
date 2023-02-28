@@ -1,4 +1,4 @@
-using Azure.Storage.Queues;
+﻿using Azure.Storage.Queues;
 using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.PubSub;
 
@@ -9,7 +9,7 @@ internal sealed class AzureStorageQueuesPubSub : IPubSub
     private string? connectionString;
     private string? queueName;
     private TimeSpan pollInterval = TimeSpan.FromSeconds(5);
-    private int maxMessages = 5; 
+    private int maxMessages = 5;
 
     public AzureStorageQueuesPubSub(ILogger<AzureStorageQueuesPubSub> logger)
     {
@@ -103,7 +103,7 @@ internal sealed class AzureStorageQueuesPubSub : IPubSub
         public string? DataContentType { get; init; }
 
         [JsonPropertyName("id")]
-        public string? Id { get; init;}
+        public string? Id { get; init; }
 
         [JsonPropertyName("pubsubname")]
         public string? PubSubName { get; init; }
