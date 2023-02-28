@@ -190,7 +190,7 @@ public sealed class StateStoreAdaptorTests
 
         mockBulkStateStore
             .Verify(component => component.BulkSetAsync(
-                It.Is<StateStoreSetRequest[]>(request => request.Length == 2 && request[0].Key == key1 && request[1].Key == key2),
+                It.Is<StateStoreSetRequest[]>(requests => requests.Length == 2 && requests[0].Key == key1 && requests[1].Key == key2),
                 It.Is<CancellationToken>(cancellationToken => cancellationToken == context.CancellationToken)), Times.Once);
     }
 
@@ -235,6 +235,50 @@ public sealed class StateStoreAdaptorTests
         Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
 
         mockStateStore.VerifyAll();
+    }
+
+    [Fact]
+    public async Task BulkGet()
+    {
+        var mockStateStore = new Mock<IStateStore>(MockBehavior.Strict);
+        var mockBulkStateStore = mockStateStore.As<IBulkStateStore>();
+
+        string key1 = "key1";
+        string key2 = "key2";
+
+        string value1 = "value1";
+        string value2 = "value2";
+
+        mockBulkStateStore
+            .Setup(component => component.BulkGetAsync(It.IsAny<StateStoreGetRequest[]>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                new StateStoreBulkStateItem[]
+                {
+                    new StateStoreBulkStateItem(key1) { Data = Encoding.UTF8.GetBytes(value1) },
+                    new StateStoreBulkStateItem(key2) { Data = Encoding.UTF8.GetBytes(value2) }
+                });
+
+        using var context = new TestServerCallContext();
+
+        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+
+        var bulkGetRequest = new Proto.Components.V1.BulkGetRequest();
+
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key1 });
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key2 });
+
+        var response = await adaptor.BulkGet(
+            bulkGetRequest,
+            context);
+
+        Assert.True(response.Got);
+        Assert.Contains(response.Items, item => item.Key == key1 && item.Data.ToStringUtf8() == value1);
+        Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
+
+        mockBulkStateStore
+            .Verify(component => component.BulkGetAsync(It.Is<StateStoreGetRequest[]>(
+                requests => requests.Length == 2 && requests[0].Key == key1 && requests[1].Key == key2),
+                It.Is<CancellationToken>(cancellationToken => cancellationToken == context.CancellationToken)), Times.Once());
     }
 
     private static bool AssertMetadataEqual(IReadOnlyDictionary<string, string> expected, IReadOnlyDictionary<string, string> actual)
