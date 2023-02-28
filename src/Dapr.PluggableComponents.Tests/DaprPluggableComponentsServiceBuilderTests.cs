@@ -11,142 +11,224 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-using System.Net.Sockets;
 using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.StateStore;
-using Grpc.Net.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
+using static Dapr.Proto.Components.V1.QueriableStateStore;
 using static Dapr.Proto.Components.V1.StateStore;
+using static Dapr.Proto.Components.V1.TransactionalStateStore;
 
 namespace Dapr.PluggableComponents;
 
-internal interface IMockStateStore : IStateStore
+public sealed class DaprPluggableComponentsServiceBuilderTests
 {
-}
-
-internal sealed class MockStateStore : IMockStateStore
-{
-    private readonly IMockStateStore proxy;
-
-    public MockStateStore(IMockStateStore proxy)
-    {
-        this.proxy = proxy;
-    }
-
-    #region IStateStore Members
-
-    public Task DeleteAsync(StateStoreDeleteRequest request, CancellationToken cancellationToken = default)
-    {
-        return this.proxy.DeleteAsync(request, cancellationToken);
-    }
-
-    public Task<StateStoreGetResponse?> GetAsync(StateStoreGetRequest request, CancellationToken cancellationToken = default)
-    {
-        return this.proxy.GetAsync(request, cancellationToken);
-    }
-
-    public Task InitAsync(MetadataRequest request, CancellationToken cancellationToken = default)
-    {
-        return this.proxy.InitAsync(request, cancellationToken);
-    }
-
-    public Task SetAsync(StateStoreSetRequest request, CancellationToken cancellationToken = default)
-    {
-        return this.proxy.SetAsync(request, cancellationToken);
-    }
-
-    #endregion
-}
-
-public sealed class DaprPluggableComponentsServiceBuilderTests : IDisposable
-{
-    #region Test Setup and Teardown
-
-    private readonly string socketPath;
-
-    public DaprPluggableComponentsServiceBuilderTests()
-    {
-        this.socketPath = Path.GetTempFileName();
-    }
-
-    public void Dispose()
-    {
-        if (File.Exists(this.socketPath))
-        {
-            File.Delete(this.socketPath);
-        }
-    }
-
-    #endregion
-
     [Fact]
     public async Task RegisterSingletonStateStore()
     {
-        var mockStateStore = new Mock<IMockStateStore>();
+        var mockStateStore = new Mock<IMockStateStore<Unit>>();
 
-        var application = DaprPluggableComponentsApplication.Create();
+        using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton<IMockStateStore>(_ => mockStateStore.Object);
+        application.Services.AddSingleton(_ => mockStateStore.Object);
+
+        using var socketFixture = new SocketFixture();
 
         application.RegisterService(
-            CreateServiceOptionsForSocket(this.socketPath),
+            socketFixture.ServiceOptions,
             serviceBuilder =>
             {
-                serviceBuilder.RegisterStateStore<MockStateStore>();
+                serviceBuilder.RegisterStateStore<MockStateStore<Unit>>();
             });
 
         await application.StartAsync();
 
-        var grpcChannel = CreateGrpcChannelForSocket(this.socketPath);
+        var client = new StateStoreClient(socketFixture.GrpcChannel);
 
-        var client = new StateStoreClient(grpcChannel);
+        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "A") };
+        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "B") };
 
-        await client.InitAsync(new Dapr.Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() });
+        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
 
-        await application.StopAsync();
-
-        mockStateStore.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        mockStateStore.Verify(stateStore => stateStore.Create(), Times.Once());
+        mockStateStore.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
-    private static DaprPluggableComponentsServiceOptions CreateServiceOptionsForSocket(string socketPath)
+    [Fact]
+    public async Task RegisterFactoryBasedStateStore()
     {
-        return new DaprPluggableComponentsServiceOptions(Path.GetFileNameWithoutExtension(socketPath))
-        {
-            SocketExtension = Path.GetExtension(socketPath),
-            SocketFolder = Path.GetDirectoryName(socketPath)
-        };
-    }
+        var mockStateStoreA = new Mock<IMockStateStore<Unit>>();
+        var mockStateStoreB = new Mock<IMockStateStore<Unit>>();
 
-    private static GrpcChannel CreateGrpcChannelForSocket(string socketPath)
-    {
-        return GrpcChannel.ForAddress(
-            "http://localhost",
-            new GrpcChannelOptions
+        const string componentInstanceA = "A";
+        const string componentInstanceB = "B";
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
             {
-                HttpHandler =
-                    new SocketsHttpHandler
+                serviceBuilder.RegisterStateStore(
+                    context =>
                     {
-                        ConnectCallback =
-                            async (_, cancellationToken) =>
-                            {
-                                var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
-
-                                try
-                                {
-                                    await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath), cancellationToken);
-
-                                    return new NetworkStream(socket, true);
-                                }
-                                catch
-                                {
-                                    socket.Dispose();
-
-                                    throw;
-                                }
-                            }
-                    }
+                        return context.InstanceId switch
+                        {
+                            componentInstanceA => new MockStateStore<Unit>(mockStateStoreA.Object),
+                            componentInstanceB => new MockStateStore<Unit>(mockStateStoreB.Object),
+                            _ => throw new Exception()
+                        };
+                    });
             });
+
+        await application.StartAsync();
+
+        var client = new StateStoreClient(socketFixture.GrpcChannel);
+
+        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceA) };
+        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceB) };
+
+        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
+
+        mockStateStoreA.Verify(stateStore => stateStore.Create(), Times.Once());
+        mockStateStoreB.Verify(stateStore => stateStore.Create(), Times.Once());
+
+        mockStateStoreA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        mockStateStoreB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [Fact]
+    public async Task RegisterBulkStateStore()
+    {
+        var mockStateStore = new Mock<IMockBulkStateStore<Unit>>();
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        application.Services.AddSingleton(_ => mockStateStore.Object);
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterStateStore<MockBulkStateStore<Unit>>();
+            });
+
+        await application.StartAsync();
+
+        var client = new StateStoreClient(socketFixture.GrpcChannel);
+
+        await client.BulkSetAsync(new Proto.Components.V1.BulkSetRequest());
+
+        mockStateStore.Verify(stateStore => stateStore.BulkSetAsync(It.IsAny<StateStoreSetRequest[]>(), It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [Fact]
+    public async Task RegisterTransactionalStateStore()
+    {
+        var mockStateStore = new Mock<IMockTransactionalStateStore<Unit>>();
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        application.Services.AddSingleton(_ => mockStateStore.Object);
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterStateStore<MockTransactionalStateStore<Unit>>();
+            });
+
+        await application.StartAsync();
+
+        var client = new TransactionalStateStoreClient(socketFixture.GrpcChannel);
+
+        await client.TransactAsync(new Proto.Components.V1.TransactionalStateRequest());
+
+        mockStateStore.Verify(stateStore => stateStore.TransactAsync(It.IsAny<StateStoreTransactRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [Fact]
+    public async Task RegisterQueryableStateStore()
+    {
+        var mockStateStore = new Mock<IMockQueryableStateStore<Unit>>();
+
+        mockStateStore
+            .Setup(stateStore => stateStore.QueryAsync(It.IsAny<StateStoreQueryRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new StateStoreQueryResponse());
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        application.Services.AddSingleton(_ => mockStateStore.Object);
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterStateStore<MockQueryableStateStore<Unit>>();
+            });
+
+        await application.StartAsync();
+
+        var client = new QueriableStateStoreClient(socketFixture.GrpcChannel);
+
+        await client.QueryAsync(new Proto.Components.V1.QueryRequest());
+
+        mockStateStore.Verify(stateStore => stateStore.QueryAsync(It.IsAny<StateStoreQueryRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+    }
+
+    [Fact]
+    public async Task RegisterSimilarComponentsAcrossServices()
+    {
+        var mockStateStoreA = new Mock<IMockStateStore<Unit.A>>();
+        var mockStateStoreB = new Mock<IMockStateStore<Unit.B>>();
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        application.Services.AddSingleton(_ => mockStateStoreA.Object);
+        application.Services.AddSingleton(_ => mockStateStoreB.Object);
+
+        using var socketFixtureA = new SocketFixture();
+        using var socketFixtureB = new SocketFixture();
+
+        application.RegisterService(
+            socketFixtureA.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterStateStore<MockStateStore<Unit.A>>();
+            });
+
+        application.RegisterService(
+            socketFixtureB.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterStateStore<MockStateStore<Unit.B>>();
+            });
+
+        await application.StartAsync();
+
+        var clientA = new StateStoreClient(socketFixtureA.GrpcChannel);
+        var clientB = new StateStoreClient(socketFixtureB.GrpcChannel);
+
+        await clientA.InitAsync(new Dapr.Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() });
+
+        mockStateStoreA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        mockStateStoreB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Never());
+
+        await clientB.InitAsync(new Dapr.Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() });
+
+        mockStateStoreA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        mockStateStoreB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
     }
 }

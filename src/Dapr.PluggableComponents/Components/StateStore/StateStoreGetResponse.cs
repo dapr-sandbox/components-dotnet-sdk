@@ -62,6 +62,7 @@ public sealed record StateStoreGetResponse
 
         if (response != null)
         {
+            grpcResponse.ContentType = response.ContentType ?? String.Empty;
             grpcResponse.Data = ByteString.CopyFrom(response.Data);
             grpcResponse.Etag = response.ETag != null ? new Etag { Value = response.ETag } : null;
 
