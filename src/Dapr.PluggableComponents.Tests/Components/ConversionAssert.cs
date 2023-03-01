@@ -85,7 +85,7 @@ internal static class ConversionAssert
     public static void MetadataEqual<TSource, TResult>(
         Func<IReadOnlyDictionary<string, string>, TSource> sourceFactory,
         Func<TSource, TResult> converter,
-        Func<TResult, Google.Protobuf.Collections.MapField<string, string>> metadataAccessor)
+        Func<TResult, IEnumerable<KeyValuePair<string, string>>> metadataAccessor)
     {
         var empty = new Dictionary<string, string>();
 
@@ -100,7 +100,7 @@ internal static class ConversionAssert
             sourceFactory,
             (_, source) => converter(source),
             metadataAccessor,
-            new (IReadOnlyDictionary<string, string>, IReadOnlyDictionary<string, string>)[]
+            new (IReadOnlyDictionary<string, string>, IEnumerable<KeyValuePair<string, string>>)[]
             {
                 (empty, empty),
                 (nonEmpty, nonEmpty)
