@@ -11,7 +11,9 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using System.Globalization;
 using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.AspNetCore;
 using Grpc.Core;
 using Microsoft.AspNetCore.Connections.Features;
 
@@ -36,7 +38,7 @@ internal sealed class RegisteredComponentProvider<TComponent> : IDaprPluggableCo
         string socketPath = GetSocketPath(context);
 
         var componentProvider = this.registry.GetComponentProvider<TComponent>(this.serviceProvider, socketPath)
-            ?? throw new InvalidOperationException($"Unable to obtain a provider for component type {typeof(TComponent)}.");
+            ?? throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.RegisteredComponentProviderNoProviderMessage, typeof(TComponent)));
 
         return componentProvider.GetComponent(context);
     }
@@ -45,7 +47,7 @@ internal sealed class RegisteredComponentProvider<TComponent> : IDaprPluggableCo
     {
         var httpContext = context.GetHttpContext();
         var socketFeature = httpContext.Features.Get<IConnectionSocketFeature>();
-        var socketPath = socketFeature?.Socket.LocalEndPoint?.ToString() ?? throw new InvalidOperationException("Unable to determine the socket on which a gRPC request was made.");
+        var socketPath = socketFeature?.Socket.LocalEndPoint?.ToString() ?? throw new InvalidOperationException(Resources.RegisteredComponentProviderUnknownSocketMessage);
 
         return socketPath;
     }

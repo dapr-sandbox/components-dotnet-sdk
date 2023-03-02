@@ -97,7 +97,7 @@ public sealed record StateStoreStateOptions
             StateOptions.Types.StateConcurrency.ConcurrencyFirstWrite => StateStoreConcurrency.FirstWrite,
             StateOptions.Types.StateConcurrency.ConcurrencyLastWrite => StateStoreConcurrency.LastWrite,
             StateOptions.Types.StateConcurrency.ConcurrencyUnspecified => StateStoreConcurrency.Unspecified,
-            _ => throw new ArgumentOutOfRangeException(nameof(concurrency), String.Format(CultureInfo.CurrentCulture, "The concurrency \"{0}\" was not recognized.", concurrency))
+            _ => throw new ArgumentOutOfRangeException(nameof(concurrency), String.Format(CultureInfo.CurrentCulture, Resources.StateStoreStateOptionsUnrecognizedConcurrencyMessage, concurrency))
         };
     }
 
@@ -108,7 +108,7 @@ public sealed record StateStoreStateOptions
             StateOptions.Types.StateConsistency.ConsistencyEventual => StateStoreConsistency.Eventual,
             StateOptions.Types.StateConsistency.ConsistencyStrong => StateStoreConsistency.Strong,
             StateOptions.Types.StateConsistency.ConsistencyUnspecified => StateStoreConsistency.Unspecified,
-            _ => throw new ArgumentOutOfRangeException(nameof(consistency), String.Format(CultureInfo.CurrentCulture, "The consistency \"{0}\" was not recognized.", consistency))
+            _ => throw new ArgumentOutOfRangeException(nameof(consistency), String.Format(CultureInfo.CurrentCulture, Resources.StateStoreStateOptionsUnrecognizedConsistencyMessage, consistency))
         };
     }
 }

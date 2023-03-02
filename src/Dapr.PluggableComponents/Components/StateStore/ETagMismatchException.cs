@@ -23,13 +23,13 @@ namespace Dapr.PluggableComponents.Components.StateStore;
 /// </remarks>
 public sealed class ETagMismatchException : RpcException
 {
-    private static StatusCode BaseStatusCode = StatusCode.FailedPrecondition;
+    private static readonly StatusCode BaseStatusCode = StatusCode.FailedPrecondition;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ETagMismatchException"/> class.
     /// </summary>
     public ETagMismatchException()
-        : this("Possible ETag mismatch.")
+        : this(Resources.ETagMismatchExceptionMessage)
     {
     }
 

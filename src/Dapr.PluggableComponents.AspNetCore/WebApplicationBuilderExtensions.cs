@@ -13,6 +13,7 @@
 
 using System.Collections.Concurrent;
 using System.Globalization;
+using Dapr.PluggableComponents.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -25,7 +26,7 @@ namespace Dapr.PluggableComponents;
 /// </summary>
 public static class WebApplicationBuilderExtensions
 {
-    private static readonly ConcurrentDictionary<string, bool> SocketPaths = new ConcurrentDictionary<string, bool>();
+    private static readonly ConcurrentDictionary<string, bool> SocketPaths = new();
 
     /// <summary>
     /// Registers services needed to host Dapr Pluggable Components via an ASP.NET application.
@@ -64,24 +65,24 @@ public static class WebApplicationBuilderExtensions
 
         if (String.IsNullOrEmpty(socketExtension))
         {
-            throw new ArgumentException("No valid socket extension was specified via options or environment variable.", nameof(options));
+            throw new ArgumentException(Resources.WebApplicationBuilderExtensionsNoExtensionMessage, nameof(options));
         }
 
         if (String.IsNullOrEmpty(socketFolder))
         {
-            throw new ArgumentException("No valid socket folder was specified via options or environment variable.", nameof(options));
+            throw new ArgumentException(Resources.WebApplicationBuilderExtensionsNoFolderMessage, nameof(options));
         }
 
         if (String.IsNullOrEmpty(socketName))
         {
-            throw new ArgumentException("No valid socket name was specified via options or environment variable.", nameof(options));
+            throw new ArgumentException(Resources.WebApplicationBuilderExtensionsNoSocketNameMessage, nameof(options));
         }
 
         string socketPath = Path.Join(socketFolder, socketName + socketExtension);
 
         if (!SocketPaths.TryAdd(socketPath, true))
         {
-            throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "A service was already added at socket path '{0}'.", socketPath), nameof(options));
+            throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, Resources.WebApplicationBuilderExtensionsDuplicateSocketMessage, socketPath), nameof(options));
         }
 
         Directory.CreateDirectory(socketFolder);

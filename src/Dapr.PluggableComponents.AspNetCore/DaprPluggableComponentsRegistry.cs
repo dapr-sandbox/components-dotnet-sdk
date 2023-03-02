@@ -12,13 +12,15 @@
 // ------------------------------------------------------------------------
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using Dapr.PluggableComponents.Adaptors;
+using Dapr.PluggableComponents.AspNetCore;
 
 namespace Dapr.PluggableComponents;
 
 internal sealed class DaprPluggableComponentsRegistry
 {
-    private readonly ConcurrentDictionary<string, SocketRegistry> registries = new ConcurrentDictionary<string, SocketRegistry>();
+    private readonly ConcurrentDictionary<string, SocketRegistry> registries = new();
 
     public void RegisterComponentProvider<TComponent>(string socketPath, Func<IServiceProvider, IDaprPluggableComponentProvider<TComponent>> providerFactory)
         where TComponent : class
@@ -27,7 +29,7 @@ internal sealed class DaprPluggableComponentsRegistry
 
         if (!registry.RegisteredTypes.TryAdd(typeof(TComponent), new CachedComponentProvider(providerFactory)))
         {
-            throw new ArgumentException($"The component provider type {typeof(TComponent)} was already registered with socket {socketPath}.", nameof(providerFactory));
+            throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, Resources.DaprPluggableComponentsRegistryDuplicateTypeMessage, typeof(TComponent), socketPath), nameof(providerFactory));
         }
     }
 
@@ -45,26 +47,20 @@ internal sealed class DaprPluggableComponentsRegistry
                 return componentProvider;
             })))
         {
-            throw new ArgumentException($"The component provider type {typeof(TComponent)} was already registered with socket {socketPath}.", nameof(socketPath));
+            throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, Resources.DaprPluggableComponentsRegistryDuplicateTypeMessage, typeof(TComponent), socketPath), nameof(socketPath));
         }
     }
 
     public IDaprPluggableComponentProvider<T> GetComponentProvider<T>(IServiceProvider serviceProvider, string socketPath)
     {
-        if (this.registries.TryGetValue(socketPath, out var registry))
+        if (this.registries.TryGetValue(socketPath, out var registry)
+            && registry.RegisteredTypes.TryGetValue(typeof(T), out var providerFactory)
+            && providerFactory.GetComponentProvider(serviceProvider) is IDaprPluggableComponentProvider<T> componentProvider)
         {
-            if (registry.RegisteredTypes.TryGetValue(typeof(T), out var providerFactory))
-            {
-                var componentProvider = providerFactory.GetComponentProvider(serviceProvider, socketPath) as IDaprPluggableComponentProvider<T>;
-
-                if (componentProvider != null)
-                {
-                    return componentProvider;
-                }
-            }
+            return componentProvider;
         }
 
-        throw new InvalidOperationException($"No component provider was registered for type {typeof(T)}.");
+        throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Resources.DaprPluggableComponetnsRegistryProviderNotFoundMessage, typeof(T)));
     }
 
     private sealed class SocketRegistry
@@ -76,23 +72,20 @@ internal sealed class DaprPluggableComponentsRegistry
     {
         private IDaprPluggableComponentProvider<object>? componentProvider;
         private readonly Func<IServiceProvider, IDaprPluggableComponentProvider<object>> componentProviderFactory;
-        private readonly object componentProviderLock = new object();
+        private readonly object componentProviderLock = new();
 
         public CachedComponentProvider(Func<IServiceProvider, IDaprPluggableComponentProvider<object>> componentProviderFactory)
         {
             this.componentProviderFactory = componentProviderFactory ?? throw new ArgumentNullException(nameof(componentProviderFactory));
         }
 
-        public IDaprPluggableComponentProvider<object> GetComponentProvider(IServiceProvider serviceProvider, string socketPath)
+        public IDaprPluggableComponentProvider<object> GetComponentProvider(IServiceProvider serviceProvider)
         {
             if (this.componentProvider == null)
             {
                 lock (this.componentProviderLock)
                 {
-                    if (this.componentProvider == null)
-                    {
-                        this.componentProvider = this.componentProviderFactory(serviceProvider);
-                    }
+                    this.componentProvider ??= this.componentProviderFactory(serviceProvider);
                 }
             }
 

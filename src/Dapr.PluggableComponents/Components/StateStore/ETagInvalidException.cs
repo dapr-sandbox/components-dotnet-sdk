@@ -23,13 +23,13 @@ namespace Dapr.PluggableComponents.Components.StateStore;
 /// </remarks>
 public sealed class ETagInvalidException : RpcException
 {
-    private static StatusCode BaseStatusCode = StatusCode.InvalidArgument;
+    private static readonly StatusCode BaseStatusCode = StatusCode.InvalidArgument;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ETagInvalidException"/> class.
     /// </summary>
     public ETagInvalidException()
-        : this("Invalid ETag value.")
+        : this(Resources.ETagInvalidExceptionMessage)
     {
     }
 
