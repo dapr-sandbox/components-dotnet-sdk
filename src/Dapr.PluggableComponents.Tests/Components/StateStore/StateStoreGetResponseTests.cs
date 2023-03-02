@@ -18,107 +18,89 @@ namespace Dapr.PluggableComponents.Components.StateStore;
 public sealed class StateStoreGetResponseTests
 {
     [Fact]
-    public void ToGetResponseNullTest()
+    public void ToGetResponseNull()
     {
-        var grpcResponse = StateStoreGetResponse.ToGetResponse(null);
+        var response = StateStoreGetResponse.ToGetResponse(null);
 
-        Assert.Equal(String.Empty, grpcResponse.ContentType);
-        Assert.Equal(new byte[] { }, grpcResponse.Data);
-        Assert.Null(grpcResponse.Etag);
-        Assert.Empty(grpcResponse.Metadata);
-    }
-
-    [Theory]
-    [InlineData(null, "")]
-    [InlineData("", "")]
-    [InlineData("application/json", "application/json")]
-    public void ToGetResponseContentTypeTests(string? contentType, string expectedContentType)
-    {
-        var response = new StateStoreGetResponse
-        {
-            ContentType = contentType
-        };
-
-        var grpcResponse = StateStoreGetResponse.ToGetResponse(response);
-
-        Assert.Equal(expectedContentType, grpcResponse.ContentType);
-    }
-
-    public static IEnumerable<object[]> DataTests =>
-        new[]{
-            new[]
-            {
-                new byte[] {}
-            },
-            new[]
-            {
-                new byte[] { 0x01, 0x02, 0x03 }
-            }
-        };
-
-    [Theory]
-    [MemberData(nameof(DataTests))]
-    public void ToGetResponseDataTests(byte[] data)
-    {
-        var response = new StateStoreGetResponse
-        {
-            Data = data
-        };
-
-        var grpcResponse = StateStoreGetResponse.ToGetResponse(response);
-
-        Assert.Equal(data, grpcResponse.Data);
+        Assert.Equal(String.Empty, response.ContentType);
+        Assert.Empty(response.Data);
+        Assert.Null(response.Etag);
+        Assert.Empty(response.Metadata);
     }
 
     [Fact]
-    public void ToGetResponseETagTests()
+    public void ToGetResponseTests()
     {
-        var response = new StateStoreGetResponse();
+        var converter = StateStoreGetResponse.ToGetResponse;
 
-        var grpcResponse = StateStoreGetResponse.ToGetResponse(response);
+        ConversionAssert.ContentTypeEqual(
+            contentType => new StateStoreGetResponse { ContentType = contentType },
+            converter,
+            response => response.ContentType);
 
-        Assert.Null(grpcResponse.Etag);
+        ConversionAssert.DataEqual(
+            data => new StateStoreGetResponse { Data = data },
+            converter,
+            response => response.Data);
 
-        string etag = "value";
+        ConversionAssert.ETagEqual(
+            etag => new StateStoreGetResponse { ETag = etag },
+            converter,
+            response => response.Etag);
 
-        response = new StateStoreGetResponse
-        {
-            ETag = etag
-        };
-
-        grpcResponse = StateStoreGetResponse.ToGetResponse(response);
-
-        Assert.NotNull(grpcResponse.Etag);
-        Assert.Equal(etag, grpcResponse.Etag.Value);
+        ConversionAssert.MetadataEqual(
+            metadata => new StateStoreGetResponse { Metadata = metadata },
+            converter,
+            response => response.Metadata);
     }
 
-    public static IEnumerable<object[]> MetadataTests =>
-        new[]{
-            new[]
-            {
-                new Dictionary<string, string>()
-            },
-            new[]
-            {
-                new Dictionary<string, string>
-                {
-                    { "key1", "value1" },
-                    { "key2", "value2" }
-                }
-            }
-        };
-
-    [Theory]
-    [MemberData(nameof(MetadataTests))]
-    public void ToGetResponseMetadataTests(Dictionary<string, string> metadata)
+    [Fact]
+    public void ToBulkStateItemTests()
     {
-        var response = new StateStoreGetResponse
-        {
-            Metadata = metadata
-        };
+        var converter = StateStoreGetResponse.ToBulkStateItem;
 
-        var grpcResponse = StateStoreGetResponse.ToGetResponse(response);
+        ConversionAssert.Equal(
+            key => new StateStoreGetResponse(),
+            converter,
+            result => result.Key,
+            new[]
+            {
+                ("", ""),
+                ("key", "key")
+            });
 
-        Assert.Equal(metadata, grpcResponse.Metadata);
+        Func<StateStoreGetResponse, Proto.Components.V1.BulkStateItem> keylessConverter = response => converter("key", response);
+
+        ConversionAssert.ContentTypeEqual(
+            contentType => new StateStoreGetResponse { ContentType = contentType },
+            keylessConverter,
+            response => response.ContentType);
+
+        ConversionAssert.DataEqual(
+            data => new StateStoreGetResponse { Data = data },
+            keylessConverter,
+            response => response.Data);
+
+        ConversionAssert.ETagEqual(
+            etag => new StateStoreGetResponse { ETag = etag },
+            keylessConverter,
+            response => response.Etag);
+
+        ConversionAssert.MetadataEqual(
+            metadata => new StateStoreGetResponse { Metadata = metadata },
+            keylessConverter,
+            response => response.Metadata);
+    }
+
+    [Fact]
+    public void ToBulkStateItemWithNull()
+    {
+        var response = StateStoreGetResponse.ToBulkStateItem("key", null);
+
+        Assert.Equal(String.Empty, response.ContentType);
+        Assert.Empty(response.Data);
+        Assert.Null(response.Etag);
+        Assert.NotNull(response.Error);
+        Assert.Empty(response.Metadata);
     }
 }
