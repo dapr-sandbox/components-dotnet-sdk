@@ -11,8 +11,8 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-using Dapr.Proto.Components.V1;
 using Dapr.PluggableComponents.Utilities;
+using Dapr.Proto.Components.V1;
 using Xunit;
 
 namespace Dapr.PluggableComponents.Components.StateStore;

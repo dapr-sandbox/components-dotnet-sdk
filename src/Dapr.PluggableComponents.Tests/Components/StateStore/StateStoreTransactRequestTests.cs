@@ -11,8 +11,8 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-using Dapr.Proto.Components.V1;
 using Dapr.PluggableComponents.Utilities;
+using Dapr.Proto.Components.V1;
 using Xunit;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
@@ -50,7 +50,7 @@ public sealed class StateStoreTransactRequestTests
 
         Assert.NotNull(request);
         Assert.Equal(2, request.Operations.Length);
-        
+
         var operation1 = request.Operations[0];
         var operation2 = request.Operations[1];
 

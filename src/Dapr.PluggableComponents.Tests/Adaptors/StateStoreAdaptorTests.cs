@@ -86,8 +86,8 @@ public sealed class StateStoreAdaptorTests
 
         var bulkDeleteRequest = new Proto.Components.V1.BulkDeleteRequest();
 
-        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest{ Key = key1 });
-        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest{ Key = key2 });
+        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest { Key = key1 });
+        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest { Key = key2 });
 
         await adaptor.BulkDelete(
             bulkDeleteRequest,
@@ -114,8 +114,8 @@ public sealed class StateStoreAdaptorTests
 
         var bulkDeleteRequest = new Proto.Components.V1.BulkDeleteRequest();
 
-        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest{ Key = key1 });
-        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest{ Key = key2 });
+        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest { Key = key1 });
+        bulkDeleteRequest.Items.Add(new Proto.Components.V1.DeleteRequest { Key = key2 });
 
         await adaptor.BulkDelete(
             bulkDeleteRequest,
@@ -153,8 +153,8 @@ public sealed class StateStoreAdaptorTests
 
         var bulkSetRequest = new Proto.Components.V1.BulkSetRequest();
 
-        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key1 });
-        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key2 });
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest { Key = key1 });
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest { Key = key2 });
 
         await adaptor.BulkSet(
             bulkSetRequest,
@@ -181,8 +181,8 @@ public sealed class StateStoreAdaptorTests
 
         var bulkSetRequest = new Proto.Components.V1.BulkSetRequest();
 
-        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key1 });
-        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest{ Key = key2 });
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest { Key = key1 });
+        bulkSetRequest.Items.Add(new Proto.Components.V1.SetRequest { Key = key2 });
 
         await adaptor.BulkSet(
             bulkSetRequest,
@@ -223,8 +223,8 @@ public sealed class StateStoreAdaptorTests
 
         var bulkGetRequest = new Proto.Components.V1.BulkGetRequest();
 
-        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key1 });
-        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key2 });
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest { Key = key1 });
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest { Key = key2 });
 
         var response = await adaptor.BulkGet(
             bulkGetRequest,
@@ -264,8 +264,8 @@ public sealed class StateStoreAdaptorTests
 
         var bulkGetRequest = new Proto.Components.V1.BulkGetRequest();
 
-        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key1 });
-        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest{ Key = key2 });
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest { Key = key1 });
+        bulkGetRequest.Items.Add(new Proto.Components.V1.GetRequest { Key = key2 });
 
         var response = await adaptor.BulkGet(
             bulkGetRequest,
