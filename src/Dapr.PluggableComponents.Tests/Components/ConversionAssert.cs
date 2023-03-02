@@ -107,6 +107,39 @@ internal static class ConversionAssert
             });
     }
 
+    public static void StringEqual<TSource, TResult>(
+        Func<string, TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, string> contentTypeAccessor)
+    {
+        Equal(
+            sourceFactory,
+            (_, source) => converter(source),
+            contentTypeAccessor,
+            new[]
+            {
+                ("", ""),
+                ("value", "value")
+            });
+    }
+
+    public static void NullableStringEqual<TSource, TResult>(
+        Func<string?, TSource> sourceFactory,
+        Func<TSource, TResult> converter,
+        Func<TResult, string> contentTypeAccessor)
+    {
+        Equal(
+            sourceFactory,
+            (_, source) => converter(source),
+            contentTypeAccessor,
+            new[]
+            {
+                (null, ""),
+                ("", ""),
+                ("value", "value")
+            });
+    }
+
     public static void Equal<TSourceProperty, TSource, TResult, TResultProperty>(
         Func<TSourceProperty, TSource> sourceFactory,
         Func<TSourceProperty, TSource, TResult> converter,
