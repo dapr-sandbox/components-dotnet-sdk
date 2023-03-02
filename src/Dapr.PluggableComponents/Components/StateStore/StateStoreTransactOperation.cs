@@ -62,7 +62,7 @@ public abstract record StateStoreTransactOperation
         {
             TransactionalStateOperation.RequestOneofCase.Delete => new StateStoreTransactDeleteOperation(StateStoreDeleteRequest.FromDeleteRequest(operation.Delete)),
             TransactionalStateOperation.RequestOneofCase.Set => new StateStoreTransactSetOperation(StateStoreSetRequest.FromSetRequest(operation.Set)),
-            _ => throw new ArgumentOutOfRangeException(nameof(operation.RequestCase), String.Format(CultureInfo.CurrentCulture, "The operation type '{0}' is not recognized.", operation.RequestCase))
+            _ => throw new ArgumentOutOfRangeException(nameof(operation), String.Format(CultureInfo.CurrentCulture, Resources.StateStoreTransactOperationUnrecognizedMessage, operation.RequestCase))
         };
     }
 }

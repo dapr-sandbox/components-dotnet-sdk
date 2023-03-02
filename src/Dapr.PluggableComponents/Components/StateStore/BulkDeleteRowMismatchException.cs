@@ -32,7 +32,7 @@ public sealed class BulkDeleteRowMismatchException : RpcException
     /// <param name="expectedRows">The number of rows expected to be affected.</param>
     /// <param name="affectedRows">The number of rows actually affected.</param>
     public BulkDeleteRowMismatchException(int expectedRows, int affectedRows)
-        : this(String.Format(CultureInfo.CurrentCulture, "Delete affected {0} rows, but expected {1}.", affectedRows, expectedRows), expectedRows, affectedRows)
+        : this(String.Format(CultureInfo.CurrentCulture, Resources.BulkDeleteRowMismatchExceptionMessage, affectedRows, expectedRows), expectedRows, affectedRows)
     {
     }
 

@@ -47,7 +47,7 @@ public sealed record StateStoreQuerySorting(string Key)
     public StateStoreQuerySortingOrder Order { get; init; } = StateStoreQuerySortingOrder.Ascending;
 
     internal static StateStoreQuerySorting FromSorting(Sorting sorting)
-        => new StateStoreQuerySorting(sorting.Key)
+        => new(sorting.Key)
         {
             Order = FromSortingOrder(sorting.Order)
         };
@@ -57,6 +57,6 @@ public sealed record StateStoreQuerySorting(string Key)
         {
             Sorting.Types.Order.Asc => StateStoreQuerySortingOrder.Ascending,
             Sorting.Types.Order.Desc => StateStoreQuerySortingOrder.Descending,
-            _ => throw new ArgumentOutOfRangeException(nameof(order), String.Format(CultureInfo.CurrentCulture, "The sorting order \"{0}\" was not recognized.", order))
+            _ => throw new ArgumentOutOfRangeException(nameof(order), String.Format(CultureInfo.CurrentCulture, Resources.StateStoreQuerySortingUnrecognizedOrderMessage, order))
         };
 }

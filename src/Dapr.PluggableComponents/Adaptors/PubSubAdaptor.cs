@@ -114,14 +114,14 @@ public class PubSubAdaptor : PubSubBase
         // The first request should contain the topic from which to pull messages.
         if (!await requests.MoveNext(context.CancellationToken))
         {
-            throw new InvalidOperationException("The component expects at least one request.");
+            throw new InvalidOperationException(Resources.PubSubAdaptorPullExpectsRequestMessage);
         }
 
         var topic = requests.Current.Topic;
 
         if (topic == null || String.IsNullOrEmpty(topic.Name))
         {
-            throw new InvalidOperationException("The component expects the first request to specify the topic.");
+            throw new InvalidOperationException(Resources.PubSubAdaptorPullExpectsTopicMessage);
         }
 
         var pendingMessages = new ConcurrentDictionary<string, MessageAcknowledgementHandler<string?>>();
