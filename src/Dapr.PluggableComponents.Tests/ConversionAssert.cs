@@ -13,7 +13,7 @@
 
 using Xunit;
 
-namespace Dapr.PluggableComponents.Components;
+namespace Dapr.PluggableComponents;
 
 internal static class ConversionAssert
 {
@@ -80,6 +80,13 @@ internal static class ConversionAssert
                     Assert.Equal(expected, actual.Value);
                 }
             });
+    }
+
+    public static bool MetadataEqual(IReadOnlyDictionary<string, string> expected, IReadOnlyDictionary<string, string> actual)
+    {
+        Assert.Equal(expected, actual);
+
+        return true;
     }
 
     public static void MetadataEqual<TSource, TResult>(

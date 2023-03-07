@@ -14,8 +14,6 @@
 using System.Text;
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components.StateStore;
-using Grpc.Core;
-using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -31,7 +29,7 @@ public sealed class StateStoreAdaptorTests
         mockStateStore
             .Setup(component => component.InitAsync(It.IsAny<Components.MetadataRequest>(), It.IsAny<CancellationToken>()));
 
-        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+        var adaptor = AdaptorFixture.CreateStateStore(mockStateStore.Object);
 
         var properties = new Dictionary<string, string>()
         {
@@ -55,7 +53,7 @@ public sealed class StateStoreAdaptorTests
         mockStateStore
             .Verify(
                 component => component.InitAsync(
-                    It.Is<Components.MetadataRequest>(request => AssertMetadataEqual(properties, request.Properties)),
+                    It.Is<Components.MetadataRequest>(request => ConversionAssert.MetadataEqual(properties, request.Properties)),
                     It.Is<CancellationToken>(token => token == context.CancellationToken)),
                 Times.Once());
     }
@@ -82,7 +80,7 @@ public sealed class StateStoreAdaptorTests
             .Setup(component => component.DeleteAsync(It.Is<StateStoreDeleteRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == context.CancellationToken)))
             .Returns(Task.CompletedTask);
 
-        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+        var adaptor = AdaptorFixture.CreateStateStore(mockStateStore.Object);
 
         var bulkDeleteRequest = new Proto.Components.V1.BulkDeleteRequest();
 
@@ -110,7 +108,7 @@ public sealed class StateStoreAdaptorTests
 
         using var context = new TestServerCallContext();
 
-        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+        var adaptor = AdaptorFixture.CreateStateStore(mockStateStore.Object);
 
         var bulkDeleteRequest = new Proto.Components.V1.BulkDeleteRequest();
 
@@ -149,7 +147,7 @@ public sealed class StateStoreAdaptorTests
             .Setup(component => component.SetAsync(It.Is<StateStoreSetRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == context.CancellationToken)))
             .Returns(Task.CompletedTask);
 
-        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+        var adaptor = AdaptorFixture.CreateStateStore(mockStateStore.Object);
 
         var bulkSetRequest = new Proto.Components.V1.BulkSetRequest();
 
@@ -177,7 +175,7 @@ public sealed class StateStoreAdaptorTests
 
         using var context = new TestServerCallContext();
 
-        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+        var adaptor = AdaptorFixture.CreateStateStore(mockStateStore.Object);
 
         var bulkSetRequest = new Proto.Components.V1.BulkSetRequest();
 
@@ -219,7 +217,7 @@ public sealed class StateStoreAdaptorTests
             .Setup(component => component.GetAsync(It.Is<StateStoreGetRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == context.CancellationToken)))
             .ReturnsAsync(new StateStoreGetResponse { Data = Encoding.UTF8.GetBytes(value2) });
 
-        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+        var adaptor = AdaptorFixture.CreateStateStore(mockStateStore.Object);
 
         var bulkGetRequest = new Proto.Components.V1.BulkGetRequest();
 
@@ -260,7 +258,7 @@ public sealed class StateStoreAdaptorTests
 
         using var context = new TestServerCallContext();
 
-        var adaptor = CreateStateStoreAdaptor(mockStateStore.Object);
+        var adaptor = AdaptorFixture.CreateStateStore(mockStateStore.Object);
 
         var bulkGetRequest = new Proto.Components.V1.BulkGetRequest();
 
@@ -279,25 +277,5 @@ public sealed class StateStoreAdaptorTests
             .Verify(component => component.BulkGetAsync(It.Is<StateStoreGetRequest[]>(
                 requests => requests.Length == 2 && requests[0].Key == key1 && requests[1].Key == key2),
                 It.Is<CancellationToken>(cancellationToken => cancellationToken == context.CancellationToken)), Times.Once());
-    }
-
-    private static bool AssertMetadataEqual(IReadOnlyDictionary<string, string> expected, IReadOnlyDictionary<string, string> actual)
-    {
-        Assert.Equal(expected, actual);
-
-        return true;
-    }
-
-    private static StateStoreAdaptor CreateStateStoreAdaptor(IStateStore stateStore)
-    {
-        var logger = new Mock<ILogger<StateStoreAdaptor>>();
-
-        var mockComponentProvider = new Mock<IDaprPluggableComponentProvider<IStateStore>>();
-
-        mockComponentProvider
-            .Setup(componentProvider => componentProvider.GetComponent(It.IsAny<ServerCallContext>()))
-            .Returns(stateStore);
-
-        return new StateStoreAdaptor(logger.Object, mockComponentProvider.Object);
     }
 }
