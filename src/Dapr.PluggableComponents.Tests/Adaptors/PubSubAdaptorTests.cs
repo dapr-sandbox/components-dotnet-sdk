@@ -12,7 +12,9 @@
 // ------------------------------------------------------------------------
 
 using Dapr.Client.Autogen.Grpc.v1;
+using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.PubSub;
+using Dapr.Proto.Components.V1;
 using Moq;
 using Xunit;
 
@@ -36,7 +38,7 @@ public sealed class PubSubAdaptorTests
             { "key2", "value2" }
         };
 
-        var metadataRequest = new MetadataRequest();
+        var metadataRequest = new Client.Autogen.Grpc.v1.MetadataRequest();
 
         metadataRequest.Properties.Add(properties);
 
@@ -53,6 +55,120 @@ public sealed class PubSubAdaptorTests
             .Verify(
                 component => component.InitAsync(
                     It.Is<Components.MetadataRequest>(request => ConversionAssert.MetadataEqual(properties, request.Properties)),
+                    It.Is<CancellationToken>(token => token == context.CancellationToken)),
+                Times.Once());
+    }
+
+    [Fact]
+    public async Task PingWithNoLiveness()
+    {
+        var mockStateStore = new Mock<IPubSub>(MockBehavior.Strict);
+
+        var adaptor = AdaptorFixture.CreatePubSub(mockStateStore.Object);
+
+        using var context = new TestServerCallContext();
+
+        await adaptor.Ping(
+            new PingRequest(),
+            context);
+    }
+
+    [Fact]
+    public async Task PingWithLiveness()
+    {
+        var mockStateStore = new Mock<IPubSub>();
+        var mockLiveness = mockStateStore.As<IPluggableComponentLiveness>();
+
+        mockLiveness
+            .Setup(component => component.PingAsync(It.IsAny<CancellationToken>()));
+
+        var adaptor = AdaptorFixture.CreatePubSub(mockStateStore.Object);
+
+        using var context = new TestServerCallContext();
+
+        await adaptor.Ping(
+            new PingRequest(),
+            context);
+
+        mockLiveness
+            .Verify(
+                component => component.PingAsync(
+                    It.Is<CancellationToken>(token => token == context.CancellationToken)),
+                Times.Once());
+    }
+
+    [Fact]
+    public async Task FeaturesWithNoFeatures()
+    {
+        var mockStateStore = new Mock<IPubSub>(MockBehavior.Strict);
+
+        var adaptor = AdaptorFixture.CreatePubSub(mockStateStore.Object);
+
+        using var context = new TestServerCallContext();
+
+        var response = await adaptor.Features(
+            new FeaturesRequest(),
+            context);
+
+        Assert.NotNull(response);
+        Assert.Empty(response.Features);
+    }
+    
+    [Fact]
+    public async Task FeaturesWithFeatures()
+    {
+        var mockStateStore = new Mock<IPubSub>();
+        var mockFeatures = mockStateStore.As<IPluggableComponentFeatures>();
+
+        mockFeatures
+            .Setup(component => component.GetFeaturesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { "feature1", "feature2" });
+
+        var adaptor = AdaptorFixture.CreatePubSub(mockStateStore.Object);
+
+        using var context = new TestServerCallContext();
+
+        var response = await adaptor.Features(
+            new FeaturesRequest(),
+            context);
+
+        Assert.NotNull(response);
+        Assert.Equal(2, response.Features.Count);
+        Assert.Contains("feature1", response.Features);
+        Assert.Contains("feature2", response.Features);
+
+        mockFeatures
+            .Verify(
+                component => component.GetFeaturesAsync(
+                    It.Is<CancellationToken>(token => token == context.CancellationToken)),
+                Times.Once());
+    }
+
+    [Fact]
+    public async Task Publish()
+    {
+        var mockStateStore = new Mock<IPubSub>();
+
+        mockStateStore
+            .Setup(component => component.PublishAsync(It.IsAny<PubSubPublishRequest>(), It.IsAny<CancellationToken>()));
+
+        var adaptor = AdaptorFixture.CreatePubSub(mockStateStore.Object);
+
+        using var context = new TestServerCallContext();
+
+        string topic = "topic";
+
+        var response = await adaptor.Publish(
+            new PublishRequest
+            {
+                Topic = topic,
+            },
+            context);
+
+        mockStateStore
+            .Verify(
+                component => component.PublishAsync(
+                    It.Is<PubSubPublishRequest>(request => request.Topic == topic),
                     It.Is<CancellationToken>(token => token == context.CancellationToken)),
                 Times.Once());
     }
