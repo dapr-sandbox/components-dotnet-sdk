@@ -11,26 +11,32 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
+using Xunit;
 
 namespace Dapr.PluggableComponents.Components.PubSub;
 
-/// <summary>
-/// Represents the topic associated with a message stream.
-/// </summary>
-/// <param name="Name">Gets the name of the topic.</param>
-public sealed record PubSubPullMessagesTopic(string Name)
+public sealed class PubSubPullMessagesTopicTests
 {
-    /// <summary>
-    /// Gets the metadata associated with the topic.
-    /// </summary>
-    public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
-
-    internal static PubSubPullMessagesTopic FromTopic(Topic topic)
+    [Fact]
+    public void FromTopicTests()
     {
-        return new PubSubPullMessagesTopic(topic.Name)
-        {
-            Metadata = topic.Metadata
-        };
+        ConversionAssert.MetadataEqual(
+            metadata =>
+            {
+                var topic = new Topic();
+
+                topic.Metadata.Add(metadata);
+
+                return topic;
+            },
+            PubSubPullMessagesTopic.FromTopic,
+            topic => topic.Metadata);
+
+        ConversionAssert.StringEqual(
+            name => new Topic { Name = name },
+            PubSubPullMessagesTopic.FromTopic,
+            topic => topic.Name);
     }
 }

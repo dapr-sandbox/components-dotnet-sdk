@@ -95,12 +95,7 @@ public class PubSubAdaptor : PubSubBase
         this.logger.LogDebug("Publish request");
 
         await this.GetPubSub(context).PublishAsync(
-            new PubSubPublishRequest(request.PubsubName, request.Topic)
-            {
-                ContentType = request.ContentType,
-                Data = request.Data.Memory,
-                Metadata = request.Metadata
-            },
+            PubSubPublishRequest.FromPublishRequest(request),
             context.CancellationToken);
 
         return new PublishResponse();
@@ -141,7 +136,7 @@ public class PubSubAdaptor : PubSubBase
             };
 
         var pullTask = this.GetPubSub(context).PullMessagesAsync(
-            new PubSubPullMessagesTopic(topic.Name) { Metadata = requests.Current.Topic.Metadata },
+            PubSubPullMessagesTopic.FromTopic(topic),
             async (message, onAcknowledgement) =>
             {
                 string messageId = Guid.NewGuid().ToString();

@@ -119,9 +119,20 @@ internal static class ConversionAssert
         Func<TSource, TResult> converter,
         Func<TResult, string> contentTypeAccessor)
     {
-        Equal(
+        StringEqual(
             sourceFactory,
             (_, source) => converter(source),
+            contentTypeAccessor);
+    }
+
+    public static void StringEqual<TSource, TResult>(
+        Func<string, TSource> sourceFactory,
+        Func<string, TSource, TResult> converter,
+        Func<TResult, string> contentTypeAccessor)
+    {
+        Equal(
+            sourceFactory,
+            (sourceProperty, source) => converter(sourceProperty, source),
             contentTypeAccessor,
             new[]
             {
