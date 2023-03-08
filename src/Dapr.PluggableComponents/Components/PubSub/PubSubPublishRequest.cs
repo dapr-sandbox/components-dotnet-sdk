@@ -40,10 +40,10 @@ public sealed record PubSubPublishRequest(string PubSubName, string Topic)
     internal static PubSubPublishRequest FromPublishRequest(PublishRequest request)
     {
         return new PubSubPublishRequest(request.PubsubName, request.Topic)
-            {
-                ContentType = request.ContentType,
-                Data = request.Data.Memory,
-                Metadata = request.Metadata
-            };
+        {
+            ContentType = request.ContentType,
+            Data = request.Data.Memory,
+            Metadata = request.Metadata
+        };
     }
 }

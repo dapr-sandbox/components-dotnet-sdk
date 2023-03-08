@@ -115,7 +115,7 @@ public sealed class PubSubAdaptorTests
         Assert.NotNull(response);
         Assert.Empty(response.Features);
     }
-    
+
     [Fact]
     public async Task FeaturesWithFeatures()
     {
