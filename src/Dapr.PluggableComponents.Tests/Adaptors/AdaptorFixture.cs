@@ -19,11 +19,43 @@ using Moq;
 
 namespace Dapr.PluggableComponents.Adaptors;
 
-internal static class AdaptorFixture
+internal sealed class PubSubAdaptorFixture : AdaptorFixture, IDisposable
 {
-    public static PubSubAdaptor CreatePubSub(IPubSub pubSub)
+    private readonly TestServerCallContext context = new TestServerCallContext();
+    private readonly Lazy<PubSubAdaptor> adaptor;
+
+    public PubSubAdaptorFixture(Mock<IPubSub>? mockComponent = null)
     {
-        return Create<PubSubAdaptor, IPubSub>(pubSub, (logger, componentProvider) => new PubSubAdaptor(logger, componentProvider));
+        this.MockComponent = mockComponent ?? new Mock<IPubSub>();
+
+        this.adaptor = new Lazy<PubSubAdaptor>(() => Create<PubSubAdaptor, IPubSub>(this.MockComponent.Object, (logger, componentProvider) => new PubSubAdaptor(logger, componentProvider)));
+    }
+
+    /// <remarks>
+    /// Loads lazily to ensure that clients have the ability to add interfaces to the mock component.
+    /// (Interfaces cannot be added after first use of Mock<T>.Object.)
+    /// </remarks>
+    public PubSubAdaptor Adaptor => this.adaptor.Value;
+
+    public ServerCallContext Context => this.context;
+
+    public Mock<IPubSub> MockComponent { get; }
+
+    #region IDisposable Members
+
+    public void Dispose()
+    {
+        this.context.Dispose();
+    }
+
+    #endregion
+}
+
+internal abstract class AdaptorFixture
+{
+    public static PubSubAdaptorFixture CreatePubSub(Mock<IPubSub>? mockComponent = null)
+    {
+        return new PubSubAdaptorFixture(mockComponent);
     }
 
     public static StateStoreAdaptor CreateStateStore(IStateStore stateStore)
@@ -31,7 +63,7 @@ internal static class AdaptorFixture
         return Create<StateStoreAdaptor, IStateStore>(stateStore, (logger, componentProvider) => new StateStoreAdaptor(logger, componentProvider));
     }
 
-    private static TAdaptor Create<TAdaptor, TInterface>(TInterface component, Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory)
+    protected static TAdaptor Create<TAdaptor, TInterface>(TInterface component, Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory)
     {
         var logger = new Mock<ILogger<TAdaptor>>();
 
