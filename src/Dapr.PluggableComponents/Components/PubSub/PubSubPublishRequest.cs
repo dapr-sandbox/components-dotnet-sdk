@@ -11,6 +11,8 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using Dapr.Proto.Components.V1;
+
 namespace Dapr.PluggableComponents.Components.PubSub;
 
 /// <summary>
@@ -34,4 +36,14 @@ public sealed record PubSubPublishRequest(string PubSubName, string Topic)
     /// Gets the content type of the message.
     /// </summary>
     public string? ContentType { get; init; }
+
+    internal static PubSubPublishRequest FromPublishRequest(PublishRequest request)
+    {
+        return new PubSubPublishRequest(request.PubsubName, request.Topic)
+        {
+            ContentType = request.ContentType,
+            Data = request.Data.Memory,
+            Metadata = request.Metadata
+        };
+    }
 }

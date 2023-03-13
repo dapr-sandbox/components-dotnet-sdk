@@ -12,10 +12,12 @@
 // ------------------------------------------------------------------------
 
 using Dapr.PluggableComponents.Components;
+using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
+using static Dapr.Proto.Components.V1.PubSub;
 using static Dapr.Proto.Components.V1.QueriableStateStore;
 using static Dapr.Proto.Components.V1.StateStore;
 using static Dapr.Proto.Components.V1.TransactionalStateStore;
@@ -24,6 +26,85 @@ namespace Dapr.PluggableComponents;
 
 public sealed class DaprPluggableComponentsServiceBuilderTests
 {
+    [Fact]
+    public async Task RegisterSingletonPubSub()
+    {
+        var mockPubSub = new Mock<IMockPubSub<Unit>>();
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        application.Services.AddSingleton(_ => mockPubSub.Object);
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterPubSub<MockPubSub<Unit>>();
+            });
+
+        await application.StartAsync();
+
+        var client = new PubSubClient(socketFixture.GrpcChannel);
+
+        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "A") };
+        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "B") };
+
+        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
+
+        mockPubSub.Verify(stateStore => stateStore.Create(), Times.Once());
+        mockPubSub.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task RegisterFactoryBasedPubSub()
+    {
+        var mockPubSubA = new Mock<IMockPubSub<Unit>>();
+        var mockPubSubB = new Mock<IMockPubSub<Unit>>();
+
+        const string componentInstanceA = "A";
+        const string componentInstanceB = "B";
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterPubSub(
+                    context =>
+                    {
+                        return context.InstanceId switch
+                        {
+                            componentInstanceA => new MockPubSub<Unit>(mockPubSubA.Object),
+                            componentInstanceB => new MockPubSub<Unit>(mockPubSubB.Object),
+                            _ => throw new Exception()
+                        };
+                    });
+            });
+
+        await application.StartAsync();
+
+        var client = new PubSubClient(socketFixture.GrpcChannel);
+
+        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceA) };
+        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceB) };
+
+        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
+
+        mockPubSubA.Verify(stateStore => stateStore.Create(), Times.Once());
+        mockPubSubB.Verify(stateStore => stateStore.Create(), Times.Once());
+
+        mockPubSubA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        mockPubSubB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+    }
+
     [Fact]
     public async Task RegisterSingletonStateStore()
     {
