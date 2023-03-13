@@ -13,9 +13,8 @@
 
 namespace Dapr.PluggableComponents.Components.PubSub;
 
-internal interface IMockPubSub<T> : IPubSub where T : class
+internal interface IMockPubSub<T> : IMockPluggableComponent, IPubSub where T : class
 {
-    void Create();
 }
 
 internal sealed class MockPubSub<T> : IPubSub where T : class

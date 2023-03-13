@@ -21,7 +21,6 @@ using Grpc.Net.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
-using static Dapr.Proto.Components.V1.PubSub;
 using static Dapr.Proto.Components.V1.QueriableStateStore;
 using static Dapr.Proto.Components.V1.StateStore;
 using static Dapr.Proto.Components.V1.TransactionalStateStore;
@@ -30,11 +29,11 @@ namespace Dapr.PluggableComponents;
 
 public sealed class DaprPluggableComponentsServiceBuilderTests
 {
-    private static async Task TestSingletonInitAsync<TMockInterface, TMockType, TClient>(
+    private static async Task TestSingletonInitAsync<TMockInterface, TClient>(
         Func<GrpcChannel, TClient> clientFactory,
+        Action<DaprPluggableComponentsServiceBuilder> registerCall,
         Func<TClient, Grpc.Core.Metadata, Task> initCall)
         where TMockInterface : class, IMockPluggableComponent
-        where TMockType : class
     {
         var mockInputBinding = new Mock<TMockInterface>();
 
@@ -48,7 +47,7 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
             socketFixture.ServiceOptions,
             serviceBuilder =>
             {
-                serviceBuilder.RegisterBinding<TMockType>();
+                registerCall(serviceBuilder);
             });
 
         await application.StartAsync();
@@ -68,6 +67,7 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
     private static async Task TestFactoryBasedInitAsync<TMockInterface, TMockType, TClient>(
         Func<GrpcChannel, TClient> clientFactory,
         Func<TMockInterface, TMockType> componentFactory,
+        Func<DaprPluggableComponentsServiceBuilder, Action<ComponentProviderDelegate<TMockType>>> registerCall,
         Func<TClient, Grpc.Core.Metadata, Task> initCall)
         where TMockInterface : class, IMockPluggableComponent
         where TMockType : class
@@ -86,7 +86,7 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
             socketFixture.ServiceOptions,
             serviceBuilder =>
             {
-                serviceBuilder.RegisterBinding(
+                registerCall(serviceBuilder)(
                     context =>
                     {
                         return context.InstanceId switch
@@ -119,8 +119,9 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
     [Fact]
     public Task RegisterSingletonInputBinding()
     {
-        return TestSingletonInitAsync<IMockInputBinding<Unit>, MockInputBinding<Unit>, InputBinding.InputBindingClient>(
+        return TestSingletonInitAsync<IMockInputBinding<Unit>, InputBinding.InputBindingClient>(
             channel => new InputBinding.InputBindingClient(channel),
+            serviceBuilder => serviceBuilder.RegisterBinding<MockInputBinding<Unit>>(),
             async (client, metadata) => await client.InitAsync(new InputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
@@ -130,14 +131,16 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         return TestFactoryBasedInitAsync<IMockInputBinding<Unit>, MockInputBinding<Unit>, InputBinding.InputBindingClient>(
             channel => new InputBinding.InputBindingClient(channel),
             component => new MockInputBinding<Unit>(component),
+            serviceBuilder => factory => serviceBuilder.RegisterBinding<MockInputBinding<Unit>>(factory),
             async (client, metadata) => await client.InitAsync(new InputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
     [Fact]
     public Task RegisterSingletonOutputBinding()
     {
-        return TestSingletonInitAsync<IMockOutputBinding<Unit>, MockOutputBinding<Unit>, OutputBinding.OutputBindingClient>(
+        return TestSingletonInitAsync<IMockOutputBinding<Unit>, OutputBinding.OutputBindingClient>(
             channel => new OutputBinding.OutputBindingClient(channel),
+            serviceBuilder => serviceBuilder.RegisterBinding<MockOutputBinding<Unit>>(),
             async (client, metadata) => await client.InitAsync(new OutputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
@@ -147,165 +150,46 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         return TestFactoryBasedInitAsync<IMockOutputBinding<Unit>, MockOutputBinding<Unit>, OutputBinding.OutputBindingClient>(
             channel => new OutputBinding.OutputBindingClient(channel),
             component => new MockOutputBinding<Unit>(component),
+            serviceBuilder => factory => serviceBuilder.RegisterBinding<MockOutputBinding<Unit>>(factory),
             async (client, metadata) => await client.InitAsync(new OutputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
     [Fact]
-    public async Task RegisterSingletonPubSub()
+    public Task RegisterSingletonPubSub()
     {
-        var mockPubSub = new Mock<IMockPubSub<Unit>>();
-
-        using var application = DaprPluggableComponentsApplication.Create();
-
-        application.Services.AddSingleton(_ => mockPubSub.Object);
-
-        using var socketFixture = new SocketFixture();
-
-        application.RegisterService(
-            socketFixture.ServiceOptions,
-            serviceBuilder =>
-            {
-                serviceBuilder.RegisterPubSub<MockPubSub<Unit>>();
-            });
-
-        await application.StartAsync();
-
-        var client = new PubSubClient(socketFixture.GrpcChannel);
-
-        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "A") };
-        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "B") };
-
-        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
-        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
-
-        mockPubSub.Verify(stateStore => stateStore.Create(), Times.Once());
-        mockPubSub.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        return TestSingletonInitAsync<IMockPubSub<Unit>, PubSub.PubSubClient>(
+            channel => new PubSub.PubSubClient(channel),
+            serviceBuilder => serviceBuilder.RegisterPubSub<MockPubSub<Unit>>(),
+            async (client, metadata) => await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
     [Fact]
-    public async Task RegisterFactoryBasedPubSub()
+    public Task RegisterFactoryBasedPubSub()
     {
-        var mockPubSubA = new Mock<IMockPubSub<Unit>>();
-        var mockPubSubB = new Mock<IMockPubSub<Unit>>();
-
-        const string componentInstanceA = "A";
-        const string componentInstanceB = "B";
-
-        using var application = DaprPluggableComponentsApplication.Create();
-
-        using var socketFixture = new SocketFixture();
-
-        application.RegisterService(
-            socketFixture.ServiceOptions,
-            serviceBuilder =>
-            {
-                serviceBuilder.RegisterPubSub(
-                    context =>
-                    {
-                        return context.InstanceId switch
-                        {
-                            componentInstanceA => new MockPubSub<Unit>(mockPubSubA.Object),
-                            componentInstanceB => new MockPubSub<Unit>(mockPubSubB.Object),
-                            _ => throw new Exception()
-                        };
-                    });
-            });
-
-        await application.StartAsync();
-
-        var client = new PubSubClient(socketFixture.GrpcChannel);
-
-        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceA) };
-        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceB) };
-
-        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
-        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
-        await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
-
-        mockPubSubA.Verify(stateStore => stateStore.Create(), Times.Once());
-        mockPubSubB.Verify(stateStore => stateStore.Create(), Times.Once());
-
-        mockPubSubA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-        mockPubSubB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        return TestFactoryBasedInitAsync<IMockPubSub<Unit>, MockPubSub<Unit>, PubSub.PubSubClient>(
+            channel => new PubSub.PubSubClient(channel),
+            component => new MockPubSub<Unit>(component),
+            serviceBuilder => factory => serviceBuilder.RegisterPubSub<MockPubSub<Unit>>(factory),
+            async (client, metadata) => await client.InitAsync(new Proto.Components.V1.PubSubInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
     [Fact]
-    public async Task RegisterSingletonStateStore()
+    public Task RegisterSingletonStateStore()
     {
-        var mockStateStore = new Mock<IMockStateStore<Unit>>();
-
-        using var application = DaprPluggableComponentsApplication.Create();
-
-        application.Services.AddSingleton(_ => mockStateStore.Object);
-
-        using var socketFixture = new SocketFixture();
-
-        application.RegisterService(
-            socketFixture.ServiceOptions,
-            serviceBuilder =>
-            {
-                serviceBuilder.RegisterStateStore<MockStateStore<Unit>>();
-            });
-
-        await application.StartAsync();
-
-        var client = new StateStoreClient(socketFixture.GrpcChannel);
-
-        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "A") };
-        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "B") };
-
-        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
-        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
-
-        mockStateStore.Verify(stateStore => stateStore.Create(), Times.Once());
-        mockStateStore.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        return TestSingletonInitAsync<IMockStateStore<Unit>, StateStore.StateStoreClient>(
+            channel => new StateStore.StateStoreClient(channel),
+            serviceBuilder => serviceBuilder.RegisterStateStore<MockStateStore<Unit>>(),
+            async (client, metadata) => await client.InitAsync(new InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
     [Fact]
-    public async Task RegisterFactoryBasedStateStore()
+    public Task RegisterFactoryBasedStateStore()
     {
-        var mockStateStoreA = new Mock<IMockStateStore<Unit>>();
-        var mockStateStoreB = new Mock<IMockStateStore<Unit>>();
-
-        const string componentInstanceA = "A";
-        const string componentInstanceB = "B";
-
-        using var application = DaprPluggableComponentsApplication.Create();
-
-        using var socketFixture = new SocketFixture();
-
-        application.RegisterService(
-            socketFixture.ServiceOptions,
-            serviceBuilder =>
-            {
-                serviceBuilder.RegisterStateStore(
-                    context =>
-                    {
-                        return context.InstanceId switch
-                        {
-                            componentInstanceA => new MockStateStore<Unit>(mockStateStoreA.Object),
-                            componentInstanceB => new MockStateStore<Unit>(mockStateStoreB.Object),
-                            _ => throw new Exception()
-                        };
-                    });
-            });
-
-        await application.StartAsync();
-
-        var client = new StateStoreClient(socketFixture.GrpcChannel);
-
-        var metadataA = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceA) };
-        var metadataB = new Grpc.Core.Metadata { new Grpc.Core.Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, componentInstanceB) };
-
-        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
-        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
-        await client.InitAsync(new Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataB);
-
-        mockStateStoreA.Verify(stateStore => stateStore.Create(), Times.Once());
-        mockStateStoreB.Verify(stateStore => stateStore.Create(), Times.Once());
-
-        mockStateStoreA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-        mockStateStoreB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        return TestFactoryBasedInitAsync<IMockStateStore<Unit>, MockStateStore<Unit>, StateStore.StateStoreClient>(
+            channel => new StateStore.StateStoreClient(channel),
+            component => new MockStateStore<Unit>(component),
+            serviceBuilder => factory => serviceBuilder.RegisterStateStore<MockStateStore<Unit>>(factory),
+            async (client, metadata) => await client.InitAsync(new InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadata));
     }
 
     [Fact]
