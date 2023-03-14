@@ -56,6 +56,11 @@ internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDi
 
 internal abstract class AdaptorFixture
 {
+    public static AdaptorFixture<InputBindingAdaptor, IInputBinding> CreateInputBinding(Mock<IInputBinding>? mockComponent = null)
+    {
+        return new AdaptorFixture<InputBindingAdaptor, IInputBinding>((logger, componentProvider) => new InputBindingAdaptor(logger, componentProvider), mockComponent);
+    }
+
     public static AdaptorFixture<OutputBindingAdaptor, IOutputBinding> CreateOutputBinding(Mock<IOutputBinding>? mockComponent = null)
     {
         return new AdaptorFixture<OutputBindingAdaptor, IOutputBinding>((logger, componentProvider) => new OutputBindingAdaptor(logger, componentProvider), mockComponent);

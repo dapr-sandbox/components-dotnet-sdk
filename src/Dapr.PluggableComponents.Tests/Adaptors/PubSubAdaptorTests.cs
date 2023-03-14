@@ -119,7 +119,7 @@ public sealed class PubSubAdaptorTests
 
         var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
 
-        var reader = new PullMessagesRequestStreamReader();
+        var reader = new AsyncStreamReader<PullMessagesRequest>();
 
         var pullTask = fixture.Adaptor.PullMessages(
             reader,
@@ -146,12 +146,10 @@ public sealed class PubSubAdaptorTests
     {
         using var fixture = AdaptorFixture.CreatePubSub();
 
-        Task pullMessagesAsyncTask = Task.CompletedTask;
-
         string contentType = "application/json";
         string error = "error";
 
-        var reader = new PullMessagesRequestStreamReader();
+        var reader = new AsyncStreamReader<PullMessagesRequest>();
 
         fixture.MockComponent
             .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
@@ -203,6 +201,42 @@ public sealed class PubSubAdaptorTests
                 Times.Once());
     }
 
+    /*
+        TODO: Uncomment as part of fix for dapr-sandbox/components-dotnet-sdk#28
+
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task PullMessagesNoMessages()
+    {
+        using var fixture = AdaptorFixture.CreatePubSub();
+
+        fixture.MockComponent
+            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
+
+        string topic = "topic";
+
+        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+
+        var reader = new AsyncStreamReader<PullMessagesRequest>();
+
+        var pullTask = fixture.Adaptor.PullMessages(
+            reader,
+            mockWriter.Object,
+            fixture.Context);
+
+        await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
+
+        await pullTask;
+
+        fixture.MockComponent
+            .Verify(
+                component => component.PullMessagesAsync(
+                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                Times.Once());
+    }
+    */
+
     [Fact(Timeout = TimeoutInMs)]
     public async Task PullMessagesNoRequests()
     {
@@ -211,7 +245,7 @@ public sealed class PubSubAdaptorTests
         fixture.MockComponent
             .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
 
-        var reader = new PullMessagesRequestStreamReader();
+        var reader = new AsyncStreamReader<PullMessagesRequest>();
         var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
 
         var pullTask = fixture.Adaptor.PullMessages(
@@ -237,7 +271,7 @@ public sealed class PubSubAdaptorTests
         fixture.MockComponent
             .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
 
-        var reader = new PullMessagesRequestStreamReader();
+        var reader = new AsyncStreamReader<PullMessagesRequest>();
         var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
 
         var pullTask = fixture.Adaptor.PullMessages(
@@ -255,41 +289,5 @@ public sealed class PubSubAdaptorTests
                 await pullTask;
             }
         );
-    }
-
-    private sealed class PullMessagesRequestStreamReader : IAsyncStreamReader<PullMessagesRequest>
-    {
-        private readonly Channel<PullMessagesRequest> channel = Channel.CreateUnbounded<PullMessagesRequest>();
-        private PullMessagesRequest? current;
-
-        public ValueTask AddAsync(PullMessagesRequest request, CancellationToken cancellationToken = default)
-        {
-            return this.channel.Writer.WriteAsync(request, cancellationToken);
-        }
-
-        public void Complete()
-        {
-            this.channel.Writer.Complete();
-        }
-
-        #region IAsyncStreamReader<PullMessagesRequest> Members
-
-        public PullMessagesRequest Current => this.current ?? throw new InvalidOperationException();
-
-        public async Task<bool> MoveNext(CancellationToken cancellationToken)
-        {
-            var result = await this.channel.Reader.WaitToReadAsync(cancellationToken);
-
-            if (result && this.channel.Reader.TryRead(out this.current))
-            {
-                return true;
-            }
-
-            this.current = null;
-
-            return false;
-        }
-
-        #endregion
     }
 }
