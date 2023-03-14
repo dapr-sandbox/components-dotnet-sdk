@@ -201,10 +201,7 @@ public sealed class PubSubAdaptorTests
                 Times.Once());
     }
 
-    /*
-        TODO: Uncomment as part of fix for dapr-sandbox/components-dotnet-sdk#28
-
-    [Fact(Timeout = TimeoutInMs)]
+    [Fact(Timeout = TimeoutInMs, Skip = "To be re-enabled when as part of fix for dapr-sandbox/components-dotnet-sdk#28.")]
     public async Task PullMessagesNoMessages()
     {
         using var fixture = AdaptorFixture.CreatePubSub();
@@ -235,7 +232,6 @@ public sealed class PubSubAdaptorTests
                     It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
                 Times.Once());
     }
-    */
 
     [Fact(Timeout = TimeoutInMs)]
     public async Task PullMessagesNoRequests()
