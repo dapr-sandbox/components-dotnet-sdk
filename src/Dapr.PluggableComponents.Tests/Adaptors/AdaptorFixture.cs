@@ -11,6 +11,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
@@ -21,7 +22,7 @@ using Moq;
 namespace Dapr.PluggableComponents.Adaptors;
 
 internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDisposable
-    where TInterface : class
+    where TInterface : class, IPluggableComponent
 {
     private readonly TestServerCallContext context = new TestServerCallContext();
     private readonly Lazy<TAdaptor> adaptor;
@@ -65,9 +66,39 @@ internal abstract class AdaptorFixture
         return new AdaptorFixture<PubSubAdaptor, IPubSub>((logger, componentProvider) => new PubSubAdaptor(logger, componentProvider), mockComponent);
     }
 
-    public static StateStoreAdaptor CreateStateStore(IStateStore stateStore)
+    public static AdaptorFixture<StateStoreAdaptor, IStateStore> CreateStateStore(Mock<IStateStore>? mockComponent = null)
     {
-        return Create<StateStoreAdaptor, IStateStore>(stateStore, (logger, componentProvider) => new StateStoreAdaptor(logger, componentProvider));
+        return new AdaptorFixture<StateStoreAdaptor, IStateStore>((logger, componentProvider) => new StateStoreAdaptor(logger, componentProvider), mockComponent);
+    }
+
+    public static async Task TestInitAsync<TAdaptor, TInterface>(
+        Func<AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
+        Func<AdaptorFixture<TAdaptor, TInterface>, Client.Autogen.Grpc.v1.MetadataRequest, Task> initCall)
+        where TInterface : class, IPluggableComponent
+    {
+        using var fixture = adaptorFactory();
+
+        fixture.MockComponent
+            .Setup(component => component.InitAsync(It.IsAny<Components.MetadataRequest>(), It.IsAny<CancellationToken>()));
+
+        var properties = new Dictionary<string, string>()
+        {
+            { "key1", "value1" },
+            { "key2", "value2" }
+        };
+
+        var metadataRequest = new Client.Autogen.Grpc.v1.MetadataRequest();
+
+        metadataRequest.Properties.Add(properties);
+
+        await initCall(fixture, metadataRequest);
+
+        fixture.MockComponent
+            .Verify(
+                component => component.InitAsync(
+                    It.Is<Components.MetadataRequest>(request => ConversionAssert.MetadataEqual(properties, request.Properties)),
+                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                Times.Once());
     }
 
     protected static TAdaptor Create<TAdaptor, TInterface>(TInterface component, Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory)

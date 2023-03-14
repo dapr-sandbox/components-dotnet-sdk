@@ -19,35 +19,10 @@ namespace Dapr.PluggableComponents.Adaptors;
 public sealed class OutputBindignAdaptorTests
 {
     [Fact]
-    public async Task InitTests()
+    public Task InitTests()
     {
-        using var fixture = AdaptorFixture.CreateOutputBinding();
-
-        fixture.MockComponent
-            .Setup(component => component.InitAsync(It.IsAny<Components.MetadataRequest>(), It.IsAny<CancellationToken>()));
-
-        var properties = new Dictionary<string, string>()
-        {
-            { "key1", "value1" },
-            { "key2", "value2" }
-        };
-
-        var metadataRequest = new Client.Autogen.Grpc.v1.MetadataRequest();
-
-        metadataRequest.Properties.Add(properties);
-
-        await fixture.Adaptor.Init(
-            new Proto.Components.V1.OutputBindingInitRequest
-            {
-                Metadata = metadataRequest
-            },
-            fixture.Context);
-
-        fixture.MockComponent
-            .Verify(
-                component => component.InitAsync(
-                    It.Is<Components.MetadataRequest>(request => ConversionAssert.MetadataEqual(properties, request.Properties)),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
-                Times.Once());
+        return AdaptorFixture.TestInitAsync(
+            () => AdaptorFixture.CreateOutputBinding(),
+            (fixture, metadataRequest) => fixture.Adaptor.Init(new Proto.Components.V1.OutputBindingInitRequest { Metadata = metadataRequest }, fixture.Context));
     }
 }
