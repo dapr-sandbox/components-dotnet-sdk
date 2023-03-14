@@ -11,6 +11,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 using Grpc.Core;
@@ -19,27 +20,28 @@ using Moq;
 
 namespace Dapr.PluggableComponents.Adaptors;
 
-internal sealed class PubSubAdaptorFixture : AdaptorFixture, IDisposable
+internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDisposable
+    where TInterface : class
 {
     private readonly TestServerCallContext context = new TestServerCallContext();
-    private readonly Lazy<PubSubAdaptor> adaptor;
+    private readonly Lazy<TAdaptor> adaptor;
 
-    public PubSubAdaptorFixture(Mock<IPubSub>? mockComponent = null)
+    public AdaptorFixture(Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory, Mock<TInterface>? mockComponent = null)
     {
-        this.MockComponent = mockComponent ?? new Mock<IPubSub>();
+        this.MockComponent = mockComponent ?? new Mock<TInterface>();
 
-        this.adaptor = new Lazy<PubSubAdaptor>(() => Create<PubSubAdaptor, IPubSub>(this.MockComponent.Object, (logger, componentProvider) => new PubSubAdaptor(logger, componentProvider)));
+        this.adaptor = new Lazy<TAdaptor>(() => Create<TAdaptor, TInterface>(this.MockComponent.Object, adaptorFactory));
     }
 
     /// <remarks>
     /// Loads lazily to ensure that clients have the ability to add interfaces to the mock component.
     /// (Interfaces cannot be added after first use of Mock<T>.Object.)
     /// </remarks>
-    public PubSubAdaptor Adaptor => this.adaptor.Value;
+    public TAdaptor Adaptor => this.adaptor.Value;
 
     public ServerCallContext Context => this.context;
 
-    public Mock<IPubSub> MockComponent { get; }
+    public Mock<TInterface> MockComponent { get; }
 
     #region IDisposable Members
 
@@ -53,9 +55,14 @@ internal sealed class PubSubAdaptorFixture : AdaptorFixture, IDisposable
 
 internal abstract class AdaptorFixture
 {
-    public static PubSubAdaptorFixture CreatePubSub(Mock<IPubSub>? mockComponent = null)
+    public static AdaptorFixture<OutputBindingAdaptor, IOutputBinding> CreateOutputBinding(Mock<IOutputBinding>? mockComponent = null)
     {
-        return new PubSubAdaptorFixture(mockComponent);
+        return new AdaptorFixture<OutputBindingAdaptor, IOutputBinding>((logger, componentProvider) => new OutputBindingAdaptor(logger, componentProvider), mockComponent);
+    }
+
+    public static AdaptorFixture<PubSubAdaptor, IPubSub> CreatePubSub(Mock<IPubSub>? mockComponent = null)
+    {
+        return new AdaptorFixture<PubSubAdaptor, IPubSub>((logger, componentProvider) => new PubSubAdaptor(logger, componentProvider), mockComponent);
     }
 
     public static StateStoreAdaptor CreateStateStore(IStateStore stateStore)
