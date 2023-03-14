@@ -12,6 +12,7 @@
 // ------------------------------------------------------------------------
 
 using System.Text;
+using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components.StateStore;
 using Moq;
 using Xunit;
@@ -26,6 +27,14 @@ public sealed class StateStoreAdaptorTests
         return AdaptorFixture.TestInitAsync(
             () => AdaptorFixture.CreateStateStore(),
             (fixture, metadataRequest) => fixture.Adaptor.Init(new Proto.Components.V1.InitRequest { Metadata = metadataRequest }, fixture.Context));
+    }
+
+    [Fact]
+    public Task PingTests()
+    {
+        return AdaptorFixture.TestPingAsync<StateStoreAdaptor, IStateStore>(
+            AdaptorFixture.CreateStateStore,
+            fixture => fixture.Adaptor.Ping(new PingRequest(), fixture.Context));
     }
 
     [Fact]

@@ -101,6 +101,46 @@ internal abstract class AdaptorFixture
                 Times.Once());
     }
 
+    public static async Task TestPingAsync<TAdaptor, TInterface>(
+        Func<Mock<TInterface>?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
+        Func<AdaptorFixture<TAdaptor, TInterface>, Task> pingCall)
+        where TInterface : class, IPluggableComponent
+    {
+        await PingWithNoLiveness<TAdaptor, TInterface>(adaptorFactory, pingCall);
+        await PingWithLiveness<TAdaptor, TInterface>(adaptorFactory, pingCall);
+    }
+
+    private static async Task PingWithNoLiveness<TAdaptor, TInterface>(
+        Func<Mock<TInterface>?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
+        Func<AdaptorFixture<TAdaptor, TInterface>, Task> pingCall)
+        where TInterface : class, IPluggableComponent
+    {
+        using var fixture = adaptorFactory(new Mock<TInterface>(MockBehavior.Strict));
+
+        await pingCall(fixture);
+    }
+
+    private static async Task PingWithLiveness<TAdaptor, TInterface>(
+        Func<Mock<TInterface>?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
+        Func<AdaptorFixture<TAdaptor, TInterface>, Task> pingCall)
+        where TInterface : class, IPluggableComponent
+    {
+        using var fixture = adaptorFactory(null);
+
+        var mockLiveness = fixture.MockComponent.As<IPluggableComponentLiveness>();
+
+        mockLiveness
+            .Setup(component => component.PingAsync(It.IsAny<CancellationToken>()));
+
+        await pingCall(fixture);
+
+        mockLiveness
+            .Verify(
+                component => component.PingAsync(
+                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                Times.Once());
+    }
+
     protected static TAdaptor Create<TAdaptor, TInterface>(TInterface component, Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory)
     {
         var logger = new Mock<ILogger<TAdaptor>>();

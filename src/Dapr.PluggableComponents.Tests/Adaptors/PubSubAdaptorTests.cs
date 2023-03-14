@@ -35,34 +35,11 @@ public sealed class PubSubAdaptorTests
     }
 
     [Fact]
-    public async Task PingWithNoLiveness()
+    public Task PingTests()
     {
-        using var fixture = AdaptorFixture.CreatePubSub(new Mock<IPubSub>(MockBehavior.Strict));
-
-        await fixture.Adaptor.Ping(
-            new PingRequest(),
-            fixture.Context);
-    }
-
-    [Fact]
-    public async Task PingWithLiveness()
-    {
-        using var fixture = AdaptorFixture.CreatePubSub();
-
-        var mockLiveness = fixture.MockComponent.As<IPluggableComponentLiveness>();
-
-        mockLiveness
-            .Setup(component => component.PingAsync(It.IsAny<CancellationToken>()));
-
-        await fixture.Adaptor.Ping(
-            new PingRequest(),
-            fixture.Context);
-
-        mockLiveness
-            .Verify(
-                component => component.PingAsync(
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
-                Times.Once());
+        return AdaptorFixture.TestPingAsync<PubSubAdaptor, IPubSub>(
+            AdaptorFixture.CreatePubSub,
+            fixture => fixture.Adaptor.Ping(new PingRequest(), fixture.Context));
     }
 
     [Fact]
