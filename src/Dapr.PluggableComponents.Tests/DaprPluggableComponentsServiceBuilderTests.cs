@@ -155,6 +155,76 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
     }
 
     [Fact]
+    public async Task RegisterSeparateInputOutputBindings()
+    {
+        var mockInputBinding = new Mock<IMockInputBinding<Unit>>();
+        var mockOutputBinding = new Mock<IMockOutputBinding<Unit>>();
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        application.Services.AddSingleton(_ => mockInputBinding.Object);
+        application.Services.AddSingleton(_ => mockOutputBinding.Object);
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterBinding<MockInputBinding<Unit>>();
+                serviceBuilder.RegisterBinding<MockOutputBinding<Unit>>();
+            });
+
+        await application.StartAsync();
+
+        var inputClient = new InputBinding.InputBindingClient(socketFixture.GrpcChannel);
+        var outputClient = new OutputBinding.OutputBindingClient(socketFixture.GrpcChannel);
+
+        var metadataA = new Metadata { new Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "A") };
+
+        await inputClient.InitAsync(new InputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await outputClient.InitAsync(new OutputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+
+        mockInputBinding.Verify(inputBinding => inputBinding.Create(), Times.Once());
+        mockInputBinding.Verify(inputBinding => inputBinding.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
+
+        mockInputBinding.Verify(outputBinding => outputBinding.Create(), Times.Once());
+        mockInputBinding.Verify(outputBinding => outputBinding.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
+    }
+
+    [Fact]
+    public async Task RegisterCombinedInputOutputBindings()
+    {
+        var mockCombinedBinding = new Mock<IMockCombinedBinding<Unit>>();
+
+        using var application = DaprPluggableComponentsApplication.Create();
+
+        application.Services.AddSingleton(_ => mockCombinedBinding.Object);
+
+        using var socketFixture = new SocketFixture();
+
+        application.RegisterService(
+            socketFixture.ServiceOptions,
+            serviceBuilder =>
+            {
+                serviceBuilder.RegisterBinding<MockCombinedBinding<Unit>>();
+            });
+
+        await application.StartAsync();
+
+        var inputClient = new InputBinding.InputBindingClient(socketFixture.GrpcChannel);
+        var outputClient = new OutputBinding.OutputBindingClient(socketFixture.GrpcChannel);
+
+        var metadataA = new Metadata { new Metadata.Entry(TestConstants.Metadata.ComponentInstanceId, "A") };
+
+        await inputClient.InitAsync(new InputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+        await outputClient.InitAsync(new OutputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
+
+        mockCombinedBinding.Verify(combinedBinding => combinedBinding.Create(), Times.Once());
+        mockCombinedBinding.Verify(combinedBinding => combinedBinding.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
     public Task RegisterSingletonPubSub()
     {
         return TestSingletonInitAsync<IMockPubSub<Unit>, PubSub.PubSubClient>(
