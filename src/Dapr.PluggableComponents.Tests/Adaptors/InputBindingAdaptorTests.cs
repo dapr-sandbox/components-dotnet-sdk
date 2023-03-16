@@ -41,7 +41,7 @@ public sealed class InputBindingAdaptorTests
             fixture => fixture.Adaptor.Ping(new PingRequest(), fixture.Context));
     }
 
-    [Fact(Timeout = TimeoutInMs, Skip = "To be re-enabled when as part of fix for dapr-sandbox/components-dotnet-sdk#28.")]
+    [Fact(Timeout = TimeoutInMs)]
     public async Task ReadNoMessages()
     {
         using var fixture = AdaptorFixture.CreateInputBinding();
@@ -67,7 +67,8 @@ public sealed class InputBindingAdaptorTests
             .Verify(
                 component => component.ReadAsync(
                     It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 
@@ -121,7 +122,8 @@ public sealed class InputBindingAdaptorTests
             .Verify(
                 component => component.ReadAsync(
                     It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 }

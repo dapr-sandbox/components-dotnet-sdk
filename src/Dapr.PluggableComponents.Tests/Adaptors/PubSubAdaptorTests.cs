@@ -201,7 +201,7 @@ public sealed class PubSubAdaptorTests
                 Times.Once());
     }
 
-    [Fact(Timeout = TimeoutInMs, Skip = "To be re-enabled when as part of fix for dapr-sandbox/components-dotnet-sdk#28.")]
+    [Fact(Timeout = TimeoutInMs)]
     public async Task PullMessagesNoMessages()
     {
         using var fixture = AdaptorFixture.CreatePubSub();
