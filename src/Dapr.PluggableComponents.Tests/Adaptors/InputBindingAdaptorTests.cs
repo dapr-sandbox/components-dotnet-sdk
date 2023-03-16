@@ -42,7 +42,7 @@ public sealed class InputBindingAdaptorTests
     }
 
     [Fact(Timeout = TimeoutInMs)]
-    public async Task ReadNoMessages()
+    public async Task ReadServerDone()
     {
         using var fixture = AdaptorFixture.CreateInputBinding();
 
@@ -62,6 +62,76 @@ public sealed class InputBindingAdaptorTests
             reader,
             mockWriter.Object,
             fixture.Context);
+
+        fixture.MockComponent
+            .Verify(
+                component => component.ReadAsync(
+                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
+                Times.Once());
+    }
+
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task ReadClientHasNoMoreMessages()
+    {
+        using var fixture = AdaptorFixture.CreateInputBinding();
+
+        var reader = new AsyncStreamReader<ReadRequest>();
+
+        fixture.MockComponent
+            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
+                (deliveryHandler, cancellationToken) =>
+                {
+                    return Task.Delay(-1, cancellationToken);
+                });
+
+        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+
+        var readTask = fixture.Adaptor.Read(
+            reader,
+            mockWriter.Object,
+            fixture.Context);
+
+        reader.Complete();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => readTask);
+
+        fixture.MockComponent
+            .Verify(
+                component => component.ReadAsync(
+                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
+                Times.Once());
+    }
+
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task ReadClientCanceled()
+    {
+        using var fixture = AdaptorFixture.CreateInputBinding();
+
+        var reader = new AsyncStreamReader<ReadRequest>();
+
+        fixture.MockComponent
+            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
+                (deliveryHandler, cancellationToken) =>
+                {
+                    return Task.Delay(-1, cancellationToken);
+                });
+
+        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+
+        var readTask = fixture.Adaptor.Read(
+            reader,
+            mockWriter.Object,
+            fixture.Context);
+
+        fixture.Context.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => readTask);
 
         fixture.MockComponent
             .Verify(
