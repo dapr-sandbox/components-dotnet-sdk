@@ -120,8 +120,7 @@ public class InputBindingAdaptor : InputBindingBase
 
         var pullTask = withCancellation(
             () =>
-            {
-                return this
+                this
                     .GetInputBinding(context)
                     .ReadAsync(
                         async (message, onAcknowledgement) =>
@@ -147,8 +146,7 @@ public class InputBindingAdaptor : InputBindingBase
                                 throw;
                             }
                         },
-                        combinedCancellationTokenSource.Token);
-            });
+                        combinedCancellationTokenSource.Token));
 
         await Task.WhenAll(acknowlegeTask, pullTask);
     }

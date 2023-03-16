@@ -11,7 +11,6 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-using System.Threading.Channels;
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.PubSub;
@@ -137,7 +136,8 @@ public sealed class PubSubAdaptorTests
                 component => component.PullMessagesAsync(
                     It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
                     It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 
@@ -197,7 +197,8 @@ public sealed class PubSubAdaptorTests
                 component => component.PullMessagesAsync(
                     It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
                     It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 
@@ -207,7 +208,8 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
+            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         string topic = "topic";
 
@@ -229,7 +231,8 @@ public sealed class PubSubAdaptorTests
                 component => component.PullMessagesAsync(
                     It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
                     It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 
