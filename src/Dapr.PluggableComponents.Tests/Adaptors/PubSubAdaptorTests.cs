@@ -260,7 +260,7 @@ public sealed class PubSubAdaptorTests
             mockWriter.Object,
             fixture.Context);
 
-        await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });   
+        await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
 
         reader.Complete();
 
@@ -300,7 +300,7 @@ public sealed class PubSubAdaptorTests
             mockWriter.Object,
             fixture.Context);
 
-        await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });   
+        await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
 
         fixture.Context.Cancel();
 
