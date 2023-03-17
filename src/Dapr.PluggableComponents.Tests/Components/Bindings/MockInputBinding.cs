@@ -11,39 +11,35 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-namespace Dapr.PluggableComponents.Components.PubSub;
+namespace Dapr.PluggableComponents.Components.Bindings;
 
-internal interface IMockPubSub<T> : IMockPluggableComponent, IPubSub where T : class
+internal interface IMockInputBinding<T> : IMockPluggableComponent, IInputBinding where T : class
 {
 }
 
-internal sealed class MockPubSub<T> : IPubSub where T : class
+internal sealed class MockInputBinding<T> : IInputBinding where T : class
 {
-    private readonly IMockPubSub<T> proxy;
+    private readonly IMockInputBinding<T> proxy;
 
-    public MockPubSub(IMockPubSub<T> proxy)
+    public MockInputBinding(IMockInputBinding<T> proxy)
     {
         this.proxy = proxy;
 
         this.proxy.Create();
     }
 
-    #region IPubSub Members
+    #region IInputBinding Members
 
     public Task InitAsync(MetadataRequest request, CancellationToken cancellationToken = default)
     {
         return this.proxy.InitAsync(request, cancellationToken);
     }
 
-    public Task PublishAsync(PubSubPublishRequest request, CancellationToken cancellationToken = default)
+    public Task ReadAsync(MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse> deliveryHandler, CancellationToken cancellationToken = default)
     {
-        return this.proxy.PublishAsync(request, cancellationToken);
-    }
-
-    public Task PullMessagesAsync(PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken = default)
-    {
-        return this.proxy.PullMessagesAsync(topic, deliveryHandler, cancellationToken);
+        return this.proxy.ReadAsync(deliveryHandler, cancellationToken);
     }
 
     #endregion
 }
+

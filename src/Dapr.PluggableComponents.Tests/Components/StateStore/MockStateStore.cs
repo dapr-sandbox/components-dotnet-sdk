@@ -13,9 +13,8 @@
 
 namespace Dapr.PluggableComponents.Components.StateStore;
 
-internal interface IMockStateStore<T> : IStateStore where T : class
+internal interface IMockStateStore<T> : IMockPluggableComponent, IStateStore where T : class
 {
-    void Create();
 }
 
 internal class MockStateStore<T> : IStateStore where T : class
