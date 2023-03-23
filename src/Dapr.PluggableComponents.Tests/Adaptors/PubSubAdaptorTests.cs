@@ -11,7 +11,6 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-using System.Threading.Channels;
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.PubSub;
@@ -137,7 +136,8 @@ public sealed class PubSubAdaptorTests
                 component => component.PullMessagesAsync(
                     It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
                     It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 
@@ -197,17 +197,19 @@ public sealed class PubSubAdaptorTests
                 component => component.PullMessagesAsync(
                     It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
                     It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 
-    [Fact(Timeout = TimeoutInMs, Skip = "To be re-enabled when as part of fix for dapr-sandbox/components-dotnet-sdk#28.")]
+    [Fact(Timeout = TimeoutInMs)]
     public async Task PullMessagesNoMessages()
     {
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
+            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         string topic = "topic";
 
@@ -229,7 +231,88 @@ public sealed class PubSubAdaptorTests
                 component => component.PullMessagesAsync(
                     It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
                     It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
+                Times.Once());
+    }
+
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task PullMessagesClientHasNoMoreMessages()
+    {
+        using var fixture = AdaptorFixture.CreatePubSub();
+
+        fixture.MockComponent
+            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns(
+                (PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken) =>
+                {
+                    return Task.Delay(-1, cancellationToken);
+                });
+
+        string topic = "topic";
+
+        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+
+        var reader = new AsyncStreamReader<PullMessagesRequest>();
+
+        var pullTask = fixture.Adaptor.PullMessages(
+            reader,
+            mockWriter.Object,
+            fixture.Context);
+
+        await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
+
+        reader.Complete();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pullTask);
+
+        fixture.MockComponent
+            .Verify(
+                component => component.PullMessagesAsync(
+                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
+                Times.Once());
+    }
+
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task PullMessagesClientCanceled()
+    {
+        using var fixture = AdaptorFixture.CreatePubSub();
+
+        fixture.MockComponent
+            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns(
+                (PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken) =>
+                {
+                    return Task.Delay(-1, cancellationToken);
+                });
+
+        string topic = "topic";
+
+        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+
+        var reader = new AsyncStreamReader<PullMessagesRequest>();
+
+        var pullTask = fixture.Adaptor.PullMessages(
+            reader,
+            mockWriter.Object,
+            fixture.Context);
+
+        await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
+
+        fixture.Context.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pullTask);
+
+        fixture.MockComponent
+            .Verify(
+                component => component.PullMessagesAsync(
+                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 

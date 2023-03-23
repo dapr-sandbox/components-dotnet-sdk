@@ -121,48 +121,79 @@ public class PubSubAdaptor : PubSubBase
 
         var pendingMessages = new ConcurrentDictionary<string, MessageAcknowledgementHandler<string?>>();
 
-        var acknowledgeTask =
+        using var combinedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+
+        async Task withCancellation(Func<Task> task)
+        {
+            try
+            {
+                await task();
+            }
+            finally
+            {
+                combinedCancellationTokenSource.Cancel();
+            }
+        }
+
+        var acknowledgeTask = withCancellation(
             async () =>
             {
-                while (await requests.MoveNext(context.CancellationToken))
-                {
-                    var request = requests.Current;
-
-                    if (request.AckMessageId != null && pendingMessages.TryRemove(request.AckMessageId, out var response))
-                    {
-                        await response(request.AckError?.Message);
-                    }
-                }
-            };
-
-        var pullTask = this.GetPubSub(context).PullMessagesAsync(
-            PubSubPullMessagesTopic.FromTopic(topic),
-            async (message, onAcknowledgement) =>
-            {
-                string messageId = Guid.NewGuid().ToString();
-
-                var response = PubSubPullMessagesResponse.ToPullMessagesResponse(messageId, message);
-
-                if (onAcknowledgement != null)
-                {
-                    pendingMessages[messageId] = onAcknowledgement;
-                }
-
                 try
                 {
-                    await responses.WriteAsync(response);
+                    while (await requests.MoveNext(combinedCancellationTokenSource.Token))
+                    {
+                        var request = requests.Current;
+
+                        if (request.AckMessageId != null && pendingMessages.TryRemove(request.AckMessageId, out var response))
+                        {
+                            await response(request.AckError?.Message);
+                        }
+                    }
                 }
-                catch
+                catch (OperationCanceledException)
                 {
-                    // If unable to write the message, there shouldn't be an acknowledgement.
-                    pendingMessages.TryRemove(messageId, out var _);
-
-                    throw;
+                    // NOTE: This exception may be thrown in two places:
+                    //
+                    //       1. When the client cancels the operation (which should also cancel the server operation).
+                    //       2. When the server completes (as it cancels the token when done).
+                    //
+                    //       In either case we want the Task.WhenAll() below to indicate the result of server completion,
+                    //       so we ignore cancellation exceptions here.
                 }
-            },
-            context.CancellationToken);
+            });
 
-        await Task.WhenAll(acknowledgeTask(), pullTask);
+        var pullTask = withCancellation(
+            () =>
+                this
+                    .GetPubSub(context)
+                    .PullMessagesAsync(
+                        PubSubPullMessagesTopic.FromTopic(topic),
+                        async (message, onAcknowledgement) =>
+                        {
+                            string messageId = Guid.NewGuid().ToString();
+
+                            var response = PubSubPullMessagesResponse.ToPullMessagesResponse(messageId, message);
+
+                            if (onAcknowledgement != null)
+                            {
+                                pendingMessages[messageId] = onAcknowledgement;
+                            }
+
+                            try
+                            {
+                                await responses.WriteAsync(response);
+                            }
+                            catch
+                            {
+                                // If unable to write the message, there shouldn't be an acknowledgement.
+                                pendingMessages.TryRemove(messageId, out var _);
+
+                                throw;
+                            }
+                        },
+                        combinedCancellationTokenSource.Token));
+
+        await Task.WhenAll(acknowledgeTask, pullTask);
     }
 
     private IPubSub GetPubSub(ServerCallContext context)

@@ -19,6 +19,11 @@ internal sealed class TestServerCallContext : ServerCallContext, IDisposable
 {
     private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
+    public void Cancel()
+    {
+        this.cts.Cancel();
+    }
+
     #region ServerCallContext Overrides
 
     protected override string MethodCore => throw new NotImplementedException();

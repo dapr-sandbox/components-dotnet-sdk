@@ -24,7 +24,6 @@ namespace Dapr.PluggableComponents.Adaptors;
 internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDisposable
     where TInterface : class, IPluggableComponent
 {
-    private readonly TestServerCallContext context = new TestServerCallContext();
     private readonly Lazy<TAdaptor> adaptor;
 
     public AdaptorFixture(Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory, Mock<TInterface>? mockComponent = null)
@@ -40,7 +39,7 @@ internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDi
     /// </remarks>
     public TAdaptor Adaptor => this.adaptor.Value;
 
-    public ServerCallContext Context => this.context;
+    public TestServerCallContext Context { get; } = new TestServerCallContext();
 
     public Mock<TInterface> MockComponent { get; }
 
@@ -48,7 +47,7 @@ internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDi
 
     public void Dispose()
     {
-        this.context.Dispose();
+        this.Context.Dispose();
     }
 
     #endregion

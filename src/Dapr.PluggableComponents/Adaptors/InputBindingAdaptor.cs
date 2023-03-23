@@ -77,47 +77,78 @@ public class InputBindingAdaptor : InputBindingBase
 
         var pendingMessages = new ConcurrentDictionary<string, MessageAcknowledgementHandler<InputBindingReadRequest>>();
 
-        var acknowledeTask =
+        using var combinedCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+
+        async Task withCancellation(Func<Task> task)
+        {
+            try
+            {
+                await task();
+            }
+            finally
+            {
+                combinedCancellationTokenSource.Cancel();
+            }
+        }
+
+        var acknowlegeTask = withCancellation(
             async () =>
             {
-                while (await requestStream.MoveNext(context.CancellationToken))
-                {
-                    var request = requestStream.Current;
-
-                    if (request.MessageId != null && pendingMessages.TryRemove(request.MessageId, out var response))
-                    {
-                        await response(InputBindingReadRequest.FromReadRequest(request));
-                    }
-                }
-            };
-
-        var pullTask = this.GetInputBinding(context).ReadAsync(
-            async (message, onAcknowledgement) =>
-            {
-                string messageId = Guid.NewGuid().ToString();
-
-                var response = InputBindingReadResponse.ToReadResponse(messageId, message);
-
-                if (onAcknowledgement != null)
-                {
-                    pendingMessages[messageId] = onAcknowledgement;
-                }
-
                 try
                 {
-                    await responseStream.WriteAsync(response);
+                    while (await requestStream.MoveNext(combinedCancellationTokenSource.Token))
+                    {
+                        var request = requestStream.Current;
+
+                        if (request.MessageId != null && pendingMessages.TryRemove(request.MessageId, out var response))
+                        {
+                            await response(InputBindingReadRequest.FromReadRequest(request));
+                        }
+                    }
                 }
-                catch
+                catch (OperationCanceledException)
                 {
-                    // If unable to write the message, there shouldn't be an acknowledgement.
-                    pendingMessages.TryRemove(messageId, out var _);
-
-                    throw;
+                    // NOTE: This exception may be thrown in two places:
+                    //
+                    //       1. When the client cancels the operation (which should also cancel the server operation).
+                    //       2. When the server completes (as it cancels the token when done).
+                    //
+                    //       In either case we want the Task.WhenAll() below to indicate the result of server completion,
+                    //       so we ignore cancellation exceptions here.
                 }
-            },
-            context.CancellationToken);
+            });
 
-        await Task.WhenAll(acknowledeTask(), pullTask);
+        var pullTask = withCancellation(
+            () =>
+                this
+                    .GetInputBinding(context)
+                    .ReadAsync(
+                        async (message, onAcknowledgement) =>
+                        {
+                            string messageId = Guid.NewGuid().ToString();
+
+                            var response = InputBindingReadResponse.ToReadResponse(messageId, message);
+
+                            if (onAcknowledgement != null)
+                            {
+                                pendingMessages[messageId] = onAcknowledgement;
+                            }
+
+                            try
+                            {
+                                await responseStream.WriteAsync(response);
+                            }
+                            catch
+                            {
+                                // If unable to write the message, there shouldn't be an acknowledgement.
+                                pendingMessages.TryRemove(messageId, out var _);
+
+                                throw;
+                            }
+                        },
+                        combinedCancellationTokenSource.Token));
+
+        await Task.WhenAll(acknowlegeTask, pullTask);
     }
 
     private IInputBinding GetInputBinding(ServerCallContext context)

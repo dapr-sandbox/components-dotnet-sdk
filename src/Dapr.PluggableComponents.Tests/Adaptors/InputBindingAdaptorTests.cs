@@ -41,8 +41,8 @@ public sealed class InputBindingAdaptorTests
             fixture => fixture.Adaptor.Ping(new PingRequest(), fixture.Context));
     }
 
-    [Fact(Timeout = TimeoutInMs, Skip = "To be re-enabled when as part of fix for dapr-sandbox/components-dotnet-sdk#28.")]
-    public async Task ReadNoMessages()
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task ReadServerDone()
     {
         using var fixture = AdaptorFixture.CreateInputBinding();
 
@@ -67,7 +67,78 @@ public sealed class InputBindingAdaptorTests
             .Verify(
                 component => component.ReadAsync(
                     It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
+                Times.Once());
+    }
+
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task ReadClientHasNoMoreMessages()
+    {
+        using var fixture = AdaptorFixture.CreateInputBinding();
+
+        var reader = new AsyncStreamReader<ReadRequest>();
+
+        fixture.MockComponent
+            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
+                (deliveryHandler, cancellationToken) =>
+                {
+                    return Task.Delay(-1, cancellationToken);
+                });
+
+        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+
+        var readTask = fixture.Adaptor.Read(
+            reader,
+            mockWriter.Object,
+            fixture.Context);
+
+        reader.Complete();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => readTask);
+
+        fixture.MockComponent
+            .Verify(
+                component => component.ReadAsync(
+                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
+                Times.Once());
+    }
+
+    [Fact(Timeout = TimeoutInMs)]
+    public async Task ReadClientCanceled()
+    {
+        using var fixture = AdaptorFixture.CreateInputBinding();
+
+        var reader = new AsyncStreamReader<ReadRequest>();
+
+        fixture.MockComponent
+            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
+            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
+                (deliveryHandler, cancellationToken) =>
+                {
+                    return Task.Delay(-1, cancellationToken);
+                });
+
+        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+
+        var readTask = fixture.Adaptor.Read(
+            reader,
+            mockWriter.Object,
+            fixture.Context);
+
+        fixture.Context.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => readTask);
+
+        fixture.MockComponent
+            .Verify(
+                component => component.ReadAsync(
+                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 
@@ -121,7 +192,8 @@ public sealed class InputBindingAdaptorTests
             .Verify(
                 component => component.ReadAsync(
                     It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
+                    // NOTE: The adaptor provides its own cancellation token.
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
     }
 }
