@@ -85,10 +85,7 @@ public class StateStoreAdaptor : StateStoreBase
                 request.Items.Select(StateStoreGetRequest.FromGetRequest).ToArray(),
                 context.CancellationToken);
 
-            var response = new BulkGetResponse
-            {
-                Got = items.Any(item => String.IsNullOrEmpty(item.Error))
-            };
+            var response = new BulkGetResponse();
 
             response.Items.Add(items.Select(StateStoreBulkStateItem.ToBulkStateItem));
 
@@ -107,10 +104,7 @@ public class StateStoreAdaptor : StateStoreBase
                 responses.Add(StateStoreGetResponse.ToBulkStateItem(item.Key, response));
             }
 
-            var grpcResponse = new BulkGetResponse
-            {
-                Got = responses.Any(item => String.IsNullOrEmpty(item.Error))
-            };
+            var grpcResponse = new BulkGetResponse();
 
             grpcResponse.Items.Add(responses);
 

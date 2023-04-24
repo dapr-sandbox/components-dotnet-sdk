@@ -189,7 +189,6 @@ public sealed class StateStoreAdaptorTests
             bulkGetRequest,
             fixture.Context);
 
-        Assert.True(response.Got);
         Assert.Contains(response.Items, item => item.Key == key1 && item.Data.ToStringUtf8() == value1);
         Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
 
@@ -227,7 +226,6 @@ public sealed class StateStoreAdaptorTests
             bulkGetRequest,
             fixture.Context);
 
-        Assert.True(response.Got);
         Assert.Contains(response.Items, item => item.Key == key1 && item.Data.ToStringUtf8() == value1);
         Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
 
