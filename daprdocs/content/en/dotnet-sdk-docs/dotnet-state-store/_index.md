@@ -163,3 +163,10 @@ The Dapr runtime has additional handling of certain error conditions resulting f
 | `ETagInvalidException` | Delete, Set, Bulk Delete, Bulk Set | When an ETag is invalid |
 | `ETagMismatchException`| Delete, Set, Bulk Delete, Bulk Set | When an ETag does not match an expected value |
 | `BulkDeleteRowMismatchException` | Bulk Delete | When the number of affected rows does not match the expected rows |
+
+## Next steps
+
+- [Learn advanced steps for the Pluggable Component .NET SDK]({{< ref "dotnet-advanced" >}})
+- Learn more about using the Pluggable Component .NET SDK for:
+  - [Bindings]({{< ref "dotnet-bindings" >}})
+  - [Pub/sub]({{< ref "dotnet-pub-sub" >}})

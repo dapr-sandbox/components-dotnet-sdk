@@ -87,3 +87,12 @@ spec:
   version: v1
   metadata: []
 ```
+
+## Next steps
+
+- [Learn more about the component lifetime]({{< ref "dotnet-component-lifetime" >}})
+- [Learn more about the application environment]({{< ref "dotnet-application-environment" >}})
+- Learn more about using the Pluggable Component .NET SDK for:
+  - [Bindings]({{< ref "dotnet-bindings" >}})
+  - [Pub/sub]({{< ref "dotnet-pub-sub" >}})
+  - [State store]({{< ref "dotnet-state-store" >}})

@@ -130,3 +130,10 @@ app.Run();
 {{% alert title="Note" color="primary" %}}
 A component that implements both `IInputBinding` and `IOutputBinding` will be registered as both an input and output binding.
 {{% /alert %}}
+
+## Next steps
+
+- [Learn advanced steps for the Pluggable Component .NET SDK]({{< ref "dotnet-advanced" >}})
+- Learn more about using the Pluggable Component .NET SDK for:
+  - [Pub/sub]({{< ref "dotnet-pub-sub" >}})
+  - [State store]({{< ref "dotnet-state-store" >}})

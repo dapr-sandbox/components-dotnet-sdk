@@ -98,3 +98,10 @@ app.RegisterService(
 
 app.Run();
 ```
+
+## Next steps
+
+- [Learn advanced steps for the Pluggable Component .NET SDK]({{< ref "dotnet-advanced" >}})
+- Learn more about using the Pluggable Component .NET SDK for:
+  - [Bindings]({{< ref "dotnet-bindings" >}})
+  - [State store]({{< ref "dotnet-state-store" >}})
