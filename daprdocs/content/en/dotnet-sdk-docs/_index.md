@@ -181,3 +181,17 @@ docker build -f Dockerfile -t <image name>:<tag> .
 {{% alert title="Note" color="primary" %}}
 Paths for `COPY` operations in the `Dockerfile` are relative to the Docker context passed when building the image, while the Docker context itself will vary depending on the needs of the project being built (for example, if it has referenced projects). In the example above, the assumption is that the Docker context is the component project directory.
 {{% /alert %}}
+
+## Demo
+
+Watch this video for a [demo on building pluggable components with .NET](https://youtu.be/s1p9MNl4VGo?t=1606):
+
+<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/s1p9MNl4VGo?start=1606" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+## Next steps
+
+- [Learn advanced steps for the Pluggable Component .NET SDK]({{< ref "dotnet-advanced" >}})
+- Learn more about using the Pluggable Component .NET SDK for:
+  - [Bindings]({{< ref "dotnet-bindings" >}})
+  - [Pub/sub]({{< ref "dotnet-pub-sub" >}})
+  - [State store]({{< ref "dotnet-state-store" >}})
