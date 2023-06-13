@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <ProtosVersion>v1</ProtosVersion>
-    <ProtosTag>master</ProtosTag>
+    <ProtosTag>v1.11.0</ProtosTag>
     <ProtosBaseUrl>https://raw.githubusercontent.com/dapr/dapr/$(ProtosTag)/dapr/proto/components/$(ProtosVersion)</ProtosBaseUrl>
     <ProtosRootDir>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\Protos</ProtosRootDir>
     <ProtosComponentsDir>$(ProtosRootDir)\dapr\proto\components\$(ProtosVersion)</ProtosComponentsDir>
