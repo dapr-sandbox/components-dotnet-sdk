@@ -6,6 +6,11 @@ weight: 1000
 description: How to get up and running with the Dapr pluggable components .NET SDK
 no_list: true
 is_preview: true
+cascade:
+  github_repo: https://github.com/dapr-sandbox/components-dotnet-sdk
+  github_subdir: daprdocs/content/en/dotnet-sdk-docs
+  path_base_for_github_subdir: content/en/developing-applications/develop-components/pluggable-components/pluggable-components-sdks/pluggable-components-dotnet/
+  github_branch: main
 ---
 
 Dapr offers NuGet packages to help with the development of .NET pluggable components.
