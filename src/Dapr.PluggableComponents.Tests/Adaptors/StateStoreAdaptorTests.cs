@@ -40,7 +40,7 @@ public sealed class StateStoreAdaptorTests
     [Fact]
     public async Task SimulatedBulkDelete()
     {
-        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore>());
+        using var fixture = AdaptorFixture.CreateStateStore();
 
         string key1 = "key1";
         string key2 = "key2";
@@ -99,8 +99,7 @@ public sealed class StateStoreAdaptorTests
     [Fact]
     public async Task SimulatedBulkSet()
     {
-        // TODO: Need to specify Strict?
-        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore>());
+        using var fixture = AdaptorFixture.CreateStateStore();
 
         string key1 = "key1";
         string key2 = "key2";
@@ -159,7 +158,7 @@ public sealed class StateStoreAdaptorTests
     [Fact]
     public async Task SimulatedBulkGet()
     {
-        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore>());
+        using var fixture = AdaptorFixture.CreateStateStore();
 
         string key1 = "key1";
         string key2 = "key2";

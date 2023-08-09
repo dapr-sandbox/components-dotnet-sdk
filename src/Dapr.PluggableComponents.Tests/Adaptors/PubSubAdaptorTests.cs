@@ -44,7 +44,7 @@ public sealed class PubSubAdaptorTests
     [Fact]
     public async Task FeaturesWithNoFeatures()
     {
-        using var fixture = AdaptorFixture.CreatePubSub(Substitute.For<IPubSub>());
+        using var fixture = AdaptorFixture.CreatePubSub();
 
         var response = await fixture.Adaptor.Features(
             new FeaturesRequest(),
