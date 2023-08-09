@@ -89,6 +89,8 @@ public sealed class StateStoreAdaptorTests
             bulkDeleteRequest,
             fixture.Context);
 
+        await fixture.MockComponent.DidNotReceive().DeleteAsync(Arg.Any<StateStoreDeleteRequest>(), Arg.Any<CancellationToken>());
+
         await mockBulkStateStore
             .Received(1)
             .BulkDeleteAsync(
@@ -147,6 +149,8 @@ public sealed class StateStoreAdaptorTests
         await fixture.Adaptor.BulkSet(
             bulkSetRequest,
             fixture.Context);
+
+        await fixture.MockComponent.DidNotReceive().SetAsync(Arg.Any<StateStoreSetRequest>(), Arg.Any<CancellationToken>());
 
         await mockBulkStateStore
             .Received(1)
@@ -227,6 +231,8 @@ public sealed class StateStoreAdaptorTests
 
         Assert.Contains(response.Items, item => item.Key == key1 && item.Data.ToStringUtf8() == value1);
         Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
+
+        await fixture.MockComponent.DidNotReceive().GetAsync(Arg.Any<StateStoreGetRequest>(), Arg.Any<CancellationToken>());
 
         await mockBulkStateStore
             .Received(1)
