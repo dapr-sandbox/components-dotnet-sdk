@@ -14,7 +14,7 @@
 using System.Text;
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components.StateStore;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Dapr.PluggableComponents.Adaptors;
@@ -40,21 +40,13 @@ public sealed class StateStoreAdaptorTests
     [Fact]
     public async Task SimulatedBulkDelete()
     {
-        using var fixture = AdaptorFixture.CreateStateStore(new Mock<IStateStore>(MockBehavior.Strict));
-
-        var sequence = new MockSequence();
+        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore>());
 
         string key1 = "key1";
         string key2 = "key2";
 
         fixture.MockComponent
-            .InSequence(sequence)
-            .Setup(component => component.DeleteAsync(It.Is<StateStoreDeleteRequest>(request => request.Key == key1), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
-            .Returns(Task.CompletedTask);
-
-        fixture.MockComponent
-            .InSequence(sequence)
-            .Setup(component => component.DeleteAsync(It.Is<StateStoreDeleteRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
+            .DeleteAsync(Arg.Any<StateStoreDeleteRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         var bulkDeleteRequest = new Proto.Components.V1.BulkDeleteRequest();
@@ -66,18 +58,24 @@ public sealed class StateStoreAdaptorTests
             bulkDeleteRequest,
             fixture.Context);
 
-        fixture.MockComponent.VerifyAll();
+        Received.InOrder(
+            () =>
+            {
+                fixture.MockComponent.DeleteAsync(Arg.Is<StateStoreDeleteRequest>(request => request.Key == key1), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
+                fixture.MockComponent.DeleteAsync(Arg.Is<StateStoreDeleteRequest>(request => request.Key == key2), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
+            });
     }
 
     [Fact]
     public async Task BulkDelete()
     {
-        using var fixture = AdaptorFixture.CreateStateStore();
+        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore, IBulkStateStore>());
 
-        var mockBulkStateStore = fixture.MockComponent.As<IBulkStateStore>();
+        var mockBulkStateStore = (IBulkStateStore)fixture.MockComponent;
 
         mockBulkStateStore
-            .Setup(component => component.BulkDeleteAsync(It.IsAny<StateStoreDeleteRequest[]>(), It.IsAny<CancellationToken>()));
+            .BulkDeleteAsync(Arg.Any<StateStoreDeleteRequest[]>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         string key1 = "key1";
         string key2 = "key2";
@@ -91,30 +89,24 @@ public sealed class StateStoreAdaptorTests
             bulkDeleteRequest,
             fixture.Context);
 
-        mockBulkStateStore
-            .Verify(component => component.BulkDeleteAsync(
-                It.Is<StateStoreDeleteRequest[]>(request => request.Length == 2 && request[0].Key == key1 && request[1].Key == key2),
-                It.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken)), Times.Once);
+        await mockBulkStateStore
+            .Received(1)
+            .BulkDeleteAsync(
+                Arg.Is<StateStoreDeleteRequest[]>(request => request.Length == 2 && request[0].Key == key1 && request[1].Key == key2),
+                Arg.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken));
     }
 
     [Fact]
     public async Task SimulatedBulkSet()
     {
-        using var fixture = AdaptorFixture.CreateStateStore(new Mock<IStateStore>(MockBehavior.Strict));
-
-        var sequence = new MockSequence();
+        // TODO: Need to specify Strict?
+        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore>());
 
         string key1 = "key1";
         string key2 = "key2";
 
         fixture.MockComponent
-            .InSequence(sequence)
-            .Setup(component => component.SetAsync(It.Is<StateStoreSetRequest>(request => request.Key == key1), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
-            .Returns(Task.CompletedTask);
-
-        fixture.MockComponent
-            .InSequence(sequence)
-            .Setup(component => component.SetAsync(It.Is<StateStoreSetRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
+            .SetAsync(Arg.Any<StateStoreSetRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         var bulkSetRequest = new Proto.Components.V1.BulkSetRequest();
@@ -126,18 +118,24 @@ public sealed class StateStoreAdaptorTests
             bulkSetRequest,
             fixture.Context);
 
-        fixture.MockComponent.VerifyAll();
+        Received.InOrder(
+            () =>
+            {
+                fixture.MockComponent.SetAsync(Arg.Is<StateStoreSetRequest>(request => request.Key == key1), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
+                fixture.MockComponent.SetAsync(Arg.Is<StateStoreSetRequest>(request => request.Key == key2), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
+            });
     }
 
     [Fact]
     public async Task BulkSet()
     {
-        using var fixture = AdaptorFixture.CreateStateStore();
+        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore, IBulkStateStore>());
 
-        var mockBulkStateStore = fixture.MockComponent.As<IBulkStateStore>();
+        var mockBulkStateStore = (IBulkStateStore)fixture.MockComponent;
 
         mockBulkStateStore
-            .Setup(component => component.BulkSetAsync(It.IsAny<StateStoreSetRequest[]>(), It.IsAny<CancellationToken>()));
+            .BulkSetAsync(Arg.Any<StateStoreSetRequest[]>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         string key1 = "key1";
         string key2 = "key2";
@@ -151,18 +149,17 @@ public sealed class StateStoreAdaptorTests
             bulkSetRequest,
             fixture.Context);
 
-        mockBulkStateStore
-            .Verify(component => component.BulkSetAsync(
-                It.Is<StateStoreSetRequest[]>(requests => requests.Length == 2 && requests[0].Key == key1 && requests[1].Key == key2),
-                It.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken)), Times.Once);
+        await mockBulkStateStore
+            .Received(1)
+            .BulkSetAsync(
+                Arg.Is<StateStoreSetRequest[]>(requests => requests.Length == 2 && requests[0].Key == key1 && requests[1].Key == key2),
+                Arg.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken));
     }
 
     [Fact]
     public async Task SimulatedBulkGet()
     {
-        using var fixture = AdaptorFixture.CreateStateStore(new Mock<IStateStore>(MockBehavior.Strict));
-
-        var sequence = new MockSequence();
+        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore>());
 
         string key1 = "key1";
         string key2 = "key2";
@@ -171,14 +168,12 @@ public sealed class StateStoreAdaptorTests
         string value2 = "value2";
 
         fixture.MockComponent
-            .InSequence(sequence)
-            .Setup(component => component.GetAsync(It.Is<StateStoreGetRequest>(request => request.Key == key1), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
-            .ReturnsAsync(new StateStoreGetResponse { Data = Encoding.UTF8.GetBytes(value1) });
+            .GetAsync(Arg.Is<StateStoreGetRequest>(request => request.Key == key1), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken))
+            .Returns(new StateStoreGetResponse { Data = Encoding.UTF8.GetBytes(value1) });
 
         fixture.MockComponent
-            .InSequence(sequence)
-            .Setup(component => component.GetAsync(It.Is<StateStoreGetRequest>(request => request.Key == key2), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
-            .ReturnsAsync(new StateStoreGetResponse { Data = Encoding.UTF8.GetBytes(value2) });
+            .GetAsync(Arg.Is<StateStoreGetRequest>(request => request.Key == key2), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken))
+            .Returns(new StateStoreGetResponse { Data = Encoding.UTF8.GetBytes(value2) });
 
         var bulkGetRequest = new Proto.Components.V1.BulkGetRequest();
 
@@ -192,15 +187,20 @@ public sealed class StateStoreAdaptorTests
         Assert.Contains(response.Items, item => item.Key == key1 && item.Data.ToStringUtf8() == value1);
         Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
 
-        fixture.MockComponent.VerifyAll();
+        Received.InOrder(
+            () =>
+            {
+                fixture.MockComponent.GetAsync(Arg.Is<StateStoreGetRequest>(request => request.Key == key1), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
+                fixture.MockComponent.GetAsync(Arg.Is<StateStoreGetRequest>(request => request.Key == key2), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
+            });
     }
 
     [Fact]
     public async Task BulkGet()
     {
-        using var fixture = AdaptorFixture.CreateStateStore(new Mock<IStateStore>(MockBehavior.Strict));
+        using var fixture = AdaptorFixture.CreateStateStore(Substitute.For<IStateStore, IBulkStateStore>());
 
-        var mockBulkStateStore = fixture.MockComponent.As<IBulkStateStore>();
+        var mockBulkStateStore = (IBulkStateStore)fixture.MockComponent;
 
         string key1 = "key1";
         string key2 = "key2";
@@ -209,8 +209,8 @@ public sealed class StateStoreAdaptorTests
         string value2 = "value2";
 
         mockBulkStateStore
-            .Setup(component => component.BulkGetAsync(It.IsAny<StateStoreGetRequest[]>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
+            .BulkGetAsync(Arg.Any<StateStoreGetRequest[]>(), Arg.Any<CancellationToken>())
+            .Returns(
                 new StateStoreBulkStateItem[]
                 {
                     new StateStoreBulkStateItem(key1) { Data = Encoding.UTF8.GetBytes(value1) },
@@ -229,9 +229,10 @@ public sealed class StateStoreAdaptorTests
         Assert.Contains(response.Items, item => item.Key == key1 && item.Data.ToStringUtf8() == value1);
         Assert.Contains(response.Items, item => item.Key == key2 && item.Data.ToStringUtf8() == value2);
 
-        mockBulkStateStore
-            .Verify(component => component.BulkGetAsync(It.Is<StateStoreGetRequest[]>(
+        await mockBulkStateStore
+            .Received(1)
+            .BulkGetAsync(Arg.Is<StateStoreGetRequest[]>(
                 requests => requests.Length == 2 && requests[0].Key == key1 && requests[1].Key == key2),
-                It.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken)), Times.Once());
+                Arg.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken));
     }
 }

@@ -16,7 +16,7 @@ using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.Proto.Components.V1;
 using Grpc.Core;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Dapr.PluggableComponents.Adaptors;
@@ -44,7 +44,7 @@ public sealed class PubSubAdaptorTests
     [Fact]
     public async Task FeaturesWithNoFeatures()
     {
-        using var fixture = AdaptorFixture.CreatePubSub(new Mock<IPubSub>(MockBehavior.Strict));
+        using var fixture = AdaptorFixture.CreatePubSub(Substitute.For<IPubSub>());
 
         var response = await fixture.Adaptor.Features(
             new FeaturesRequest(),
@@ -57,13 +57,13 @@ public sealed class PubSubAdaptorTests
     [Fact]
     public async Task FeaturesWithFeatures()
     {
-        using var fixture = AdaptorFixture.CreatePubSub();
+        using var fixture = AdaptorFixture.CreatePubSub(Substitute.For<IPubSub, IPluggableComponentFeatures>());
 
-        var mockFeatures = fixture.MockComponent.As<IPluggableComponentFeatures>();
+        var mockFeatures = (IPluggableComponentFeatures)fixture.MockComponent;
 
         mockFeatures
-            .Setup(component => component.GetFeaturesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[] { "feature1", "feature2" });
+            .GetFeaturesAsync(Arg.Any<CancellationToken>())
+            .Returns(new[] { "feature1", "feature2" });
 
         var response = await fixture.Adaptor.Features(
             new FeaturesRequest(),
@@ -74,11 +74,10 @@ public sealed class PubSubAdaptorTests
         Assert.Contains("feature1", response.Features);
         Assert.Contains("feature2", response.Features);
 
-        mockFeatures
-            .Verify(
-                component => component.GetFeaturesAsync(
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
-                Times.Once());
+        await mockFeatures
+            .Received(1)
+            .GetFeaturesAsync(
+                Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
     }
 
     [Fact]
@@ -87,7 +86,8 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PublishAsync(It.IsAny<PubSubPublishRequest>(), It.IsAny<CancellationToken>()));
+            .PublishAsync(Arg.Any<PubSubPublishRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         string topic = "topic";
 
@@ -98,12 +98,11 @@ public sealed class PubSubAdaptorTests
             },
             fixture.Context);
 
-        fixture.MockComponent
-            .Verify(
-                component => component.PublishAsync(
-                    It.Is<PubSubPublishRequest>(request => request.Topic == topic),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .PublishAsync(
+                Arg.Is<PubSubPublishRequest>(request => request.Topic == topic),
+                Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -112,17 +111,18 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
+            .PullMessagesAsync(Arg.Any<PubSubPullMessagesTopic>(), Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         string topic = "topic";
 
-        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<PullMessagesResponse>>();
 
         var reader = new AsyncStreamReader<PullMessagesRequest>();
 
         var pullTask = fixture.Adaptor.PullMessages(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
@@ -131,14 +131,13 @@ public sealed class PubSubAdaptorTests
 
         await pullTask;
 
-        fixture.MockComponent
-            .Verify(
-                component => component.PullMessagesAsync(
-                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
-                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .PullMessagesAsync(
+                Arg.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -152,10 +151,13 @@ public sealed class PubSubAdaptorTests
         var reader = new AsyncStreamReader<PullMessagesRequest>();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
-            .Returns<PubSubPullMessagesTopic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse>, CancellationToken>(
-                async (topic, deliveryHandler, cancellationToken) =>
+            .PullMessagesAsync(Arg.Any<PubSubPullMessagesTopic>(), Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(
+                async callInfo =>
                 {
+                    var topic = callInfo.ArgAt<PubSubPullMessagesTopic>(0);
+                    var deliveryHandler = callInfo.ArgAt<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(1);
+
                     await deliveryHandler(
                         new PubSubPullMessagesResponse(topic.Name) { ContentType = contentType },
                         ackError =>
@@ -170,13 +172,14 @@ public sealed class PubSubAdaptorTests
 
         string topic = "topic";
 
-        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<PullMessagesResponse>>();
 
         mockWriter
-            .Setup(writer => writer.WriteAsync(It.IsAny<PullMessagesResponse>()))
-            .Returns<PullMessagesResponse>(
-                async response =>
+            .WriteAsync(Arg.Any<PullMessagesResponse>())
+            .Returns(
+                async callInfo =>
                 {
+                    var response = callInfo.ArgAt<PullMessagesResponse>(0);
                     Assert.Equal(contentType, response.ContentType);
                     Assert.Equal(topic, response.TopicName);
 
@@ -185,21 +188,20 @@ public sealed class PubSubAdaptorTests
 
         var pullMessagesTask = fixture.Adaptor.PullMessages(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
 
         await pullMessagesTask;
 
-        fixture.MockComponent
-            .Verify(
-                component => component.PullMessagesAsync(
-                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
-                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .PullMessagesAsync(
+                Arg.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -208,32 +210,31 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
+            .PullMessagesAsync(Arg.Any<PubSubPullMessagesTopic>(), Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask);
 
         string topic = "topic";
 
-        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<PullMessagesResponse>>();
 
         var reader = new AsyncStreamReader<PullMessagesRequest>();
 
         var pullTask = fixture.Adaptor.PullMessages(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
 
         await pullTask;
 
-        fixture.MockComponent
-            .Verify(
-                component => component.PullMessagesAsync(
-                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
-                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .PullMessagesAsync(
+                Arg.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -242,22 +243,22 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
+            .PullMessagesAsync(Arg.Any<PubSubPullMessagesTopic>(), Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), Arg.Any<CancellationToken>())
             .Returns(
-                (PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken) =>
+                callInfo =>
                 {
-                    return Task.Delay(-1, cancellationToken);
+                    return Task.Delay(-1, callInfo.ArgAt<CancellationToken>(2));
                 });
 
         string topic = "topic";
 
-        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<PullMessagesResponse>>();
 
         var reader = new AsyncStreamReader<PullMessagesRequest>();
 
         var pullTask = fixture.Adaptor.PullMessages(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
@@ -266,14 +267,13 @@ public sealed class PubSubAdaptorTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pullTask);
 
-        fixture.MockComponent
-            .Verify(
-                component => component.PullMessagesAsync(
-                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
-                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .PullMessagesAsync(
+                Arg.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -282,22 +282,22 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()))
+            .PullMessagesAsync(Arg.Any<PubSubPullMessagesTopic>(), Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), Arg.Any<CancellationToken>())
             .Returns(
-                (PubSubPullMessagesTopic topic, MessageDeliveryHandler<string?, PubSubPullMessagesResponse> deliveryHandler, CancellationToken cancellationToken) =>
+                callInfo =>
                 {
-                    return Task.Delay(-1, cancellationToken);
+                    return Task.Delay(-1, callInfo.ArgAt<CancellationToken>(2));
                 });
 
         string topic = "topic";
 
-        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<PullMessagesResponse>>();
 
         var reader = new AsyncStreamReader<PullMessagesRequest>();
 
         var pullTask = fixture.Adaptor.PullMessages(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         await reader.AddAsync(new PullMessagesRequest { Topic = new Topic { Name = topic } });
@@ -306,14 +306,13 @@ public sealed class PubSubAdaptorTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pullTask);
 
-        fixture.MockComponent
-            .Verify(
-                component => component.PullMessagesAsync(
-                    It.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
-                    It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .PullMessagesAsync(
+                Arg.Is<PubSubPullMessagesTopic>(request => request.Name == topic),
+                Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -322,14 +321,15 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
+            .PullMessagesAsync(Arg.Any<PubSubPullMessagesTopic>(), Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         var reader = new AsyncStreamReader<PullMessagesRequest>();
-        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<PullMessagesResponse>>();
 
         var pullTask = fixture.Adaptor.PullMessages(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         reader.Complete();
@@ -348,14 +348,15 @@ public sealed class PubSubAdaptorTests
         using var fixture = AdaptorFixture.CreatePubSub();
 
         fixture.MockComponent
-            .Setup(component => component.PullMessagesAsync(It.IsAny<PubSubPullMessagesTopic>(), It.IsAny<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), It.IsAny<CancellationToken>()));
+            .PullMessagesAsync(Arg.Any<PubSubPullMessagesTopic>(), Arg.Any<MessageDeliveryHandler<string?, PubSubPullMessagesResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         var reader = new AsyncStreamReader<PullMessagesRequest>();
-        var mockWriter = new Mock<IServerStreamWriter<PullMessagesResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<PullMessagesResponse>>();
 
         var pullTask = fixture.Adaptor.PullMessages(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         await reader.AddAsync(new PullMessagesRequest { });
