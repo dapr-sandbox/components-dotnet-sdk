@@ -129,7 +129,7 @@ internal abstract class AdaptorFixture
         Func<AdaptorFixture<TAdaptor, TInterface>, Task> pingCall)
         where TInterface : class, IPluggableComponent
     {
-        using var fixture = adaptorFactory(null);
+        using var fixture = adaptorFactory(Substitute.For<TInterface, IPluggableComponentLiveness>());
 
         var mockLiveness = (IPluggableComponentLiveness)fixture.MockComponent;
 
