@@ -15,7 +15,7 @@ using Dapr.PluggableComponents.Adaptors;
 using Dapr.Proto.Components.V1;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Dapr.PluggableComponents.Components.StateStore;
@@ -25,20 +25,21 @@ public sealed class TransactionalStateStoreAdaptorTests
     [Fact]
     public async Task TransactTest()
     {
-        var mockStateStore = new Mock<ITransactionalStateStore>();
+        var mockStateStore = Substitute.For<ITransactionalStateStore>();
 
         mockStateStore
-            .Setup(stateStore => stateStore.TransactAsync(It.IsAny<StateStoreTransactRequest>(), It.IsAny<CancellationToken>()));
+            .TransactAsync(Arg.Any<StateStoreTransactRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
-        var logger = new Mock<ILogger<TransactionalStateStoreAdaptor>>();
+        var logger = Substitute.For<ILogger<TransactionalStateStoreAdaptor>>();
 
-        var mockComponentProvider = new Mock<IDaprPluggableComponentProvider<ITransactionalStateStore>>();
+        var mockComponentProvider = Substitute.For<IDaprPluggableComponentProvider<ITransactionalStateStore>>();
 
         mockComponentProvider
-            .Setup(componentProvider => componentProvider.GetComponent(It.IsAny<ServerCallContext>()))
-            .Returns(mockStateStore.Object);
+            .GetComponent(Arg.Any<ServerCallContext>())
+            .Returns(mockStateStore);
 
-        var adaptor = new TransactionalStateStoreAdaptor(logger.Object, mockComponentProvider.Object);
+        var adaptor = new TransactionalStateStoreAdaptor(logger, mockComponentProvider);
 
         using var context = new TestServerCallContext();
 
@@ -48,8 +49,9 @@ public sealed class TransactionalStateStoreAdaptorTests
 
         await adaptor.Transact(grpcRequest, context);
 
-        mockStateStore
-            .Verify(stateStore => stateStore.TransactAsync(It.Is<StateStoreTransactRequest>(request => AssertMetadataEqual(grpcRequest.Metadata, request.Metadata)), It.Is<CancellationToken>(cancellationToken => cancellationToken == context.CancellationToken)), Times.Once());
+        await mockStateStore
+            .Received(1)
+            .TransactAsync(Arg.Is<StateStoreTransactRequest>(request => AssertMetadataEqual(grpcRequest.Metadata, request.Metadata)), Arg.Is<CancellationToken>(cancellationToken => cancellationToken == context.CancellationToken));
     }
 
     private static bool AssertMetadataEqual(IReadOnlyDictionary<string, string> expected, IReadOnlyDictionary<string, string> actual)
