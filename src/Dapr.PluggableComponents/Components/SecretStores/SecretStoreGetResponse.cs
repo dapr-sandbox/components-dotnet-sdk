@@ -31,15 +31,6 @@ public sealed record SecretStoreGetResponse
     public IReadOnlyDictionary<string, string> Data = new Dictionary<string, string>();
 
 
-
-    /// <summary>
-    /// Gets or sets the metadata associated with the request.
-    /// </summary>
-    /// <remarks>
-    /// If omitted, defaults to an empty dictionary.
-    /// </remarks>
-    public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
-
     internal static GetSecretResponse ToGetResponse(SecretStoreGetResponse? response)
     {
         var grpcResponse = new GetSecretResponse();

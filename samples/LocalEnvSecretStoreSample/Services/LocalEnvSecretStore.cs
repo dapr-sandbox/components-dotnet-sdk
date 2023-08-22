@@ -16,16 +16,16 @@ internal sealed class LocalEnvSecretStore : ISecretStore
 
     public Task<SecretStoreGetResponse> GetAsync(SecretStoreGetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("Get request for secret {key}", request.secretName);
+        this.logger.LogInformation("Get request for secret {key}", request.SecretName);
 
         SecretStoreGetResponse? response = null;
-        string data = Environment.GetEnvironmentVariable(request.secretName);
+        string data = Environment.GetEnvironmentVariable(request.SecretName);
         if (data == null)
         {
             data = "";
         }
         Dictionary<string, string> resp = new Dictionary<string, string>();
-        resp.Add(request.secretName, data);
+        resp.Add(request.SecretName, data);
         response = new SecretStoreGetResponse
         {
             Data = resp

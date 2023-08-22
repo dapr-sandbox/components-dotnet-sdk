@@ -24,7 +24,7 @@ public interface ISecretStore : IPluggableComponent
     /// <param name="request">Properties related to the secret to be retrieved.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation, resulting in the retrieved secret, if any.</returns>
-    Task<SecretStoreGetResponse?> GetAsync(SecretStoreGetRequest request, CancellationToken cancellationToken = default);
+    Task<SecretStoreGetResponse> GetAsync(SecretStoreGetRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Called to get bulk secret.
@@ -32,6 +32,6 @@ public interface ISecretStore : IPluggableComponent
     /// <param name="request">Properties related to the secret to be retrieved.</param>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation, resulting in the retrieved secret, if any.</returns>
-    Task<SecretStoreBulkGetResponse?> BulkGetAsync(SecretStoreBulkGetRequest request, CancellationToken cancellationToken = default);
+    Task<SecretStoreBulkGetResponse> BulkGetAsync(SecretStoreBulkGetRequest request, CancellationToken cancellationToken = default);
 
 }

@@ -20,7 +20,6 @@ namespace Dapr.PluggableComponents.Components.SecretStores;
 public sealed record SecretStoreBulkGetResponse
 {
     public IReadOnlyDictionary<string, string> Data = new Dictionary<string, string>();
-    public IReadOnlyDictionary<string, string> Metadata { get; init; } = new Dictionary<string, string>();
 
     internal static BulkGetSecretResponse ToBulkGetResponse(SecretStoreBulkGetResponse? response)
     {
