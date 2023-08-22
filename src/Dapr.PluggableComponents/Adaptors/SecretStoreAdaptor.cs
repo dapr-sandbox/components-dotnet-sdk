@@ -46,17 +46,6 @@ public class SecretStoreAdaptor : SecretStoreBase
         this.componentProvider = componentProvider ?? throw new ArgumentNullException(nameof(componentProvider));
     }
 
-
-    /// <inheritdoc/>
-    public override async Task<BulkGetSecretResponse> BulkGet(BulkGetSecretRequest request, ServerCallContext context)
-    {
-        this.logger.LogDebug("Bulk get request for secret");
-
-        var secretStore = this.GetSecretStore(context);
-
-        return null;
-    }
-
     /// <inheritdoc/>
     public override async Task<FeaturesResponse> Features(FeaturesRequest request, ServerCallContext context)
     {
@@ -84,6 +73,16 @@ public class SecretStoreAdaptor : SecretStoreBase
             context.CancellationToken);
 
         return SecretStoreGetResponse.ToGetResponse(response);
+    }
+
+    /// <inheritdoc/>
+    public override async Task<BulkGetSecretResponse> BulkGet(BulkGetSecretRequest request, ServerCallContext context)
+    {
+        this.logger.LogDebug("Bulk get request for secret");
+
+        var secretStore = this.GetSecretStore(context);
+        var response = await secretStore.BulkGetAsync(SecretStoreBulkGetRequest.FromGetRequest(request), context.CancellationToken);
+        return SecretStoreBulkGetResponse.ToBulkGetResponse(response);
     }
 
     /// <inheritdoc/>

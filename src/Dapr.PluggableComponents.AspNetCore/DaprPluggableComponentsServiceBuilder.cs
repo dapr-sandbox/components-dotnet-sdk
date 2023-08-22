@@ -197,9 +197,6 @@ public sealed class DaprPluggableComponentsServiceBuilder
     public DaprPluggableComponentsServiceBuilder RegisterSecretStore<TSecretStore>() where TSecretStore : class, ISecretStore
     {
         this.AddComponent<ISecretStore, TSecretStore, SecretStoreAdaptor>();
-
-        this.AddRelatedSecretStoreServices<TSecretStore>();
-
         return this;
     }
 
@@ -219,9 +216,6 @@ public sealed class DaprPluggableComponentsServiceBuilder
         where TSecretStore : class, ISecretStore
     {
         this.AddComponent<ISecretStore, TSecretStore, SecretStoreAdaptor>(secretStoreFactory);
-
-        this.AddRelatedSecretStoreServices<TSecretStore>();
-
         return this;
     }
 

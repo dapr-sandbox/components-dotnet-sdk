@@ -39,9 +39,15 @@ internal sealed class LocalEnvSecretStore : ISecretStore
         this.logger.LogInformation("Get request for all secrets");
 
         SecretStoreBulkGetResponse? response = null;
-        //this.logger.LogInformation(Environment.GetEnvironmentVariables());
-        
-
+        Dictionary<string, string> resp = new Dictionary<string, string>();
+        foreach (string key in Environment.GetEnvironmentVariables().Keys)
+        {
+            resp.Add(key, Environment.GetEnvironmentVariable(key));
+        }
+        response = new SecretStoreBulkGetResponse
+        {
+            Data = resp
+        };
         return Task.FromResult(response);
     }
 

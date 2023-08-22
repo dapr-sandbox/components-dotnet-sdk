@@ -53,27 +53,4 @@ public sealed record SecretStoreGetResponse
 
         return grpcResponse;
     }
-
-    /*internal static BulksecretItem ToBulksecretItem(string key, secretStoreGetResponse? response)
-    {
-        var secretItem = new BulksecretItem
-        {
-            Key = key
-        };
-
-        if (response != null)
-        {
-            secretItem.ContentType = response.ContentType ?? String.Empty;
-            secretItem.Data = ByteString.CopyFrom(response.Data);
-            secretItem.Etag = response.ETag != null ? new Etag { Value = response.ETag } : null;
-
-            secretItem.Metadata.Add(response.Metadata);
-        }
-        else
-        {
-            secretItem.Error = "Unable to fetch the item.";
-        }
-
-        return secretItem;
-    }*/
 }
