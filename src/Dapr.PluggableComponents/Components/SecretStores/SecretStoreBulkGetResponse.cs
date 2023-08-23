@@ -19,18 +19,21 @@ namespace Dapr.PluggableComponents.Components.SecretStores;
 
 public sealed record SecretStoreBulkGetResponse
 {
-    public IReadOnlyDictionary<string, string> Data = new Dictionary<string, string>();
+    public IReadOnlyDictionary<string, SecretStoreResponse> Data { get; init; } = new Dictionary<string, SecretStoreResponse>();
 
-    internal static BulkGetSecretResponse ToBulkGetResponse(SecretStoreBulkGetResponse? response)
+    internal static BulkGetSecretResponse ToBulkGetResponse(SecretStoreBulkGetResponse response)
     {
         var grpcResponse = new BulkGetSecretResponse();
         if (response != null)
         {
             foreach (var item in response.Data)
             {
-                var secretItem = new SecretResponse();
-                secretItem.Secrets.Add(item.Key, item.Value);
-                grpcResponse.Data.Add(item.Key, secretItem);
+                var secretResp = new SecretResponse();
+                foreach (var sec in item.Value.Data)
+                {
+                    secretResp.Secrets.Add(sec.Key, sec.Value);
+                    grpcResponse.Data.Add(sec.Key, secretResp);
+                }
             }
         }
         return grpcResponse;

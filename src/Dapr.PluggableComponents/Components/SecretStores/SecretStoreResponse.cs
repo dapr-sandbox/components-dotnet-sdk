@@ -14,13 +14,12 @@
 using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
 using Google.Protobuf;
-
 namespace Dapr.PluggableComponents.Components.SecretStores;
 
 /// <summary>
-/// Represents properties associated with a response to retrieving secret from a secret store.
+/// Represents properties associated with a response to retrieving bulk secret from a secret store.
 /// </summary>
-public sealed record SecretStoreGetResponse
+public sealed record SecretStoreResponse
 {
     /// <summary>
     /// Gets or sets the key's value.
@@ -31,17 +30,18 @@ public sealed record SecretStoreGetResponse
     public IReadOnlyDictionary<string, string> Data { get; init; } = new Dictionary<string, string>();
 
 
-    internal static GetSecretResponse ToGetResponse(SecretStoreGetResponse response)
+    internal static SecretResponse ToGetResponse(SecretStoreResponse response)
     {
-        var grpcResponse = new GetSecretResponse();
+        var grpcResponse = new SecretResponse();
 
         // NOTE: in case of not found, you should not return any error.
 
         if (response != null)
         {
-            grpcResponse.Data.Add(response.Data);
+            grpcResponse.Secrets.Add(response.Data);
         }
 
         return grpcResponse;
     }
 }
+

@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Protobuf Include="@(Protos-&gt;'$(ProtosComponentsDir)/%(Identity)')" ProtoRoot="$(ProtosRootDir)" GrpcServices="Client,Server" />
+    <Protobuf Include="@(Protos->'$(ProtosComponentsDir)/%(Identity)')" ProtoRoot="$(ProtosRootDir)" GrpcServices="Client,Server" />
   </ItemGroup>
 
   <ItemGroup>
