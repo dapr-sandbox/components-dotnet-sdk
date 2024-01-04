@@ -29,12 +29,9 @@ public static class Constants
         public const string DaprComponentsSocketsExtension = ".sock";
 
         /// <summary>
-        /// The default directory in which Dapr Pluggable Components create their socket files.
+        /// The default temp sub-directory in which Dapr Pluggable Components create their socket files.
         /// </summary>
-        /// <remarks>
-        /// This location is applicable only to Mac OS and Linux platforms.
-        /// </remarks>
-        public const string DaprComponentsSocketsFolder = "/tmp/dapr-components-sockets";
+        public const string DaprComponentsSocketsFolder = "dapr-components-sockets";
     }
 
     /// <summary>

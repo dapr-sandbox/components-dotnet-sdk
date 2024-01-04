@@ -269,26 +269,29 @@ public sealed class DaprPluggableComponentsApplication : IDaprPluggableComponent
             configurer(app);
         }
 
-        app.Lifetime.ApplicationStarted.Register(
-            () =>
-            {
-                // NOTE:
-                //
-                // In Kubernetes, the creator of the socket file (this pluggable component) will not be the same user
-                // as the reader/writer of the socket file (the Dapr sidecar), unlike when running the component
-                // locally. Therefore, once the socket file has been created (after start), the permissions need be
-                // updated to allow global read/write.
-
-                foreach (var socketPath in socketPaths)
+        if (!OperatingSystem.IsWindows())
+        {
+            app.Lifetime.ApplicationStarted.Register(
+                () =>
                 {
-                    var fileInfo = new UnixFileInfo(socketPath);
+                    // NOTE:
+                    //
+                    // In Kubernetes, the creator of the socket file (this pluggable component) will not be the same user
+                    // as the reader/writer of the socket file (the Dapr sidecar), unlike when running the component
+                    // locally. Therefore, once the socket file has been created (after start), the permissions need be
+                    // updated to allow global read/write.
 
-                    fileInfo.FileAccessPermissions =
-                        FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
-                        | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite
-                        | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherWrite;
-                }
-            });
+                    foreach (var socketPath in socketPaths)
+                    {
+                        var fileInfo = new UnixFileInfo(socketPath);
+
+                        fileInfo.FileAccessPermissions =
+                            FileAccessPermissions.UserRead | FileAccessPermissions.UserWrite
+                            | FileAccessPermissions.GroupRead | FileAccessPermissions.GroupWrite
+                            | FileAccessPermissions.OtherRead | FileAccessPermissions.OtherWrite;
+                    }
+                });
+        }
 
         return app;
     }
