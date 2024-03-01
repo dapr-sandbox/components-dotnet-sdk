@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscordBindingSample", "sam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapr.PluggableComponents.Tests", "src\Dapr.PluggableComponents.Tests\Dapr.PluggableComponents.Tests.csproj", "{C9027B0B-A589-4E92-AB32-34B8961C479B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalEnvSecretStoreSample", "samples\LocalEnvSecretStoreSample\LocalEnvSecretStoreSample.csproj", "{FB79E8DE-3AA9-47E0-9EA6-627DCAFC6068}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,6 +62,10 @@ Global
 		{C9027B0B-A589-4E92-AB32-34B8961C479B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9027B0B-A589-4E92-AB32-34B8961C479B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9027B0B-A589-4E92-AB32-34B8961C479B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB79E8DE-3AA9-47E0-9EA6-627DCAFC6068}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB79E8DE-3AA9-47E0-9EA6-627DCAFC6068}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB79E8DE-3AA9-47E0-9EA6-627DCAFC6068}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB79E8DE-3AA9-47E0-9EA6-627DCAFC6068}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E54270BE-EF83-47BE-B29C-29BC89701099} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
@@ -69,5 +75,6 @@ Global
 		{A6565BA8-E05C-4B4E-A908-C4B86232F9AB} = {6F4E950F-E4CD-4FA4-BA3D-528F0022C03B}
 		{BCE0E3E4-60D9-4947-9E1A-300640BE5FBF} = {6F4E950F-E4CD-4FA4-BA3D-528F0022C03B}
 		{C9027B0B-A589-4E92-AB32-34B8961C479B} = {8E8203A7-A0B9-4F48-9CD4-DE9A0D3B73FB}
+		{FB79E8DE-3AA9-47E0-9EA6-627DCAFC6068} = {6F4E950F-E4CD-4FA4-BA3D-528F0022C03B}
 	EndGlobalSection
 EndGlobal
