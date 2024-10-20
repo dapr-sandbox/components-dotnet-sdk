@@ -17,7 +17,7 @@ using Dapr.PluggableComponents.Components.PubSub;
 using Dapr.PluggableComponents.Components.StateStore;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
-using Moq;
+using NSubstitute;
 
 namespace Dapr.PluggableComponents.Adaptors;
 
@@ -26,11 +26,11 @@ internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDi
 {
     private readonly Lazy<TAdaptor> adaptor;
 
-    public AdaptorFixture(Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory, Mock<TInterface>? mockComponent = null)
+    public AdaptorFixture(Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory, TInterface? mockComponent = null)
     {
-        this.MockComponent = mockComponent ?? new Mock<TInterface>();
+        this.MockComponent = mockComponent ?? Substitute.For<TInterface>();
 
-        this.adaptor = new Lazy<TAdaptor>(() => Create<TAdaptor, TInterface>(this.MockComponent.Object, adaptorFactory));
+        this.adaptor = new Lazy<TAdaptor>(() => Create<TAdaptor, TInterface>(this.MockComponent, adaptorFactory));
     }
 
     /// <remarks>
@@ -41,7 +41,7 @@ internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDi
 
     public TestServerCallContext Context { get; } = new TestServerCallContext();
 
-    public Mock<TInterface> MockComponent { get; }
+    public TInterface MockComponent { get; }
 
     #region IDisposable Members
 
@@ -55,22 +55,22 @@ internal sealed class AdaptorFixture<TAdaptor, TInterface> : AdaptorFixture, IDi
 
 internal abstract class AdaptorFixture
 {
-    public static AdaptorFixture<InputBindingAdaptor, IInputBinding> CreateInputBinding(Mock<IInputBinding>? mockComponent = null)
+    public static AdaptorFixture<InputBindingAdaptor, IInputBinding> CreateInputBinding(IInputBinding? mockComponent = null)
     {
         return new AdaptorFixture<InputBindingAdaptor, IInputBinding>((logger, componentProvider) => new InputBindingAdaptor(logger, componentProvider), mockComponent);
     }
 
-    public static AdaptorFixture<OutputBindingAdaptor, IOutputBinding> CreateOutputBinding(Mock<IOutputBinding>? mockComponent = null)
+    public static AdaptorFixture<OutputBindingAdaptor, IOutputBinding> CreateOutputBinding(IOutputBinding? mockComponent = null)
     {
         return new AdaptorFixture<OutputBindingAdaptor, IOutputBinding>((logger, componentProvider) => new OutputBindingAdaptor(logger, componentProvider), mockComponent);
     }
 
-    public static AdaptorFixture<PubSubAdaptor, IPubSub> CreatePubSub(Mock<IPubSub>? mockComponent = null)
+    public static AdaptorFixture<PubSubAdaptor, IPubSub> CreatePubSub(IPubSub? mockComponent = null)
     {
         return new AdaptorFixture<PubSubAdaptor, IPubSub>((logger, componentProvider) => new PubSubAdaptor(logger, componentProvider), mockComponent);
     }
 
-    public static AdaptorFixture<StateStoreAdaptor, IStateStore> CreateStateStore(Mock<IStateStore>? mockComponent = null)
+    public static AdaptorFixture<StateStoreAdaptor, IStateStore> CreateStateStore(IStateStore? mockComponent = null)
     {
         return new AdaptorFixture<StateStoreAdaptor, IStateStore>((logger, componentProvider) => new StateStoreAdaptor(logger, componentProvider), mockComponent);
     }
@@ -83,7 +83,8 @@ internal abstract class AdaptorFixture
         using var fixture = adaptorFactory();
 
         fixture.MockComponent
-            .Setup(component => component.InitAsync(It.IsAny<Components.MetadataRequest>(), It.IsAny<CancellationToken>()));
+            .InitAsync(Arg.Any<Components.MetadataRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         var properties = new Dictionary<string, string>()
         {
@@ -97,16 +98,15 @@ internal abstract class AdaptorFixture
 
         await initCall(fixture, metadataRequest);
 
-        fixture.MockComponent
-            .Verify(
-                component => component.InitAsync(
-                    It.Is<Components.MetadataRequest>(request => ConversionAssert.MetadataEqual(properties, request.Properties)),
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .InitAsync(
+                    Arg.Is<Components.MetadataRequest>(request => ConversionAssert.MetadataEqual(properties, request.Properties)),
+                    Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
     }
 
     public static async Task TestPingAsync<TAdaptor, TInterface>(
-        Func<Mock<TInterface>?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
+        Func<TInterface?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
         Func<AdaptorFixture<TAdaptor, TInterface>, Task> pingCall)
         where TInterface : class, IPluggableComponent
     {
@@ -115,46 +115,45 @@ internal abstract class AdaptorFixture
     }
 
     private static async Task PingWithNoLiveness<TAdaptor, TInterface>(
-        Func<Mock<TInterface>?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
+        Func<TInterface?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
         Func<AdaptorFixture<TAdaptor, TInterface>, Task> pingCall)
         where TInterface : class, IPluggableComponent
     {
-        using var fixture = adaptorFactory(new Mock<TInterface>(MockBehavior.Strict));
+        using var fixture = adaptorFactory(Substitute.For<TInterface>());
 
         await pingCall(fixture);
     }
 
     private static async Task PingWithLiveness<TAdaptor, TInterface>(
-        Func<Mock<TInterface>?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
+        Func<TInterface?, AdaptorFixture<TAdaptor, TInterface>> adaptorFactory,
         Func<AdaptorFixture<TAdaptor, TInterface>, Task> pingCall)
         where TInterface : class, IPluggableComponent
     {
-        using var fixture = adaptorFactory(null);
+        using var fixture = adaptorFactory(Substitute.For<TInterface, IPluggableComponentLiveness>());
 
-        var mockLiveness = fixture.MockComponent.As<IPluggableComponentLiveness>();
+        var mockLiveness = (IPluggableComponentLiveness)fixture.MockComponent;
 
         mockLiveness
-            .Setup(component => component.PingAsync(It.IsAny<CancellationToken>()));
+            .PingAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
         await pingCall(fixture);
 
-        mockLiveness
-            .Verify(
-                component => component.PingAsync(
-                    It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)),
-                Times.Once());
+        await mockLiveness
+            .Received(1)
+            .PingAsync(Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
     }
 
     protected static TAdaptor Create<TAdaptor, TInterface>(TInterface component, Func<ILogger<TAdaptor>, IDaprPluggableComponentProvider<TInterface>, TAdaptor> adaptorFactory)
     {
-        var logger = new Mock<ILogger<TAdaptor>>();
+        var logger = Substitute.For<ILogger<TAdaptor>>();
 
-        var mockComponentProvider = new Mock<IDaprPluggableComponentProvider<TInterface>>();
+        var mockComponentProvider = Substitute.For<IDaprPluggableComponentProvider<TInterface>>();
 
         mockComponentProvider
-            .Setup(componentProvider => componentProvider.GetComponent(It.IsAny<ServerCallContext>()))
+            .GetComponent(Arg.Any<ServerCallContext>())
             .Returns(component);
 
-        return adaptorFactory(logger.Object, mockComponentProvider.Object);
+        return adaptorFactory(logger, mockComponentProvider);
     }
 }

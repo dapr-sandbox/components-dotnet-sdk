@@ -16,7 +16,7 @@ using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.Proto.Components.V1;
 using Grpc.Core;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Dapr.PluggableComponents.Adaptors;
@@ -49,27 +49,22 @@ public sealed class InputBindingAdaptorTests
         var reader = new AsyncStreamReader<ReadRequest>();
 
         fixture.MockComponent
-            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
-            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
-                (deliveryHandler, cancellationToken) =>
-                {
-                    return Task.CompletedTask;
-                });
+            .ReadAsync(Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
 
-        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<ReadResponse>>();
 
         await fixture.Adaptor.Read(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
-        fixture.MockComponent
-            .Verify(
-                component => component.ReadAsync(
-                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+        await fixture.MockComponent
+            .Received(1)
+            .ReadAsync(
+                    Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
                     // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+                    Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -80,31 +75,30 @@ public sealed class InputBindingAdaptorTests
         var reader = new AsyncStreamReader<ReadRequest>();
 
         fixture.MockComponent
-            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
-            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
-                (deliveryHandler, cancellationToken) =>
+            .ReadAsync(Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(
+                callInfo =>
                 {
-                    return Task.Delay(-1, cancellationToken);
+                    return Task.Delay(-1, (CancellationToken)callInfo[1]);
                 });
 
-        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<ReadResponse>>();
 
         var readTask = fixture.Adaptor.Read(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         reader.Complete();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => readTask);
 
-        fixture.MockComponent
-            .Verify(
-                component => component.ReadAsync(
-                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .ReadAsync(
+                Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -115,31 +109,30 @@ public sealed class InputBindingAdaptorTests
         var reader = new AsyncStreamReader<ReadRequest>();
 
         fixture.MockComponent
-            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
-            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
-                (deliveryHandler, cancellationToken) =>
+            .ReadAsync(Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(
+                callInfo =>
                 {
-                    return Task.Delay(-1, cancellationToken);
+                    return Task.Delay(-1, (CancellationToken)callInfo[1]);
                 });
 
-        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<ReadResponse>>();
 
         var readTask = fixture.Adaptor.Read(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         fixture.Context.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => readTask);
 
-        fixture.MockComponent
-            .Verify(
-                component => component.ReadAsync(
-                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .ReadAsync(
+                Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 
     [Fact(Timeout = TimeoutInMs)]
@@ -153,10 +146,12 @@ public sealed class InputBindingAdaptorTests
         var reader = new AsyncStreamReader<ReadRequest>();
 
         fixture.MockComponent
-            .Setup(component => component.ReadAsync(It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), It.IsAny<CancellationToken>()))
-            .Returns<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>, CancellationToken>(
-                async (deliveryHandler, cancellationToken) =>
+            .ReadAsync(Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(), Arg.Any<CancellationToken>())
+            .Returns(
+                async callInfo =>
                 {
+                    var deliveryHandler = (MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>)callInfo[0];
+
                     await deliveryHandler(
                         new InputBindingReadResponse { ContentType = contentType },
                         response =>
@@ -169,13 +164,15 @@ public sealed class InputBindingAdaptorTests
                         });
                 });
 
-        var mockWriter = new Mock<IServerStreamWriter<ReadResponse>>();
+        var mockWriter = Substitute.For<IServerStreamWriter<ReadResponse>>();
 
         mockWriter
-            .Setup(writer => writer.WriteAsync(It.IsAny<ReadResponse>()))
-            .Returns<ReadResponse>(
-                async response =>
+            .WriteAsync(Arg.Any<ReadResponse>())
+            .Returns(
+                async callInfo =>
                 {
+                    var response = (ReadResponse)callInfo[0];
+
                     Assert.Equal(contentType, response.ContentType);
 
                     await reader.AddAsync(new ReadRequest { ResponseError = new AckResponseError { Message = error }, MessageId = response.MessageId });
@@ -183,17 +180,16 @@ public sealed class InputBindingAdaptorTests
 
         var pullMessagesTask = fixture.Adaptor.Read(
             reader,
-            mockWriter.Object,
+            mockWriter,
             fixture.Context);
 
         await pullMessagesTask;
 
-        fixture.MockComponent
-            .Verify(
-                component => component.ReadAsync(
-                    It.IsAny<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
-                    // NOTE: The adaptor provides its own cancellation token.
-                    It.IsAny<CancellationToken>()),
-                Times.Once());
+        await fixture.MockComponent
+            .Received(1)
+            .ReadAsync(
+                Arg.Any<MessageDeliveryHandler<InputBindingReadRequest, InputBindingReadResponse>>(),
+                // NOTE: The adaptor provides its own cancellation token.
+                Arg.Any<CancellationToken>());
     }
 }

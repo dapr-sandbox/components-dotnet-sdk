@@ -19,7 +19,7 @@ using Dapr.Proto.Components.V1;
 using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using Xunit;
 using static Dapr.Proto.Components.V1.QueriableStateStore;
 using static Dapr.Proto.Components.V1.StateStore;
@@ -35,11 +35,11 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         Func<TClient, Grpc.Core.Metadata, Task> initCall)
         where TMockInterface : class, IMockPluggableComponent
     {
-        var mockInputBinding = new Mock<TMockInterface>();
+        var mockInputBinding = Substitute.For<TMockInterface>();
 
         using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton(_ => mockInputBinding.Object);
+        application.Services.AddSingleton(_ => mockInputBinding);
 
         using var socketFixture = new SocketFixture();
 
@@ -60,8 +60,8 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         await initCall(client, metadataA);
         await initCall(client, metadataB);
 
-        mockInputBinding.Verify(inputBinding => inputBinding.Create(), Times.Once());
-        mockInputBinding.Verify(inputBinding => inputBinding.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        mockInputBinding.Received(1).Create();
+        await mockInputBinding.Received(2).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
     }
 
     private static async Task TestFactoryBasedInitAsync<TMockInterface, TMockType, TClient>(
@@ -72,8 +72,8 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         where TMockInterface : class, IMockPluggableComponent
         where TMockType : class
     {
-        var mockComponentA = new Mock<TMockInterface>();
-        var mockComponentB = new Mock<TMockInterface>();
+        var mockComponentA = Substitute.For<TMockInterface>();
+        var mockComponentB = Substitute.For<TMockInterface>();
 
         const string componentInstanceA = "A";
         const string componentInstanceB = "B";
@@ -91,8 +91,8 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
                     {
                         return context.InstanceId switch
                         {
-                            componentInstanceA => componentFactory(mockComponentA.Object),
-                            componentInstanceB => componentFactory(mockComponentB.Object),
+                            componentInstanceA => componentFactory(mockComponentA),
+                            componentInstanceB => componentFactory(mockComponentB),
                             _ => throw new Exception()
                         };
                     });
@@ -109,11 +109,11 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         await initCall(client, metadataA);
         await initCall(client, metadataB);
 
-        mockComponentA.Verify(component => component.Create(), Times.Once());
-        mockComponentB.Verify(component => component.Create(), Times.Once());
+        mockComponentA.Received(1).Create();
+        mockComponentB.Received(1).Create();
 
-        mockComponentA.Verify(component => component.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-        mockComponentB.Verify(component => component.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        await mockComponentA.Received(2).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
+        await mockComponentB.Received(1).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -157,13 +157,13 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
     [Fact]
     public async Task RegisterSeparateInputOutputBindings()
     {
-        var mockInputBinding = new Mock<IMockInputBinding<Unit>>();
-        var mockOutputBinding = new Mock<IMockOutputBinding<Unit>>();
+        var mockInputBinding = Substitute.For<IMockInputBinding<Unit>>();
+        var mockOutputBinding = Substitute.For<IMockOutputBinding<Unit>>();
 
         using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton(_ => mockInputBinding.Object);
-        application.Services.AddSingleton(_ => mockOutputBinding.Object);
+        application.Services.AddSingleton(_ => mockInputBinding);
+        application.Services.AddSingleton(_ => mockOutputBinding);
 
         using var socketFixture = new SocketFixture();
 
@@ -185,21 +185,21 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         await inputClient.InitAsync(new InputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
         await outputClient.InitAsync(new OutputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
 
-        mockInputBinding.Verify(inputBinding => inputBinding.Create(), Times.Once());
-        mockInputBinding.Verify(inputBinding => inputBinding.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
+        mockInputBinding.Received(1).Create();
+        await mockInputBinding.Received(1).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
 
-        mockInputBinding.Verify(outputBinding => outputBinding.Create(), Times.Once());
-        mockInputBinding.Verify(outputBinding => outputBinding.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(1));
+        mockInputBinding.Received(1).Create();
+        await mockInputBinding.Received(1).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task RegisterCombinedInputOutputBindings()
     {
-        var mockCombinedBinding = new Mock<IMockCombinedBinding<Unit>>();
+        var mockCombinedBinding = Substitute.For<IMockCombinedBinding<Unit>>();
 
         using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton(_ => mockCombinedBinding.Object);
+        application.Services.AddSingleton(_ => mockCombinedBinding);
 
         using var socketFixture = new SocketFixture();
 
@@ -220,8 +220,8 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
         await inputClient.InitAsync(new InputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
         await outputClient.InitAsync(new OutputBindingInitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() }, metadataA);
 
-        mockCombinedBinding.Verify(combinedBinding => combinedBinding.Create(), Times.Once());
-        mockCombinedBinding.Verify(combinedBinding => combinedBinding.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        mockCombinedBinding.Received(1).Create();
+        await mockCombinedBinding.Received(2).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -265,11 +265,11 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
     [Fact]
     public async Task RegisterBulkStateStore()
     {
-        var mockStateStore = new Mock<IMockBulkStateStore<Unit>>();
+        var mockStateStore = Substitute.For<IMockBulkStateStore<Unit>>();
 
         using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton(_ => mockStateStore.Object);
+        application.Services.AddSingleton(_ => mockStateStore);
 
         using var socketFixture = new SocketFixture();
 
@@ -286,17 +286,17 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
 
         await client.BulkSetAsync(new Proto.Components.V1.BulkSetRequest());
 
-        mockStateStore.Verify(stateStore => stateStore.BulkSetAsync(It.IsAny<StateStoreSetRequest[]>(), It.IsAny<CancellationToken>()), Times.Once());
+        await mockStateStore.Received(1).BulkSetAsync(Arg.Any<StateStoreSetRequest[]>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task RegisterTransactionalStateStore()
     {
-        var mockStateStore = new Mock<IMockTransactionalStateStore<Unit>>();
+        var mockStateStore = Substitute.For<IMockTransactionalStateStore<Unit>>();
 
         using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton(_ => mockStateStore.Object);
+        application.Services.AddSingleton(_ => mockStateStore);
 
         using var socketFixture = new SocketFixture();
 
@@ -313,21 +313,21 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
 
         await client.TransactAsync(new Proto.Components.V1.TransactionalStateRequest());
 
-        mockStateStore.Verify(stateStore => stateStore.TransactAsync(It.IsAny<StateStoreTransactRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        await mockStateStore.Received(1).TransactAsync(Arg.Any<StateStoreTransactRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task RegisterQueryableStateStore()
     {
-        var mockStateStore = new Mock<IMockQueryableStateStore<Unit>>();
+        var mockStateStore = Substitute.For<IMockQueryableStateStore<Unit>>();
 
         mockStateStore
-            .Setup(stateStore => stateStore.QueryAsync(It.IsAny<StateStoreQueryRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new StateStoreQueryResponse());
+            .QueryAsync(Arg.Any<StateStoreQueryRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new StateStoreQueryResponse());
 
         using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton(_ => mockStateStore.Object);
+        application.Services.AddSingleton(_ => mockStateStore);
 
         using var socketFixture = new SocketFixture();
 
@@ -344,19 +344,19 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
 
         await client.QueryAsync(new Proto.Components.V1.QueryRequest());
 
-        mockStateStore.Verify(stateStore => stateStore.QueryAsync(It.IsAny<StateStoreQueryRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        await mockStateStore.Received(1).QueryAsync(Arg.Any<StateStoreQueryRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task RegisterSimilarComponentsAcrossServices()
     {
-        var mockStateStoreA = new Mock<IMockStateStore<Unit.A>>();
-        var mockStateStoreB = new Mock<IMockStateStore<Unit.B>>();
+        var mockStateStoreA = Substitute.For<IMockStateStore<Unit.A>>();
+        var mockStateStoreB = Substitute.For<IMockStateStore<Unit.B>>();
 
         using var application = DaprPluggableComponentsApplication.Create();
 
-        application.Services.AddSingleton(_ => mockStateStoreA.Object);
-        application.Services.AddSingleton(_ => mockStateStoreB.Object);
+        application.Services.AddSingleton(_ => mockStateStoreA);
+        application.Services.AddSingleton(_ => mockStateStoreB);
 
         using var socketFixtureA = new SocketFixture();
         using var socketFixtureB = new SocketFixture();
@@ -382,12 +382,12 @@ public sealed class DaprPluggableComponentsServiceBuilderTests
 
         await clientA.InitAsync(new Dapr.Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() });
 
-        mockStateStoreA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
-        mockStateStoreB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Never());
+        await mockStateStoreA.Received(1).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
+        await mockStateStoreB.DidNotReceive().InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
 
         await clientB.InitAsync(new Dapr.Proto.Components.V1.InitRequest { Metadata = new Client.Autogen.Grpc.v1.MetadataRequest() });
 
-        mockStateStoreA.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
-        mockStateStoreB.Verify(stateStore => stateStore.InitAsync(It.IsAny<MetadataRequest>(), It.IsAny<CancellationToken>()), Times.Once());
+        await mockStateStoreA.Received(1).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
+        await mockStateStoreB.Received(1).InitAsync(Arg.Any<MetadataRequest>(), Arg.Any<CancellationToken>());
     }
 }

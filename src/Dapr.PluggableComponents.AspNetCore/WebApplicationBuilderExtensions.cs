@@ -56,10 +56,9 @@ public static class WebApplicationBuilderExtensions
             ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsExtension)
             ?? Constants.Defaults.DaprComponentsSocketsExtension;
 
-        // TODO: Add support for native (i.e. non-WSL) Windows.
         string socketFolder = options.SocketFolder
             ?? Environment.GetEnvironmentVariable(Constants.EnvironmentVariables.DaprComponentsSocketsFolder)
-            ?? Constants.Defaults.DaprComponentsSocketsFolder;
+            ?? Path.Combine(Path.GetTempPath(), Constants.Defaults.DaprComponentsSocketsFolder);
 
         string socketName = options.SocketName;
 

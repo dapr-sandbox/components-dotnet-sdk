@@ -14,7 +14,7 @@
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.Proto.Components.V1;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace Dapr.PluggableComponents.Adaptors;
@@ -48,15 +48,16 @@ public sealed class OutputBindignAdaptorTests
         var request = new InvokeRequest { Operation = operation };
 
         fixture.MockComponent
-            .Setup(component => component.InvokeAsync(It.Is<OutputBindingInvokeRequest>(request => request.Operation == operation), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
-            .ReturnsAsync(new OutputBindingInvokeResponse { ContentType = contentType });
+            .InvokeAsync(Arg.Is<OutputBindingInvokeRequest>(request => request.Operation == operation), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken))
+            .Returns(new OutputBindingInvokeResponse { ContentType = contentType });
 
         var response = await fixture.Adaptor.Invoke(new InvokeRequest { Operation = operation }, fixture.Context);
 
         Assert.Equal(contentType, response.ContentType);
 
-        fixture.MockComponent
-            .Verify(component => component.InvokeAsync(It.Is<OutputBindingInvokeRequest>(request => request.Operation == operation), It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)), Times.Once);
+        await fixture.MockComponent
+            .Received(1)
+            .InvokeAsync(Arg.Is<OutputBindingInvokeRequest>(request => request.Operation == operation), Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
     }
 
     [Fact]
@@ -67,14 +68,15 @@ public sealed class OutputBindignAdaptorTests
         var operations = new[] { "operation1", "operation2" };
 
         fixture.MockComponent
-            .Setup(component => component.ListOperationsAsync(It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)))
-            .ReturnsAsync(operations);
+            .ListOperationsAsync(Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken))
+            .Returns(operations);
 
         var response = await fixture.Adaptor.ListOperations(new ListOperationsRequest(), fixture.Context);
 
         Assert.Equal(operations, response.Operations);
 
-        fixture.MockComponent
-            .Verify(component => component.ListOperationsAsync(It.Is<CancellationToken>(token => token == fixture.Context.CancellationToken)), Times.Once);
+        await fixture.MockComponent
+            .Received(1)
+            .ListOperationsAsync(Arg.Is<CancellationToken>(token => token == fixture.Context.CancellationToken));
     }
 }
