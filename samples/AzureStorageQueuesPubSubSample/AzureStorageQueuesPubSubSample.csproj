@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Queues" Version="12.12.0" />
-    <PackageReference Include="System.Text.Json" Version="7.0.1" />
+    <PackageReference Include="Azure.Storage.Queues" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 </Project>
