@@ -48,15 +48,20 @@ public sealed class DaprPluggableComponentsApplicationTests
     }
 
     [Fact(Timeout = TimeoutInMs)]
-    public void Run()
+    public async Task Run()
     {
         var application = DaprPluggableComponentsApplication.Create();
 
-        Task.Delay(TimeSpan.FromSeconds(1))
-            .ContinueWith(task => application.StopAsync())
-            .Unwrap()
-            .ContinueWith(task => Assert.Fail("Unable to stop application."), TaskContinuationOptions.OnlyOnFaulted);
+        var runTask = Task.Run(
+            () =>
+            {
+                application.Run();
+            });
 
-        application.Run();
+        await Task.Delay(TimeSpan.FromSeconds(1));
+
+        await application.StopAsync();
+
+        await runTask;
     }
 }
