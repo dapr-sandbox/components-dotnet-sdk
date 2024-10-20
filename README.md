@@ -6,7 +6,7 @@ This SDK provides a better interface to create Pluggable Components without worr
 
 ## Prerequisites
 
-- [.NET 6 SDK](https://dotnet.microsoft.com/) or later
+- [.NET 6 or .NET 8 SDK](https://dotnet.microsoft.com/)
 - [Dapr](https://dapr.io/)
 
   ### SDK and Dapr Compatibility
@@ -15,6 +15,7 @@ This SDK provides a better interface to create Pluggable Components without worr
   |-------------|--------------------------|-------|
   | v0.1.x | v1.10 | Using SDK with Dapr v1.9 will not have ETag error handling. |
   | v0.2.x | v1.11 | Dapr state store API changes require use of the 0.2.0 SDK. |
+  | v0.3.x | v1.14 | |
 
 ## Implementing a Pluggable Component
 
