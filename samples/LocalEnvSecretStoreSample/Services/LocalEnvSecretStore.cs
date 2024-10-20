@@ -1,6 +1,5 @@
-﻿using System;
-using Dapr.PluggableComponents.Components;
-using Dapr.PluggableComponents.Components.SecretStores;
+﻿using Dapr.PluggableComponents.Components;
+using Dapr.PluggableComponents.Components.SecretStore;
 
 namespace LocalEnvSecretStoreSample.Services;
 
@@ -20,7 +19,7 @@ internal sealed class LocalEnvSecretStore : ISecretStore
         this.logger.LogInformation("Get request for secret {key}", request.SecretName);
 
         SecretStoreGetResponse? response = null;
-        string data = Environment.GetEnvironmentVariable(request.SecretName);
+        string? data = Environment.GetEnvironmentVariable(request.SecretName);
         if (data == null)
         {
             data = "";
@@ -47,7 +46,7 @@ internal sealed class LocalEnvSecretStore : ISecretStore
         {
             resp = new Dictionary<string, string>
             {
-                {key, Environment.GetEnvironmentVariable(key) }
+                {key, Environment.GetEnvironmentVariable(key) ?? String.Empty }
             };
             secretStoreResponse = new SecretStoreResponse
             {

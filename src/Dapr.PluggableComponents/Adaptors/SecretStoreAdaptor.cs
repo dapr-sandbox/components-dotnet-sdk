@@ -13,10 +13,8 @@
 
 using Dapr.Client.Autogen.Grpc.v1;
 using Dapr.PluggableComponents.Components;
-using Dapr.PluggableComponents.Components.SecretStores;
-using Dapr.PluggableComponents.Utilities;
+using Dapr.PluggableComponents.Components.SecretStore;
 using Dapr.Proto.Components.V1;
-using Google.Protobuf;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using static Dapr.Proto.Components.V1.SecretStore;

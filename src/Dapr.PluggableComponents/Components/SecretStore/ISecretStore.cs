@@ -11,7 +11,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-namespace Dapr.PluggableComponents.Components.SecretStores;
+namespace Dapr.PluggableComponents.Components.SecretStore;
 
 /// <summary>
 /// Represents a secret store Dapr Pluggable Component.

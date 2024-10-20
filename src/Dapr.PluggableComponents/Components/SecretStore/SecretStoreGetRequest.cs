@@ -13,7 +13,7 @@
 
 using Dapr.Proto.Components.V1;
 
-namespace Dapr.PluggableComponents.Components.SecretStores;
+namespace Dapr.PluggableComponents.Components.SecretStore;
 
 /// <summary>
 /// Represents properties associated with a request to retrieve a secret from a secret store.

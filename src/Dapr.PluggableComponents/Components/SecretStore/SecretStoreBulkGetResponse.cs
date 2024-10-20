@@ -15,33 +15,29 @@ using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
 using Google.Protobuf;
 
-namespace Dapr.PluggableComponents.Components.SecretStores;
+namespace Dapr.PluggableComponents.Components.SecretStore;
 
-/// <summary>
-/// Represents properties associated with a response to retrieving secret from a secret store.
-/// </summary>
-public sealed record SecretStoreGetResponse
+public sealed record SecretStoreBulkGetResponse
 {
-    /// <summary>
-    /// Gets or sets the key's value.
-    /// </summary>
-    /// <remarks>
-    /// If omitted, defaults to an empty array.
-    /// </remarks>
-    public IReadOnlyDictionary<string, string> Data { get; init; } = new Dictionary<string, string>();
+    public IReadOnlyDictionary<string, SecretStoreResponse> Data { get; init; } = new Dictionary<string, SecretStoreResponse>();
 
-
-    internal static GetSecretResponse ToGetResponse(SecretStoreGetResponse response)
+    internal static BulkGetSecretResponse ToBulkGetResponse(SecretStoreBulkGetResponse response)
     {
-        var grpcResponse = new GetSecretResponse();
-
-        // NOTE: in case of not found, you should not return any error.
-
+        var grpcResponse = new BulkGetSecretResponse();
         if (response != null)
         {
-            grpcResponse.Data.Add(response.Data);
+            foreach (var item in response.Data)
+            {
+                var secretResp = new SecretResponse();
+                foreach (var sec in item.Value.Data)
+                {
+                    secretResp.Secrets.Add(sec.Key, sec.Value);
+                    grpcResponse.Data.Add(sec.Key, secretResp);
+                }
+            }
         }
-
         return grpcResponse;
     }
 }
+
+

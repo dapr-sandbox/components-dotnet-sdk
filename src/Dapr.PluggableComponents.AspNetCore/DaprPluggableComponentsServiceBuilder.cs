@@ -14,7 +14,7 @@
 using Dapr.PluggableComponents.Adaptors;
 using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.PluggableComponents.Components.PubSub;
-using Dapr.PluggableComponents.Components.SecretStores;
+using Dapr.PluggableComponents.Components.SecretStore;
 using Dapr.PluggableComponents.Components.StateStore;
 
 namespace Dapr.PluggableComponents;
