@@ -14,6 +14,7 @@
 using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.PluggableComponents.Components.PubSub;
+using Dapr.PluggableComponents.Components.SecretStore;
 using Dapr.PluggableComponents.Components.StateStore;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
@@ -73,6 +74,11 @@ internal abstract class AdaptorFixture
     public static AdaptorFixture<StateStoreAdaptor, IStateStore> CreateStateStore(IStateStore? mockComponent = null)
     {
         return new AdaptorFixture<StateStoreAdaptor, IStateStore>((logger, componentProvider) => new StateStoreAdaptor(logger, componentProvider), mockComponent);
+    }
+
+    public static AdaptorFixture<SecretStoreAdaptor, ISecretStore> CreateSecretStore(ISecretStore? mockComponent = null)
+    {
+        return new AdaptorFixture<SecretStoreAdaptor, ISecretStore>((logger, componentProvider) => new SecretStoreAdaptor(logger, componentProvider), mockComponent);
     }
 
     public static async Task TestInitAsync<TAdaptor, TInterface>(

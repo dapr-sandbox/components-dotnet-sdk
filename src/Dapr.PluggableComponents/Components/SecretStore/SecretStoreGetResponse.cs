@@ -23,13 +23,9 @@ namespace Dapr.PluggableComponents.Components.SecretStore;
 public sealed record SecretStoreGetResponse
 {
     /// <summary>
-    /// Gets or sets the key's value.
+    /// Gets the secrets.
     /// </summary>
-    /// <remarks>
-    /// If omitted, defaults to an empty array.
-    /// </remarks>
-    public IReadOnlyDictionary<string, string> Data { get; init; } = new Dictionary<string, string>();
-
+    public IReadOnlyDictionary<string, string> Secrets { get; init; } = new Dictionary<string, string>();
 
     internal static GetSecretResponse ToGetResponse(SecretStoreGetResponse response)
     {
@@ -39,7 +35,7 @@ public sealed record SecretStoreGetResponse
 
         if (response != null)
         {
-            grpcResponse.Data.Add(response.Data);
+            grpcResponse.Data.Add(response.Secrets);
         }
 
         return grpcResponse;

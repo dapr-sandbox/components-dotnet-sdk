@@ -14,6 +14,7 @@
 using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
 using Google.Protobuf;
+
 namespace Dapr.PluggableComponents.Components.SecretStore;
 
 /// <summary>
@@ -24,22 +25,15 @@ public sealed record SecretStoreResponse
     /// <summary>
     /// Gets or sets the key's value.
     /// </summary>
-    /// <remarks>
-    /// If omitted, defaults to an empty array.
-    /// </remarks>
     public IReadOnlyDictionary<string, string> Data { get; init; } = new Dictionary<string, string>();
-
-
+    
     internal static SecretResponse ToGetResponse(SecretStoreResponse response)
     {
         var grpcResponse = new SecretResponse();
 
         // NOTE: in case of not found, you should not return any error.
 
-        if (response != null)
-        {
-            grpcResponse.Secrets.Add(response.Data);
-        }
+        grpcResponse.Secrets.Add(response.Data);
 
         return grpcResponse;
     }

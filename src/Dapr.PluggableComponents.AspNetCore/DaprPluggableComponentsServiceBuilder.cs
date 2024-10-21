@@ -204,7 +204,7 @@ public sealed class DaprPluggableComponentsServiceBuilder
     /// Registers a secret store with this service.
     /// </summary>
     /// <typeparam name="TSecretStore">The type of secret store to register.</typeparam>
-    /// <param name="stateStoreFactory">A factory method called when creating new secret store instances.</param>
+    /// <param name="secretStoreFactory">A factory method called when creating new secret store instances.</param>
     /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
     /// <remarks>
     /// The factory method will be called once for each configured Dapr component; the returned instance will be

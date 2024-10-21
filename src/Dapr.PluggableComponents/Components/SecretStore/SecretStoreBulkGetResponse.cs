@@ -17,25 +17,32 @@ using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Components.SecretStore;
 
+/// <summary>
+/// Represents properties associated with a response to retrieving all secrets from a secret store.
+/// </summary>
 public sealed record SecretStoreBulkGetResponse
 {
-    public IReadOnlyDictionary<string, SecretStoreResponse> Data { get; init; } = new Dictionary<string, SecretStoreResponse>();
+    /// <summary>
+    /// Gets the groups of secrets.
+    /// </summary>
+    public IReadOnlyDictionary<string, SecretStoreResponse> Groups { get; init; } = new Dictionary<string, SecretStoreResponse>();
 
     internal static BulkGetSecretResponse ToBulkGetResponse(SecretStoreBulkGetResponse response)
     {
-        var grpcResponse = new BulkGetSecretResponse();
-        if (response != null)
+        BulkGetSecretResponse grpcResponse = new();
+
+        foreach (var item in response.Groups)
         {
-            foreach (var item in response.Data)
+            SecretResponse secretResp = new();
+
+            foreach (var sec in item.Value.Data)
             {
-                var secretResp = new SecretResponse();
-                foreach (var sec in item.Value.Data)
-                {
-                    secretResp.Secrets.Add(sec.Key, sec.Value);
-                    grpcResponse.Data.Add(sec.Key, secretResp);
-                }
+                secretResp.Secrets.Add(sec.Key, sec.Value);
             }
+
+            grpcResponse.Data.Add(item.Key, secretResp);
         }
+    
         return grpcResponse;
     }
 }
