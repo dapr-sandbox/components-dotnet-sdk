@@ -16,19 +16,19 @@ internal sealed class LocalEnvSecretStore : ISecretStore
 
     public Task<SecretStoreGetResponse> GetAsync(SecretStoreGetRequest request, CancellationToken cancellationToken = default)
     {
-        this.logger.LogInformation("Get request for secret {key}", request.SecretName);
+        this.logger.LogInformation("Get request for secret {key}", request.Key);
 
         SecretStoreGetResponse? response = null;
-        string? data = Environment.GetEnvironmentVariable(request.SecretName);
+        string? data = Environment.GetEnvironmentVariable(request.Key);
         if (data == null)
         {
             data = "";
         }
         Dictionary<string, string> resp = new Dictionary<string, string>();
-        resp.Add(request.SecretName, data);
+        resp.Add(request.Key, data);
         response = new SecretStoreGetResponse
         {
-            Data = resp
+            Secrets = resp
         };
 
         return Task.FromResult(response);
@@ -56,7 +56,7 @@ internal sealed class LocalEnvSecretStore : ISecretStore
         }
         response = new SecretStoreBulkGetResponse
         {
-            Data = bulkResp
+            Keys = bulkResp
         };
         return Task.FromResult(response);
     }

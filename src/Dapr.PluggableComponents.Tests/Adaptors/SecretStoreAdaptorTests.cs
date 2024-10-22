@@ -43,7 +43,7 @@ public sealed class SecretStoreAdaptorTests
         using var fixture = AdaptorFixture.CreateSecretStore(Substitute.For<ISecretStore>());
 
         string key = "key";
-        
+
         string key1 = "key1";
         string key2 = "key2";
 
@@ -87,7 +87,7 @@ public sealed class SecretStoreAdaptorTests
         using var fixture = AdaptorFixture.CreateSecretStore(Substitute.For<ISecretStore>());
 
         string key = "key";
-        
+
         string key1 = "key1";
         string key2 = "key2";
 
@@ -122,9 +122,9 @@ public sealed class SecretStoreAdaptorTests
             fixture.Context);
 
         Assert.Contains(response.Data, item => item.Key == key);
-        
+
         var secretResponse = response.Data[key];
-        
+
         Assert.Contains(secretResponse.Secrets, item => item.Key == key1 && item.Value == value1);
         Assert.Contains(secretResponse.Secrets, item => item.Key == key2 && item.Value == value2);
 

@@ -40,9 +40,8 @@ public sealed record SecretStoreBulkGetResponse
 
             grpcResponse.Data.Add(item.Key, secretResp);
         }
-    
+
         return grpcResponse;
     }
 }
-
 

@@ -26,7 +26,7 @@ public sealed record SecretStoreResponse
     /// Gets or sets the key's value.
     /// </summary>
     public IReadOnlyDictionary<string, string> Data { get; init; } = new Dictionary<string, string>();
-    
+
     internal static SecretResponse ToGetResponse(SecretStoreResponse response)
     {
         var grpcResponse = new SecretResponse();
@@ -38,4 +38,3 @@ public sealed record SecretStoreResponse
         return grpcResponse;
     }
 }
-
