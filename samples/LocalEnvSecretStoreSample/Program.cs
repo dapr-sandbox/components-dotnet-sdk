@@ -1,4 +1,4 @@
-using Dapr.PluggableComponents;
+﻿using Dapr.PluggableComponents;
 using LocalEnvSecretStoreSample.Services;
 
 var app = DaprPluggableComponentsApplication.Create();
