@@ -42,6 +42,8 @@ public sealed class SecretStoreAdaptorTests
     {
         using var fixture = AdaptorFixture.CreateSecretStore(Substitute.For<ISecretStore>());
 
+        string key = "key";
+        
         string key1 = "key1";
         string key2 = "key2";
 
@@ -62,7 +64,7 @@ public sealed class SecretStoreAdaptorTests
 
         var getRequest = new Proto.Components.V1.GetSecretRequest();
 
-        getRequest.Key = key1;
+        getRequest.Key = key;
 
         var response = await fixture.Adaptor.Get(
             getRequest,
@@ -75,7 +77,61 @@ public sealed class SecretStoreAdaptorTests
             .MockComponent
             .Received(1)
             .GetAsync(Arg.Is<SecretStoreGetRequest>(
-                    requests => requests.SecretName == key1),
+                    requests => requests.Key == key),
+                Arg.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken));
+    }
+
+    [Fact]
+    public async Task GetBulkSecrets()
+    {
+        using var fixture = AdaptorFixture.CreateSecretStore(Substitute.For<ISecretStore>());
+
+        string key = "key";
+        
+        string key1 = "key1";
+        string key2 = "key2";
+
+        string value1 = "value1";
+        string value2 = "value2";
+
+        fixture.MockComponent
+            .BulkGetAsync(Arg.Any<SecretStoreBulkGetRequest>(), Arg.Any<CancellationToken>())
+            .Returns(
+                new SecretStoreBulkGetResponse
+                {
+                    Keys = new Dictionary<string, SecretStoreResponse>
+                    {
+                        {
+                            key,
+                            new SecretStoreResponse
+                            {
+                                Data = new Dictionary<string, string>
+                                {
+                                    { key1, value1 },
+                                    { key2, value2 }
+                                }
+                            }
+                        }
+                    }
+                });
+
+        var getRequest = new Proto.Components.V1.BulkGetSecretRequest();
+
+        var response = await fixture.Adaptor.BulkGet(
+            getRequest,
+            fixture.Context);
+
+        Assert.Contains(response.Data, item => item.Key == key);
+        
+        var secretResponse = response.Data[key];
+        
+        Assert.Contains(secretResponse.Secrets, item => item.Key == key1 && item.Value == value1);
+        Assert.Contains(secretResponse.Secrets, item => item.Key == key2 && item.Value == value2);
+
+        await fixture
+            .MockComponent
+            .Received(1)
+            .BulkGetAsync(Arg.Any<SecretStoreBulkGetRequest>(),
                 Arg.Is<CancellationToken>(cancellationToken => cancellationToken == fixture.Context.CancellationToken));
     }
 }

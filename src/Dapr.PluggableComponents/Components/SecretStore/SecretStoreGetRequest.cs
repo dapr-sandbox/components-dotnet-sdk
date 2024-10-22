@@ -18,8 +18,8 @@ namespace Dapr.PluggableComponents.Components.SecretStore;
 /// <summary>
 /// Represents properties associated with a request to retrieve a secret from a secret store.
 /// </summary>
-/// <param name="SecretName">The secret that should be retrieved.</param>
-public sealed record SecretStoreGetRequest(string SecretName)
+/// <param name="Key">The key for the secrets that should be retrieved.</param>
+public sealed record SecretStoreGetRequest(string Key)
 {
     /// <summary>
     /// Gets the metadata associated with the request.

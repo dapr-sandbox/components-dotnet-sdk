@@ -11,9 +11,7 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
-using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
-using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Components.SecretStore;
 
@@ -25,13 +23,13 @@ public sealed record SecretStoreBulkGetResponse
     /// <summary>
     /// Gets the groups of secrets.
     /// </summary>
-    public IReadOnlyDictionary<string, SecretStoreResponse> Groups { get; init; } = new Dictionary<string, SecretStoreResponse>();
+    public IReadOnlyDictionary<string, SecretStoreResponse> Keys { get; init; } = new Dictionary<string, SecretStoreResponse>();
 
     internal static BulkGetSecretResponse ToBulkGetResponse(SecretStoreBulkGetResponse response)
     {
         BulkGetSecretResponse grpcResponse = new();
 
-        foreach (var item in response.Groups)
+        foreach (var item in response.Keys)
         {
             SecretResponse secretResp = new();
 
