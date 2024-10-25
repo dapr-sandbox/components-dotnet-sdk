@@ -99,13 +99,13 @@ public sealed class SecretStoreAdaptorTests
             .Returns(
                 new SecretStoreBulkGetResponse
                 {
-                    Keys = new Dictionary<string, SecretStoreResponse>
+                    Keys = new Dictionary<string, SecretStoreGetResponse>
                     {
                         {
                             key,
-                            new SecretStoreResponse
+                            new SecretStoreGetResponse
                             {
-                                Data = new Dictionary<string, string>
+                                Secrets = new Dictionary<string, string>
                                 {
                                     { key1, value1 },
                                     { key2, value2 }

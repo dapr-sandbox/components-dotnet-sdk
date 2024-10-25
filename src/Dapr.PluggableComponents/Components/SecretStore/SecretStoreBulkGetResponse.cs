@@ -23,7 +23,7 @@ public sealed record SecretStoreBulkGetResponse
     /// <summary>
     /// Gets the groups of secrets.
     /// </summary>
-    public IReadOnlyDictionary<string, SecretStoreResponse> Keys { get; init; } = new Dictionary<string, SecretStoreResponse>();
+    public IReadOnlyDictionary<string, SecretStoreGetResponse> Keys { get; init; } = new Dictionary<string, SecretStoreGetResponse>();
 
     internal static BulkGetSecretResponse ToBulkGetResponse(SecretStoreBulkGetResponse response)
     {
@@ -33,7 +33,7 @@ public sealed record SecretStoreBulkGetResponse
         {
             SecretResponse secretResp = new();
 
-            foreach (var sec in item.Value.Data)
+            foreach (var sec in item.Value.Secrets)
             {
                 secretResp.Secrets.Add(sec.Key, sec.Value);
             }

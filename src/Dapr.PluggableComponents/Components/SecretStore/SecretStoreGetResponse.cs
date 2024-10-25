@@ -13,7 +13,6 @@
 
 using Dapr.PluggableComponents.Utilities;
 using Dapr.Proto.Components.V1;
-using Google.Protobuf;
 
 namespace Dapr.PluggableComponents.Components.SecretStore;
 
