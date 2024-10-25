@@ -14,6 +14,7 @@
 using Dapr.PluggableComponents.Adaptors;
 using Dapr.PluggableComponents.Components.Bindings;
 using Dapr.PluggableComponents.Components.PubSub;
+using Dapr.PluggableComponents.Components.SecretStore;
 using Dapr.PluggableComponents.Components.StateStore;
 
 namespace Dapr.PluggableComponents;
@@ -181,6 +182,45 @@ public sealed class DaprPluggableComponentsServiceBuilder
 
     #endregion
 
+    #region Secret Store Registration
+
+    /// <summary>
+    /// Registers a singleton secret store with this service.
+    /// </summary>
+    /// <typeparam name="TSecretStore">The type of secret store to register.</typeparam>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// A single instance of the secret store will be created to service all configured Dapr components.
+    ///
+    /// Only a single secret store type can be associated with a given service.
+    /// </remarks>
+    public DaprPluggableComponentsServiceBuilder RegisterSecretStore<TSecretStore>() where TSecretStore : class, ISecretStore
+    {
+        this.AddComponent<ISecretStore, TSecretStore, SecretStoreAdaptor>();
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a secret store with this service.
+    /// </summary>
+    /// <typeparam name="TSecretStore">The type of secret store to register.</typeparam>
+    /// <param name="secretStoreFactory">A factory method called when creating new secret store instances.</param>
+    /// <returns>The current <see cref="DaprPluggableComponentsServiceBuilder"/> instance.</returns>
+    /// <remarks>
+    /// The factory method will be called once for each configured Dapr component; the returned instance will be
+    /// associated with that Dapr component and methods invoked when the component receives requests.
+    ///
+    /// Only a single secret store type can be associated with a given service.
+    /// </remarks>
+    public DaprPluggableComponentsServiceBuilder RegisterSecretStore<TSecretStore>(ComponentProviderDelegate<TSecretStore> secretStoreFactory)
+        where TSecretStore : class, ISecretStore
+    {
+        this.AddComponent<ISecretStore, TSecretStore, SecretStoreAdaptor>(secretStoreFactory);
+        return this;
+    }
+
+    #endregion
+
     private void AddComponent<TComponentType, TComponentImpl, TAdaptor>()
         where TComponentType : class
         where TComponentImpl : class, TComponentType
@@ -235,5 +275,10 @@ public sealed class DaprPluggableComponentsServiceBuilder
         {
             this.AddRelatedService<IQueryableStateStore, TStateStore, QueryableStateStoreAdaptor>();
         }
+    }
+
+    private void AddRelatedSecretStoreServices<TSecretStore>() where TSecretStore : class
+    {
+        this.AddRelatedService<ISecretStore, TSecretStore, SecretStoreAdaptor>();
     }
 }
