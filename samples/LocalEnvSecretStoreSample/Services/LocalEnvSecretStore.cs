@@ -1,6 +1,6 @@
-﻿using Dapr.PluggableComponents.Components;
+﻿using System.Collections;
+using Dapr.PluggableComponents.Components;
 using Dapr.PluggableComponents.Components.SecretStore;
-using System.Collections;
 
 namespace LocalEnvSecretStoreSample.Services;
 
