@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <ProtosVersion>v1</ProtosVersion>
-    <ProtosTag>v1.11.0</ProtosTag>
+    <ProtosTag>v1.14.4</ProtosTag>
     <ProtosBaseUrl>https://raw.githubusercontent.com/dapr/dapr/$(ProtosTag)/dapr/proto/components/$(ProtosVersion)</ProtosBaseUrl>
     <ProtosRootDir>$(BaseIntermediateOutputPath)$(Configuration)\$(TargetFramework)\Protos</ProtosRootDir>
     <ProtosComponentsDir>$(ProtosRootDir)\dapr\proto\components\$(ProtosVersion)</ProtosComponentsDir>
@@ -13,6 +13,7 @@
     <Protos Include="common.proto" Visible="false" />
     <Protos Include="pubsub.proto" Visible="false" />
     <Protos Include="state.proto" Visible="false" />
+    <Protos Include="secretstore.proto" Visible="false" />
   </ItemGroup>
 
   <!-- Additional Nuget package properties. -->
@@ -36,12 +37,8 @@
   </ItemGroup>
 
   <Target Name="DownloadComponentProtos" BeforeTargets="Protobuf_BeforeCompile">
-    <MakeDir
-      Directories="$(ProtosComponentsDir)" />
-    <DownloadFile
-      Condition="!Exists('$(ProtosComponentsDir)/%(Protos.Identity)')"
-      SourceUrl="$(ProtosBaseUrl)/%(Protos.Identity)"
-      DestinationFolder="$(ProtosComponentsDir)" />
+    <MakeDir Directories="$(ProtosComponentsDir)" />
+    <DownloadFile Condition="!Exists('$(ProtosComponentsDir)/%(Protos.Identity)')" SourceUrl="$(ProtosBaseUrl)/%(Protos.Identity)" DestinationFolder="$(ProtosComponentsDir)" />
   </Target>
 
 </Project>
